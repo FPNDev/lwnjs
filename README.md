@@ -551,25 +551,6 @@ Modes:
 
 ---
 
-## Migrating from `local_modules`
-
-| Before                                                       | After                                                                         |
-| ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
-| `new Observable<T>()` used as an event                       | `createEmitter<T>()`; `notify` → `emit`                                       |
-| `new Observable<T>(true)` + `.value`                         | `createState<T>(initial)`; `.value` → `get()`, `notify` → `set`               |
-| `observable.done(x)` / `subscribeDone`                       | return `{ emitter, done: Promise }`                                           |
-| `pipe`, async iterator, `of`                                 | removed                                                                       |
-| `createPool()` + `onDestroy(node, () => pool.clear())`       | `source.subscribe(node, fn)`, `listen(node, target, type, fn)`                |
-| `onAttach(node, () => cleanup)`                              | same, or `onAttach(node, (scope) => source.subscribe(scope, fn))`             |
-| `render(parent, moduleDefault(import(...)), slot)`           | `const outlet = createOutlet(parent, slot)`; `outlet.show(() => import(...))` |
-| page factories `() => Node`                                  | `(parent) => view`, calling `attach(parent, node)` first                      |
-| `getCurrentRenderParent()` fallback in `useStore`            | removed. Attach first, or resolve in `onAttach`                               |
-| `isolateEnv` / `disposeEnv` / `isEnv` / `isolateViewOnFocus` | `env.isolate` / `env.release` / `env.is` + `isCurrent`; focus recipe above    |
-| `setupRouter(routes, getPathname)`                           | `setupRouter(routes, { history })`                                            |
-| `util/html`                                                  | `lwn-js/html` (or keep the app's own)                                          |
-
----
-
 ## Development
 
 ```sh
