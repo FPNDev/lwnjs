@@ -2,6 +2,8 @@
 
 [![npm version](https://img.shields.io/npm/v/lwn-js.svg)](https://www.npmjs.com/package/lwn-js)
 
+### Please, note - work in progress
+
 A small UI engine built around a **logical tree**. Components are plain functions that create views and attach them to a parent. The tree decides when things live and die: subscriptions, listeners, stores and child components are released when their owner is destroyed.
 
 - **Renderer-agnostic.** A logical node is any object: a DOM node, a WebGL mesh, a plain `{}`. The DOM is just one renderer adapter.
