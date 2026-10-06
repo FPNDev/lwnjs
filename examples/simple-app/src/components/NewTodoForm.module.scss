@@ -1,0 +1,16 @@
+@use '../styles/tokens' as *;
+
+.form {
+  display: flex;
+  gap: $space;
+  margin-bottom: $space * 2;
+
+  input {
+    @include input;
+    flex: 1;
+  }
+
+  button {
+    @include button;
+  }
+}

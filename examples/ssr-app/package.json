@@ -1,0 +1,24 @@
+{
+  "name": "engine-ts-ssr-shop",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "engine-ts dev",
+    "build": "tsc && engine-ts build",
+    "start": "engine-ts start"
+  },
+  "dependencies": {
+    "engine-ts": "file:../../../engine-ts",
+    "linkedom": "^0.18.13"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "sass": "^1.105.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.2"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true
+  }
+}

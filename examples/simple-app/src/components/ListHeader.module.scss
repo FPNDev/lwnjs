@@ -1,0 +1,19 @@
+@use '../styles/tokens' as *;
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space * 2;
+  margin-bottom: $space * 3;
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  overflow-wrap: anywhere;
+}
+
+.delete {
+  @include button(danger);
+}

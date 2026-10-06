@@ -1,0 +1,25 @@
+@use '../styles/tokens' as *;
+
+.dock {
+  position: fixed;
+  right: $space * 3;
+  bottom: $space * 3;
+  width: 360px;
+  height: 480px;
+  display: flex;
+  border: 1px solid $color-border;
+  border-radius: $radius;
+  overflow: hidden;
+  background: $color-surface;
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.5);
+  z-index: 10;
+
+  &[hidden] {
+    display: none;
+  }
+
+  > * {
+    flex: 1;
+    min-width: 0;
+  }
+}

@@ -1,0 +1,84 @@
+@use 'sass:color';
+
+$space: 8px;
+$radius: 12px;
+$sidebar-width: 300px;
+
+$font-stack: system-ui, -apple-system, 'Segoe UI', sans-serif;
+$mono-stack: ui-monospace, 'Cascadia Code', Menlo, monospace;
+
+$color-bg: #0f1218;
+$color-surface: #171b23;
+$color-raised: #1f2430;
+$color-border: #2a3040;
+$color-text: #e6e9ef;
+$color-muted: #8b93a7;
+$color-accent: #5b8cff;
+$color-online: #3ecf8e;
+$color-warning: #f5a524;
+$color-danger: #ff5c5c;
+
+@mixin focus-ring {
+  outline: 2px solid color.change($color-accent, $alpha: 0.5);
+  outline-offset: 2px;
+}
+
+@mixin button($variant: primary) {
+  border: 0;
+  border-radius: $radius * 0.6;
+  padding: $space $space * 1.75;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+
+  @if $variant == primary {
+    background: $color-accent;
+    color: white;
+
+    &:hover {
+      background: color.adjust($color-accent, $lightness: 6%);
+    }
+  } @else if $variant == ghost {
+    background: transparent;
+    color: $color-muted;
+
+    &:hover {
+      background: $color-raised;
+      color: $color-text;
+    }
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+@mixin input {
+  border: 1px solid $color-border;
+  border-radius: $radius * 0.6;
+  padding: $space $space * 1.5;
+  font: inherit;
+  color: inherit;
+  background: $color-bg;
+
+  &:focus {
+    @include focus-ring;
+    border-color: $color-accent;
+  }
+}
+
+@mixin presence-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: $color-muted;
+  flex: none;
+
+  &[data-presence='online'] {
+    background: $color-online;
+  }
+
+  &[data-presence='connecting'] {
+    background: $color-warning;
+  }
+}

@@ -1,0 +1,13 @@
+@use '../styles/tokens' as *;
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: $space * 1.5;
+  color: $color-muted;
+
+  button {
+    @include button(ghost);
+  }
+}

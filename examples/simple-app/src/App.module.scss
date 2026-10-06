@@ -1,0 +1,12 @@
+@use './styles/tokens' as *;
+
+.layout {
+  display: grid;
+  grid-template-columns: $sidebar-width 1fr;
+  height: 100%;
+}
+
+.main {
+  overflow-y: auto;
+  padding: $space * 5 $space * 6;
+}

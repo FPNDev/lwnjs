@@ -1,0 +1,236 @@
+// One stylesheet module, imported by the eager app shell as well as the lazy pages.
+// With SSR the page markup arrives before its lazy chunk; keeping page styles in the
+// entry CSS means nothing renders unstyled while that chunk loads.
+
+$space: 8px;
+$radius: 12px;
+$color-text: #1d1d1f;
+$color-muted: #6e6e73;
+$color-border: #e5e5ea;
+$color-bg: #fafafa;
+$color-accent: #0a7c5c;
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: $space * 3;
+  padding: $space * 1.5 $space * 4;
+  border-bottom: 1px solid $color-border;
+  background: rgb(255 255 255 / 0.9);
+  backdrop-filter: blur(8px);
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.nav {
+  display: flex;
+  gap: $space * 2;
+  flex: 1;
+}
+
+.header a {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-accent;
+  }
+}
+
+.button {
+  border: 0;
+  border-radius: 999px;
+  padding: $space $space * 2;
+  font: inherit;
+  background: $color-text;
+  color: white;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-accent;
+  }
+}
+
+.ghost {
+  border: 1px solid $color-border;
+  background: white;
+  color: $color-text;
+
+  &:hover {
+    background: $color-bg;
+    color: $color-text;
+  }
+}
+
+.main {
+  flex: 1;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: $space * 4;
+}
+
+.footer {
+  padding: $space * 3;
+  color: $color-muted;
+  text-align: center;
+  font-size: 13px;
+}
+
+.title {
+  margin: 0 0 $space * 2;
+  font-size: 32px;
+}
+
+.muted {
+  color: $color-muted;
+}
+
+.section {
+  margin-bottom: $space * 6;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+
+  h2 {
+    margin: 0 0 $space * 2;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: $space * 3;
+}
+
+.card {
+  display: grid;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+
+  img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: $radius;
+    background: $color-bg;
+  }
+
+  &:hover strong {
+    color: $color-accent;
+  }
+}
+
+.product {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space * 5;
+
+  img {
+    width: 100%;
+    border-radius: $radius;
+    background: $color-bg;
+  }
+}
+
+.price {
+  font-size: 22px;
+  margin-bottom: $space * 3;
+}
+
+.search {
+  width: 100%;
+  margin-bottom: $space * 3;
+  padding: $space * 1.5 $space * 2;
+  border: 1px solid $color-border;
+  border-radius: 999px;
+  font: inherit;
+}
+
+// Account layout
+
+.account {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: $space * 4;
+}
+
+.accountNav {
+  display: grid;
+  align-content: start;
+  gap: $space;
+
+  img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: $color-bg;
+  }
+}
+
+.active {
+  font-weight: 700;
+  color: $color-accent;
+}
+
+.order {
+  padding: $space * 2;
+  margin-bottom: $space * 2;
+  border: 1px solid $color-border;
+  border-radius: $radius;
+}
+
+// Cart drawer (a portal in <body>)
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgb(0 0 0 / 0.3);
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(380px, 100%);
+  padding: $space * 3;
+  overflow-y: auto;
+  background: white;
+  box-shadow: -12px 0 32px rgb(0 0 0 / 0.12);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: $space * 1.5;
+  padding: $space 0;
+  border-bottom: 1px solid $color-border;
+
+  img {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  span {
+    flex: 1;
+  }
+}

@@ -1,0 +1,19 @@
+@use '../styles/tokens' as *;
+
+.items {
+  @include card;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.empty {
+  color: $color-muted;
+  text-align: center;
+  padding: $space * 4;
+}

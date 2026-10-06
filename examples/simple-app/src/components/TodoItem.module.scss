@@ -1,0 +1,45 @@
+@use '../styles/tokens' as *;
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: $space * 1.5;
+  padding: $space * 1.25 $space * 2;
+
+  & + & {
+    border-top: 1px solid $color-border;
+  }
+
+  &:hover .remove {
+    visibility: visible;
+  }
+
+  &.done .title {
+    color: $color-muted;
+    text-decoration: line-through;
+  }
+}
+
+.check {
+  width: 18px;
+  height: 18px;
+  accent-color: $color-accent;
+}
+
+.title {
+  flex: 1;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.edit {
+  @include input;
+  flex: 1;
+  padding: 4px $space;
+}
+
+.remove {
+  @include button(danger);
+  visibility: hidden;
+  padding: 4px 8px;
+}

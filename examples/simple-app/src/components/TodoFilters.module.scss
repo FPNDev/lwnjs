@@ -1,0 +1,18 @@
+@use '../styles/tokens' as *;
+
+.filters {
+  display: flex;
+  gap: $space * 0.5;
+  margin-bottom: $space * 1.5;
+
+  button {
+    @include button(ghost);
+    padding: $space * 0.5 $space * 1.25;
+  }
+}
+
+.selected {
+  background: $color-surface;
+  color: $color-text;
+  box-shadow: 0 0 0 1px $color-border;
+}
