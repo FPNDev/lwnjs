@@ -35,7 +35,8 @@ export const domRenderer: Renderer<Node> = {
     anchor.parentNode?.insertBefore(view, anchor);
   },
   remove(view) {
-    if (view instanceof Node && 'remove' in view) {
+    const ViewNode = view.ownerDocument?.defaultView?.Node;
+    if (ViewNode && view instanceof ViewNode && 'remove' in view) {
       (view as ChildNode).remove();
     }
   },
