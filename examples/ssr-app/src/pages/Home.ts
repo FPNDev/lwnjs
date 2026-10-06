@@ -18,10 +18,11 @@ export function Home(parent: object) {
       >View all</a
     >`;
     routerLink(more);
-    const grid = html`<div class=${classes.grid}></div>`;
-    for (const product of featured.products) {
-      grid.append(ProductCard(node, product));
-    }
+    
+    const grid = html`<div class=${classes.grid}>
+      ${featured.products.map((product) => ProductCard(node, product))}
+    </div>`;
+
     node.append(html`
       <section class=${classes.section}>
         <div class=${classes.sectionHeader}>
