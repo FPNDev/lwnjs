@@ -1,6 +1,6 @@
 # Core reference
 
-Import these APIs from lwnjs/core.
+Import these APIs from lwn-js/core.
 
 ```ts
 import {
@@ -23,7 +23,7 @@ import {
   setRenderer,
   getRenderer,
   domRenderer,
-} from 'lwnjs/core';
+} from 'lwn-js/core';
 ```
 
 ## Ownership links

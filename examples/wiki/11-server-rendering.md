@@ -4,8 +4,8 @@ The same components render to HTML on the server and **hydrate** in the browser:
 
 Two entry points are involved:
 
-- `lwnjs/ssr`: client-safe, imported by app code (`serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer`).
-- `lwnjs/server`: Node only, imported by the server entry (`defineServerApp`, `createServer`, caches, `toNodeHandler`).
+- `lwn-js/ssr`: client-safe, imported by app code (`serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer`).
+- `lwn-js/server`: Node only, imported by the server entry (`defineServerApp`, `createServer`, caches, `toNodeHandler`).
 
 Server rendering produces HTML; it uses `linkedom` as the server DOM (an optional peer dependency).
 
@@ -59,7 +59,7 @@ Deciding:
 Server routes attach server-only behaviour to your route objects. They live in a module the client never imports.
 
 ```ts
-import type { ServerRoute } from 'lwnjs/server';
+import type { ServerRoute } from 'lwn-js/server';
 
 export const serverRoutes: ServerRoute[] = [
   {
@@ -184,7 +184,7 @@ function summary(product: ApiProduct): ProductSummary {
    - navigate the app's router to the URL,
    - call `App(container)` in the root render scope,
    - wait until every outlet load has settled (lazy pages render too), bounded by `timeout`.
-4. **Serialize:** normalize text nodes (see Hydration), record the `childNodes` path of every view created through `lwnjs/html`, and embed `<script id="__engine" type="application/json">` with the data and the paths (`<` escaped, so data can't close the script). Add `modulepreload` links for the route's `preload` modules. Output the document.
+4. **Serialize:** normalize text nodes (see Hydration), record the `childNodes` path of every view created through `lwn-js/html`, and embed `<script id="__engine" type="application/json">` with the data and the paths (`<` escaped, so data can't close the script). Add `modulepreload` links for the route's `preload` modules. Output the document.
 5. **Clean up:** destroy the app root (route listeners and subscriptions end), restore globals, release the lock.
 
 Loaders run concurrently across requests; only the render itself is serialized. Lazy imports are warm after the first render, so the lock costs little.
@@ -232,7 +232,7 @@ After hydration, `loadServerData` (the router's `load` hook) runs before route a
 ## Caching (SSG and ISR)
 
 ```ts
-import { fsCache, memoryCache, type PageCache } from 'lwnjs/server';
+import { fsCache, memoryCache, type PageCache } from 'lwn-js/server';
 ```
 
 | Cache                            | Behaviour                                                                                                                                |
@@ -280,7 +280,7 @@ lwn start   # production server on dist/
 The CLI is a thin layer over these:
 
 ```ts
-import { createServer, fsCache, toNodeHandler } from 'lwnjs/server';
+import { createServer, fsCache, toNodeHandler } from 'lwn-js/server';
 
 const server = createServer({
   template,

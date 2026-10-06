@@ -20,7 +20,7 @@ The component owns both the value and the nodes that display it, so there is no 
 createState(initial) stores a current value and notifies subscribers when you call set or notify.
 
 ```ts
-import { createState } from 'lwnjs/core';
+import { createState } from 'lwn-js/core';
 
 type Todo = { id: string; title: string; done: boolean };
 
@@ -45,7 +45,7 @@ This is intentional. Components choose which part of the view to update. A state
 An emitter represents an event with no stored current value. Late subscribers do not receive past events.
 
 ```ts
-import { createEmitter } from 'lwnjs/core';
+import { createEmitter } from 'lwn-js/core';
 
 const messageAdded = createEmitter<string>();
 const seen: string[] = [];
@@ -85,8 +85,8 @@ import {
   component,
   createStore,
   useStore,
-} from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+} from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 
 const ThemeStore = createStore(() => ({ color: 'navy' }));
 

@@ -1,5 +1,5 @@
-import { attach, component, env, listen } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, component, env, listen } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { isolateOnFocus } from '../lib/focus-env';
 import classes from './NewTodoForm.module.scss';
 

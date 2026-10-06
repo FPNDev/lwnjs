@@ -1,10 +1,10 @@
 # Server reference
 
-Server APIs run in Node. Import them from `lwnjs/server`. The client side of hydration and page-data access comes from `lwnjs/ssr`.
+Server APIs run in Node. Import them from `lwn-js/server`. The client side of hydration and page-data access comes from `lwn-js/ssr`.
 
 ```ts
-import { defineServerApp } from 'lwnjs/server';
-import { hydrate, loadServerData, serverToken, useServer } from 'lwnjs/ssr';
+import { defineServerApp } from 'lwn-js/server';
+import { hydrate, loadServerData, serverToken, useServer } from 'lwn-js/ssr';
 ```
 
 ## One app shared by server and browser
@@ -69,7 +69,7 @@ On the first browser visit, hydration reads the embedded server payload. On late
 A server route associates server-only behavior with a route object.
 
 ```ts
-import type { ServerRoute } from 'lwnjs/server';
+import type { ServerRoute } from 'lwn-js/server';
 
 const serverRoutes: ServerRoute[] = [
   {
@@ -162,7 +162,7 @@ The same cache interface can be supplied to `createServer`. The file cache is al
 
 ## Hydration helpers
 
-Import client-safe helpers from `lwnjs/ssr`:
+Import client-safe helpers from `lwn-js/ssr`:
 
 - `serverToken<T>(key)` creates a typed key for server data.
 - `useServer(token)` reads the current page's data during setup.

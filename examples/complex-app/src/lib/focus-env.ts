@@ -1,4 +1,4 @@
-import { env, listen, onDestroy } from 'lwnjs/core';
+import { env, listen, onDestroy } from 'lwn-js/core';
 
 /**
  * Makes `id` the current env while focus is inside `element`, nested in

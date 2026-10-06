@@ -5,7 +5,7 @@ This page builds a small client-side app and introduces the pattern used through
 ## Install
 
 ```sh
-npm install lwnjs
+npm install lwn-js
 ```
 
 The package publishes ESM modules with TypeScript declarations. A bundler must support package exports. The examples use Vite, but the engine does not require a particular bundler for client-side use.
@@ -35,8 +35,8 @@ import {
   domRenderer,
   listen,
   setRenderer,
-} from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+} from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 
 setRenderer(domRenderer);
 

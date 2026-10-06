@@ -98,4 +98,4 @@ This endpoint is available only when a secret is configured. Revalidation refres
 
 The CLI imports Vite at runtime. The server rendering path uses linkedom to provide a DOM on Node. These are optional peer dependencies in the package manifest, so install the ones needed by the parts of the application you use.
 
-For an Express-style server or custom host, use `createServer` and `toNodeHandler` from `lwnjs/server` directly. See [Server reference](reference-server.md).
+For an Express-style server or custom host, use `createServer` and `toNodeHandler` from `lwn-js/server` directly. See [Server reference](reference-server.md).

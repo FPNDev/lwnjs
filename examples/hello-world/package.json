@@ -1,5 +1,5 @@
 {
-  "name": "lwnjs-hello-world",
+  "name": "lwn-js-hello-world",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "lwnjs": "file:../.."
+    "lwn-js": "file:../.."
   },
   "devDependencies": {
     "typescript": "~5.9.3",

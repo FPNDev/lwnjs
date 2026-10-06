@@ -1,5 +1,5 @@
-import { attach, component, useStore } from 'lwnjs/core';
-import { html, text } from 'lwnjs/html';
+import { attach, component, useStore } from 'lwn-js/core';
+import { html, text } from 'lwn-js/html';
 import { formatTime, initial } from '../lib/format';
 import {
   ChatRoute,

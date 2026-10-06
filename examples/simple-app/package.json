@@ -1,5 +1,5 @@
 {
-  "name": "lwnjs-todos",
+  "name": "lwn-js-todos",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "lwnjs": "file:../.."
+    "lwn-js": "file:../.."
   },
   "devDependencies": {
     "sass": "^1.105.1",

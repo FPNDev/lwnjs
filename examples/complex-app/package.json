@@ -1,5 +1,5 @@
 {
-  "name": "lwnjs-p2p-chat",
+  "name": "lwn-js-p2p-chat",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "lwnjs": "file:../..",
+    "lwn-js": "file:../..",
     "peerjs": "^1.5.5"
   },
   "devDependencies": {

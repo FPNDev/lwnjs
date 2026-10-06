@@ -22,7 +22,7 @@ No allocations, no indirection, nothing to clean up. Most component-local state 
 Use it when **several independent components** must react to the same value, which usually means it lives in a store:
 
 ```ts
-import { createState } from 'lwnjs/core';
+import { createState } from 'lwn-js/core';
 
 const lists = createState<TodoList[]>([]);
 
@@ -61,7 +61,7 @@ One state holding a whole collection is usually right: observers re-render the p
 For events rather than values: a submit, an abort, a message arriving, a toast to show.
 
 ```ts
-import { createEmitter } from 'lwnjs/core';
+import { createEmitter } from 'lwn-js/core';
 
 const messageAdded = createEmitter<Message>();
 messageAdded.subscribe((message) => list.add(message));

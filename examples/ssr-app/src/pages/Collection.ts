@@ -1,6 +1,6 @@
-import { attach, destroy } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
-import { useServer } from 'lwnjs/ssr';
+import { attach, destroy } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
+import { useServer } from 'lwn-js/ssr';
 import { ProductCard } from '../components/ProductCard';
 import { CollectionData } from '../data';
 import { CollectionRoute, router } from '../routes';

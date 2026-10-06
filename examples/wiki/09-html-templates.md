@@ -1,9 +1,9 @@
 # 9. HTML templates
 
-`lwnjs/html` builds DOM from tagged template literals. It's optional: components can create views any way they like. But it's fast and safe, and it's what makes server-rendered views hydratable.
+`lwn-js/html` builds DOM from tagged template literals. It's optional: components can create views any way they like. But it's fast and safe, and it's what makes server-rendered views hydratable.
 
 ```ts
-import { element, html, mhtml, text } from 'lwnjs/html';
+import { element, html, mhtml, text } from 'lwn-js/html';
 ```
 
 ## `html`: one root

@@ -76,11 +76,11 @@ The performance model is selective work, not a claim that every operation is con
 
 | Import       | Use                                                           |
 | ------------ | ------------------------------------------------------------- |
-| lwnjs/core   | Ownership, state, stores, envs, listeners, and renderer setup |
-| lwnjs/router | Routes, history, and outlets                                  |
-| lwnjs/html   | HTML templates and typed node creation                        |
-| lwnjs/ssr    | Client-safe hydration and page-data helpers                   |
-| lwnjs/server | Node server rendering and caches                              |
+| lwn-js/core   | Ownership, state, stores, envs, listeners, and renderer setup |
+| lwn-js/router | Routes, history, and outlets                                  |
+| lwn-js/html   | HTML templates and typed node creation                        |
+| lwn-js/ssr    | Client-safe hydration and page-data helpers                   |
+| lwn-js/server | Node server rendering and caches                              |
 | lwn          | Command-line interface                                        |
 
 ## Example apps

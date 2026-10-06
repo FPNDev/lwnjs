@@ -1,5 +1,5 @@
-import { attach, destroy, listen } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, destroy, listen } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { searchProducts } from '../api';
 import { ProductCard } from '../components/ProductCard';
 import classes from '../styles/ui.module.scss';

@@ -1,6 +1,6 @@
-import { attach, component, listen, useStore } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
-import { isServer } from 'lwnjs/ssr';
+import { attach, component, listen, useStore } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
+import { isServer } from 'lwn-js/ssr';
 import { CartStore } from '../cart';
 import { routerLink } from '../routes';
 import classes from '../styles/ui.module.scss';

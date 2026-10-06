@@ -1,4 +1,4 @@
-import { createStore } from 'lwnjs/core';
+import { createStore } from 'lwn-js/core';
 import type { Conversation } from '../components/Conversation';
 import type { Dock } from '../components/Dock';
 import type { Toasts } from '../components/Toasts';

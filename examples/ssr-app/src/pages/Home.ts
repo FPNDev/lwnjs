@@ -1,6 +1,6 @@
-import { attach } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
-import { useServer } from 'lwnjs/ssr';
+import { attach } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
+import { useServer } from 'lwn-js/ssr';
 import { ProductCard } from '../components/ProductCard';
 import { FeaturedData } from '../data';
 import { routerLink } from '../routes';

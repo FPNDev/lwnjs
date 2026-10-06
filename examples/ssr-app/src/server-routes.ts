@@ -1,4 +1,4 @@
-import type { ServerRoute } from 'lwnjs/server';
+import type { ServerRoute } from 'lwn-js/server';
 import { collection, featuredCollections, orders, product, user } from './api';
 import {
   CollectionData,

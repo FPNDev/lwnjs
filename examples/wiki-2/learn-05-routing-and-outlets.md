@@ -5,7 +5,7 @@ The router matches the current URL against route objects. An outlet shows the vi
 ## Define route objects once
 
 ```ts
-import { setupRouter, type Route } from 'lwnjs/router';
+import { setupRouter, type Route } from 'lwn-js/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const ProductRoute: Route = {
@@ -24,9 +24,9 @@ String paths can be nested. A child path of orders under /account matches /accou
 An outlet owns the current page view and replaces it when another view is shown.
 
 ```ts
-import { attach, component, domRenderer, setRenderer } from 'lwnjs/core';
-import { createOutlet, setupRouter, type Route } from 'lwnjs/router';
-import { html } from 'lwnjs/html';
+import { attach, component, domRenderer, setRenderer } from 'lwn-js/core';
+import { createOutlet, setupRouter, type Route } from 'lwn-js/router';
+import { html } from 'lwn-js/html';
 
 setRenderer(domRenderer);
 

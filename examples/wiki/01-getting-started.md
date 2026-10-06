@@ -3,12 +3,12 @@
 ## Install
 
 ```sh
-npm install lwnjs
+npm install lwn-js
 ```
 
 Optional peer dependencies, only when you need them:
 
-- `linkedom`: the DOM used for server rendering (`lwnjs/server`).
+- `linkedom`: the DOM used for server rendering (`lwn-js/server`).
 - `vite`: used by the `lwn` CLI (`dev`, `build`, `start`).
 
 LWN ships ESM with type declarations. Any bundler that understands `package.json` `exports` works; the examples use Vite.
@@ -29,7 +29,7 @@ Recommended compiler options:
 }
 ```
 
-`DOM.Iterable` lets you `for..of` over `NodeList`s. With `"moduleResolution": "bundler"` (or `node16`/`nodenext`), subpath imports like `lwnjs/core` resolve to their types.
+`DOM.Iterable` lets you `for..of` over `NodeList`s. With `"moduleResolution": "bundler"` (or `node16`/`nodenext`), subpath imports like `lwn-js/core` resolve to their types.
 
 ## A client-only app
 
@@ -43,8 +43,8 @@ import {
   domRenderer,
   listen,
   setRenderer,
-} from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+} from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 
 // 1. Once, before anything is shown: views are DOM nodes.
 setRenderer(domRenderer);
@@ -80,7 +80,7 @@ What happened:
 ### Adding routes
 
 ```ts
-import { createOutlet, setupRouter, type Route } from 'lwnjs/router';
+import { createOutlet, setupRouter, type Route } from 'lwn-js/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const ItemRoute: Route = { path: /\/items\/(?<id>\d+)/u };
@@ -110,9 +110,9 @@ The same components render on the server and hydrate in the browser. You need tw
 
 ```ts
 // src/app.ts (shared)
-import { domRenderer, setRenderer } from 'lwnjs/core';
-import { setupRouter } from 'lwnjs/router';
-import { loadServerData } from 'lwnjs/ssr';
+import { domRenderer, setRenderer } from 'lwn-js/core';
+import { setupRouter } from 'lwn-js/router';
+import { loadServerData } from 'lwn-js/ssr';
 
 setRenderer(domRenderer);
 export const routes = [HomeRoute, ProductRoute];
@@ -120,11 +120,11 @@ export const router = setupRouter(routes, { load: loadServerData(routes) });
 export const App = component((container: Element) => { … });
 
 // src/entry-client.ts
-import { hydrate } from 'lwnjs/ssr';
+import { hydrate } from 'lwn-js/ssr';
 await hydrate(document.querySelector('#app')!, App, router);
 
 // src/entry-server.ts (Node only)
-import { defineServerApp } from 'lwnjs/server';
+import { defineServerApp } from 'lwn-js/server';
 export default defineServerApp({ router, routes, serverRoutes, app: App });
 ```
 

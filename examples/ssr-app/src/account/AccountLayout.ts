@@ -1,7 +1,7 @@
-import { attach, listen } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
-import { createOutlet } from 'lwnjs/router';
-import { useServer } from 'lwnjs/ssr';
+import { attach, listen } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
+import { createOutlet } from 'lwn-js/router';
+import { useServer } from 'lwn-js/ssr';
 import { UserData } from '../data';
 import { OrdersRoute, OverviewRoute, router, routerLink } from '../routes';
 import classes from '../styles/ui.module.scss';

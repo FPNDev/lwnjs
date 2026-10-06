@@ -1,5 +1,5 @@
-import { attach, useStore } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, useStore } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { ListHeader } from '../components/ListHeader';
 import { NewTodoForm } from '../components/NewTodoForm';
 import { TodoFilters, type Filter } from '../components/TodoFilters';

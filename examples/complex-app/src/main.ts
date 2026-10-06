@@ -1,5 +1,5 @@
 import './styles/global.scss';
-import { domRenderer, setRenderer } from 'lwnjs/core';
+import { domRenderer, setRenderer } from 'lwn-js/core';
 import { App } from './App';
 import { startChat } from './store/chat';
 

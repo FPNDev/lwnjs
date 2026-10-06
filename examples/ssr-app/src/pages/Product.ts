@@ -1,6 +1,6 @@
-import { attach, listen, useStore } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
-import { useServer } from 'lwnjs/ssr';
+import { attach, listen, useStore } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
+import { useServer } from 'lwn-js/ssr';
 import type { ProductDetail } from '../api';
 import { CartStore } from '../cart';
 import { ProductData } from '../data';

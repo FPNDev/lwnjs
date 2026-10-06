@@ -1,6 +1,6 @@
-import { attach, attachStore, component, env, listen } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
-import { createOutlet } from 'lwnjs/router';
+import { attach, attachStore, component, env, listen } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
+import { createOutlet } from 'lwn-js/router';
 import classes from './App.module.scss';
 import { ContactList } from './components/ContactList';
 import { Dock } from './components/Dock';

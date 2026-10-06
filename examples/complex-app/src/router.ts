@@ -1,5 +1,5 @@
-import { listen } from 'lwnjs/core';
-import { setupRouter, type Route } from 'lwnjs/router';
+import { listen } from 'lwn-js/core';
+import { setupRouter, type Route } from 'lwn-js/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const ChatRoute: Route = { path: /\/chat\/(?<peer>[\w-]+)/u };

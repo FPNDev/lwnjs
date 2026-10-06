@@ -5,7 +5,7 @@ An **outlet** is a slot that shows one view at a time. Route actions call `outle
 ## Creating an outlet
 
 ```ts
-import { createOutlet } from 'lwnjs/router';
+import { createOutlet } from 'lwn-js/router';
 
 const slot = html<Comment>`<!---->`;
 const node = html`<div class="app">

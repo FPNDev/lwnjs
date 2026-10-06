@@ -21,7 +21,7 @@ Call `setRenderer(domRenderer)` once (in a `beforeEach` or a setup file).
 ## Components
 
 ```ts
-import { destroy, domRenderer, setRenderer } from 'lwnjs/core';
+import { destroy, domRenderer, setRenderer } from 'lwn-js/core';
 import { NewTodoForm } from '../src/components/NewTodoForm';
 
 beforeEach(() => setRenderer(domRenderer));
@@ -125,7 +125,7 @@ env.release(id);
 
 ```ts
 // @vitest-environment node
-import { createServer, memoryCache } from 'lwnjs/server';
+import { createServer, memoryCache } from 'lwn-js/server';
 
 const server = createServer({
   template,

@@ -16,7 +16,7 @@ type Renderer<V extends object> = {
 ## The DOM renderer
 
 ```ts
-import { domRenderer, setRenderer } from 'lwnjs/core';
+import { domRenderer, setRenderer } from 'lwn-js/core';
 setRenderer(domRenderer);
 ```
 

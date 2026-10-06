@@ -1,5 +1,5 @@
-import { attach, component } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, component } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { formatTime } from '../lib/format';
 import type { Message } from '../services/db';
 import classes from './Conversation.module.scss';

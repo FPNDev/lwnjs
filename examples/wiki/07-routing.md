@@ -1,11 +1,11 @@
 # 7. Routing
 
-`lwnjs/router` matches URLs against a tree of route objects and runs actions for the routes that are active. It doesn't render anything itself: route actions decide what to show, usually through outlets ([Outlets and layouts](08-outlets-and-layouts.md)).
+`lwn-js/router` matches URLs against a tree of route objects and runs actions for the routes that are active. It doesn't render anything itself: route actions decide what to show, usually through outlets ([Outlets and layouts](08-outlets-and-layouts.md)).
 
 ## Route objects
 
 ```ts
-import { type Route } from 'lwnjs/router';
+import { type Route } from 'lwn-js/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const SearchRoute: Route = { path: '/search' };
@@ -68,7 +68,7 @@ String routes have no params (`getParams()` is `null`).
 ## Creating the router
 
 ```ts
-import { setupRouter } from 'lwnjs/router';
+import { setupRouter } from 'lwn-js/router';
 
 export const router = setupRouter(routes, {
   history: browserHistory(), // default; memoryHistory() where there is no window

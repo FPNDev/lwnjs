@@ -53,11 +53,11 @@ App ─┬─ Sidebar ─┬─ ListRow (a)               <div.layout>
 
 | Import         | Contains                                                                                                           |
 | -------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `lwnjs/core`   | the logical tree, lifecycle hooks, `component`, `createState`, `createEmitter`, stores, `env`, `listen`, renderers |
-| `lwnjs/router` | `setupRouter`, routes, history adapters, `createOutlet`, `aliasRoute`                                              |
-| `lwnjs/html`   | `html`, `mhtml`, `element`, `text`                                                                                 |
-| `lwnjs/ssr`    | client side of server rendering: `serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer`               |
-| `lwnjs/server` | Node only: `defineServerApp`, `createServer`, `fsCache`, `memoryCache`, `toNodeHandler`                            |
+| `lwn-js/core`   | the logical tree, lifecycle hooks, `component`, `createState`, `createEmitter`, stores, `env`, `listen`, renderers |
+| `lwn-js/router` | `setupRouter`, routes, history adapters, `createOutlet`, `aliasRoute`                                              |
+| `lwn-js/html`   | `html`, `mhtml`, `element`, `text`                                                                                 |
+| `lwn-js/ssr`    | client side of server rendering: `serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer`               |
+| `lwn-js/server` | Node only: `defineServerApp`, `createServer`, `fsCache`, `memoryCache`, `toNodeHandler`                            |
 | `lwn` (CLI)    | `lwn dev`, `lwn build`, `lwn start`                                                                                |
 
 Bundlers include only what you import. A bundle that uses `createState` alone is about 1.5 kB minified.

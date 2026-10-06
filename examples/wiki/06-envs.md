@@ -9,7 +9,7 @@ Keyboard input is global: a `keydown` on `document` reaches every listener. Isol
 - **Each component checks its own env.** Nobody asks "who else is active"; a component asks "am I current?" or "am I active?".
 
 ```ts
-import { env } from 'lwnjs/core';
+import { env } from 'lwn-js/core';
 
 const id = Symbol('composer');
 

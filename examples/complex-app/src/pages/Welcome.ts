@@ -1,5 +1,5 @@
-import { attach, useStore } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, useStore } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { ChatStore } from '../store/chat';
 import classes from './Page.module.scss';
 

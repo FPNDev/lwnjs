@@ -1,5 +1,5 @@
-import { attach, attachStore, component, destroy, onDestroy } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, attachStore, component, destroy, onDestroy } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { PlacementStore } from '../store/ui';
 import type { Conversation } from './Conversation';
 import classes from './Dock.module.scss';

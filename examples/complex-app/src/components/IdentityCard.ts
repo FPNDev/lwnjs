@@ -1,5 +1,5 @@
-import { attach, component, listen, useStore } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, component, listen, useStore } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { isolateOnFocus } from '../lib/focus-env';
 import { ChatStore } from '../store/chat';
 import { UiStore } from '../store/ui';

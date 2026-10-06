@@ -4,8 +4,8 @@ import {
   domRenderer,
   listen,
   setRenderer,
-} from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+} from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 
 // Tell the engine how to place views. Once, before anything is shown.
 setRenderer(domRenderer);

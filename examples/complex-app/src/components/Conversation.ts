@@ -1,5 +1,5 @@
-import { attach, component, onAttach, useStore } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, component, onAttach, useStore } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { ChatStore } from '../store/chat';
 import { PlacementStore } from '../store/ui';
 import { Composer } from './Composer';

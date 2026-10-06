@@ -1,5 +1,5 @@
 {
-  "name": "lwnjs-ssr-shop",
+  "name": "lwn-js-ssr-shop",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "start": "lwn start"
   },
   "dependencies": {
-    "lwnjs": "file:../..",
+    "lwn-js": "file:../..",
     "linkedom": "^0.18.13"
   },
   "devDependencies": {

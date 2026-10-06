@@ -1,6 +1,6 @@
-import { listen } from 'lwnjs/core';
-import { setupRouter, type Route } from 'lwnjs/router';
-import { loadServerData } from 'lwnjs/ssr';
+import { listen } from 'lwn-js/core';
+import { setupRouter, type Route } from 'lwn-js/router';
+import { loadServerData } from 'lwn-js/ssr';
 
 export const HomeRoute: Route = { path: '/' };
 export const CollectionRoute: Route = {

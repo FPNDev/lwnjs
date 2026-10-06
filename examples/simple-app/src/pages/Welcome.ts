@@ -1,5 +1,5 @@
-import { attach } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import classes from './Page.module.scss';
 
 export function Welcome(parent: object) {

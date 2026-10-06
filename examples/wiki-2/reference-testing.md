@@ -29,7 +29,7 @@ Install the DOM renderer before tests that use outlets or destruction to remove 
 
 ```ts
 import { beforeEach } from 'vitest';
-import { domRenderer, setRenderer } from 'lwnjs/core';
+import { domRenderer, setRenderer } from 'lwn-js/core';
 
 beforeEach(() => {
   setRenderer(domRenderer);
@@ -43,7 +43,7 @@ The renderer is module-level state. Setting it in shared test setup gives each t
 A component can use a plain object as its owner. It does not need a mounted container unless the component behavior depends on a parent element.
 
 ```ts
-import { destroy, domRenderer, setRenderer } from 'lwnjs/core';
+import { destroy, domRenderer, setRenderer } from 'lwn-js/core';
 import { NewTodoForm } from '../src/components/NewTodoForm';
 
 beforeEach(() => {
@@ -164,7 +164,7 @@ Use Node for server tests and call the server's request handler directly.
 
 ```ts
 // @vitest-environment node
-import { createServer, memoryCache } from 'lwnjs/server';
+import { createServer, memoryCache } from 'lwn-js/server';
 
 const server = createServer({
   template,

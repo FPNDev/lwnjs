@@ -6,8 +6,8 @@ import {
   listen,
   onDestroy,
   useStore,
-} from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+} from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 import { CartStore } from '../cart';
 import classes from '../styles/ui.module.scss';
 

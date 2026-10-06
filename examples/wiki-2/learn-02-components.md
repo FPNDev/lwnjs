@@ -5,8 +5,8 @@ A component is a function that creates a view and connects it to behavior. It ru
 ## A component function
 
 ```ts
-import { attach, component, listen } from 'lwnjs/core';
-import { html } from 'lwnjs/html';
+import { attach, component, listen } from 'lwn-js/core';
+import { html } from 'lwn-js/html';
 
 type SearchBoxOptions = {
   onSearch(term: string): void;

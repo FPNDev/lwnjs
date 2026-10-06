@@ -4,9 +4,9 @@ import {
   component,
   domRenderer,
   setRenderer,
-} from 'lwnjs/core';
-import { html } from 'lwnjs/html';
-import { createOutlet } from 'lwnjs/router';
+} from 'lwn-js/core';
+import { html } from 'lwn-js/html';
+import { createOutlet } from 'lwn-js/router';
 import { CartStore } from './cart';
 import { Header } from './components/Header';
 import { Home } from './pages/Home';

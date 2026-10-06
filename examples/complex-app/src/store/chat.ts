@@ -5,7 +5,7 @@ import {
   createStore,
   destroy,
   onDestroy,
-} from 'lwnjs/core';
+} from 'lwn-js/core';
 import Peer, { type DataConnection } from 'peerjs';
 import {
   createKeys,

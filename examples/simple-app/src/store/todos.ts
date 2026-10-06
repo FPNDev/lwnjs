@@ -1,4 +1,4 @@
-import { createState, createStore } from 'lwnjs/core';
+import { createState, createStore } from 'lwn-js/core';
 
 export type Todo = {
   id: string;
@@ -12,7 +12,7 @@ export type TodoList = {
   todos: Todo[];
 };
 
-export const STORAGE_KEY = 'lwnjs-todos';
+export const STORAGE_KEY = 'lwn-js-todos';
 
 function read(): TodoList[] {
   try {
