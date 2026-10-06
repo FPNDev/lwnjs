@@ -44,10 +44,8 @@ export function setupApp(
     const post = useServer(PostData);
     const title = html`<h1>${post.title}</h1>`;
     const status = text('');
-    const node = html`<article>
-      ${title}${status}
-      <p>${post.body}</p>
-    </article>`;
+    // prettier-ignore
+    const node = html`<article>${title}${status}<p>${post.body}</p></article>`;
     attach(parent, node);
     // The outlet keeps this page across post navigations; the page follows the route itself.
     router.route(node, PostRoute, () => {

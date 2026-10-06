@@ -30,9 +30,8 @@ describe('html', () => {
 
   it('inserts nodes and arrays of nodes in place', () => {
     const items = ['a', 'b'].map((label) => html`<li>${label}</li>`);
-    const list = html`<ul>
-      ${element('hr')}${items}
-    </ul>` as Element;
+    // prettier-ignore
+    const list = html`<ul>${element('hr')}${items}</ul>` as Element;
 
     expect(list.outerHTML).toBe('<ul><hr><li>a</li><li>b</li></ul>');
     expect(list.children[1]).toBe(items[0]);

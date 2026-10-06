@@ -36,6 +36,7 @@ describe('hydration', () => {
       'HEADER',
       'ARTICLE',
     ]);
+    console.log([...serverArticle!.childNodes]);
     // The empty text node left as a comment by the server is a text node again.
     expect(serverArticle!.childNodes[1].nodeType).toBe(3);
   });
