@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "A high-performance TypeScript UI engine with direct component updates, explicit lifetimes, and server-side rendering.",
   "type": "module",
+  "license": "MIT",
   "exports": {
     "./core": {
       "types": "./dist/core/index.d.ts",
