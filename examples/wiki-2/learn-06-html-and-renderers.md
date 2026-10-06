@@ -4,20 +4,20 @@ The HTML package is an optional way to build DOM nodes. It does not decide what 
 
 ## Build a view with html
 
-~~~ts
+```ts
 import { html } from 'lwnjs/html';
 
 const title = html`<h1>Welcome</h1>`;
 const node = html`<section>${title}</section>`;
 title.textContent = 'Your dashboard';
-~~~
+```
 
 html returns exactly one root node. Pass a type parameter when TypeScript needs a more specific element type:
 
-~~~ts
-const email = html<HTMLInputElement>`<input type="email">`;
+```ts
+const email = html<HTMLInputElement>`<input type="email" />`;
 const placeholder = html<Comment>`<!---->`;
-~~~
+```
 
 For several root nodes, use mhtml. For an element or text node created by tag name or value, use element and text.
 
@@ -27,10 +27,10 @@ Strings, numbers, booleans, and bigints become text nodes when used as child con
 
 Nodes are inserted as nodes, and arrays are flattened recursively. Null and undefined add no child nodes. In an attribute, values become text; arrays are joined with spaces and a node contributes its textContent.
 
-~~~ts
+```ts
 const greeting = html`<p>Hello, ${userName}.</p>`;
 const link = html<HTMLAnchorElement>`<a href=${url}>Open</a>`;
-~~~
+```
 
 This protects interpolated text. If you deliberately set innerHTML later, the safety depends on how that string was produced.
 
@@ -38,14 +38,14 @@ This protects interpolated text. If you deliberately set innerHTML later, the sa
 
 Build the structure once, keep the nodes that will change, and update them where the data changes:
 
-~~~ts
+```ts
 const title = html`<h1></h1>`;
 const status = html`<p></p>`;
 const node = html`<section>${title}${status}</section>`;
 
 title.textContent = account.name;
 status.textContent = account.online ? 'Online' : 'Offline';
-~~~
+```
 
 For dynamic collections, keep one view per item in a Map. Create rows for new items, update existing rows, and destroy rows that were removed. Filtering can often toggle hidden rather than rebuild the list.
 

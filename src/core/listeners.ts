@@ -79,9 +79,17 @@ export function createListeners<T>() {
     }
   };
 
-  const subscribe = ((ownerOrListener: object | Listener<T>, maybeListener?: Listener<T>) => {
-    const owner = typeof ownerOrListener === 'function' ? getOwner() : ownerOrListener;
-    const link = add(typeof ownerOrListener === 'function' ? (ownerOrListener as Listener<T>) : maybeListener!);
+  const subscribe = ((
+    ownerOrListener: object | Listener<T>,
+    maybeListener?: Listener<T>,
+  ) => {
+    const owner =
+      typeof ownerOrListener === 'function' ? getOwner() : ownerOrListener;
+    const link = add(
+      typeof ownerOrListener === 'function'
+        ? (ownerOrListener as Listener<T>)
+        : maybeListener!,
+    );
     if (!owner) {
       return () => {
         remove(link);

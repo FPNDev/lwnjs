@@ -13,25 +13,29 @@ import { env } from 'lwnjs/core';
 
 const id = Symbol('composer');
 
-env.isolate(id);            // id becomes current; any other chain is released
-env.isolate(id, modalId);   // id becomes current, nested in modalId (if modalId is active)
-env.release(id);            // id and anything nested in it are released
-env.isCurrent(id);          // id is the innermost env
-env.is(id);                 // id is current or contains the current env
-env.current;                // the innermost env, or undefined
+env.isolate(id); // id becomes current; any other chain is released
+env.isolate(id, modalId); // id becomes current, nested in modalId (if modalId is active)
+env.release(id); // id and anything nested in it are released
+env.isCurrent(id); // id is the innermost env
+env.is(id); // id is current or contains the current env
+env.current; // the innermost env, or undefined
 ```
 
-| Call | Cost |
-|---|---|
-| `isolate`, `release` | O(released envs) |
-| `is`, `isCurrent`, `current` | O(1) |
+| Call                         | Cost             |
+| ---------------------------- | ---------------- |
+| `isolate`, `release`         | O(released envs) |
+| `is`, `isCurrent`, `current` | O(1)             |
 
 ## Three rules cover most apps
 
 **1. Inputs isolate their env while focused.**
 
 ```ts
-export function isolateOnFocus(element: HTMLElement, id: symbol, within?: symbol) {
+export function isolateOnFocus(
+  element: HTMLElement,
+  id: symbol,
+  within?: symbol,
+) {
   listen(element, 'focusin', () => env.isolate(id, within));
   listen(element, 'focusout', (event) => {
     if (!element.contains(event.relatedTarget as Node | null)) {
@@ -76,7 +80,7 @@ const modalId = Symbol('new chat');
 env.isolate(modalId);
 onDestroy(modalNode, () => env.release(modalId));
 
-isolateOnFocus(nameInput, Symbol('name'), modalId);   // [modal, name] while typing
+isolateOnFocus(nameInput, Symbol('name'), modalId); // [modal, name] while typing
 
 listen(modalNode, document, 'keydown', (event) => {
   // `is`, not `isCurrent`: Escape closes the modal even while its input has focus.
@@ -97,11 +101,11 @@ listen(modalNode, document, 'keydown', (event) => {
 
 ## Choosing `is` or `isCurrent`
 
-| Question | Check |
-|---|---|
-| Does this key belong to me, and only if nothing inside me wants it? | `env.isCurrent(myId)` |
-| Should this work anywhere inside me (Escape to close)? | `env.is(myId)` |
-| Is this a global shortcut? | `env.current === undefined` |
+| Question                                                            | Check                       |
+| ------------------------------------------------------------------- | --------------------------- |
+| Does this key belong to me, and only if nothing inside me wants it? | `env.isCurrent(myId)`       |
+| Should this work anywhere inside me (Escape to close)?              | `env.is(myId)`              |
+| Is this a global shortcut?                                          | `env.current === undefined` |
 
 ## Lifecycle
 

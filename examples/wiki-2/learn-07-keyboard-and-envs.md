@@ -6,7 +6,7 @@ A keydown event on document reaches listeners throughout an app. Isolated envs l
 
 An env is a symbol. Isolate it when the component takes control of input, then release it when that interaction ends.
 
-~~~ts
+```ts
 import { attach, component, env, listen, onDestroy } from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 
@@ -30,7 +30,11 @@ const Composer = component((parent: object, sendMessage: () => void) => {
   });
 
   listen(input, 'keydown', (event) => {
-    if (event.key === 'Enter' && !event.shiftKey && env.isCurrent(composerEnv)) {
+    if (
+      event.key === 'Enter' &&
+      !event.shiftKey &&
+      env.isCurrent(composerEnv)
+    ) {
       event.preventDefault();
       sendMessage();
     }
@@ -38,7 +42,7 @@ const Composer = component((parent: object, sendMessage: () => void) => {
 
   return node;
 });
-~~~
+```
 
 env.isCurrent(id) is true only when id is the innermost active env. This lets a focused control take a key away from its parent.
 
@@ -46,7 +50,7 @@ env.isCurrent(id) is true only when id is the innermost active env. This lets a 
 
 Register an app shortcut from an attached app component. It can run only when there is no current env:
 
-~~~ts
+```ts
 const App = component((parent: object, newItemInput: HTMLInputElement) => {
   const node = html`<main></main>`;
   attach(parent, node);
@@ -59,7 +63,7 @@ const App = component((parent: object, newItemInput: HTMLInputElement) => {
 
   return node;
 });
-~~~
+```
 
 While a component has isolated its env, the app shortcut stays quiet. The component that owns the focused control can handle the same key.
 
@@ -69,14 +73,14 @@ In a real app, focus events are a convenient way to enter and leave an env. The 
 
 A modal can own Escape while an input inside it owns Enter. Isolate the input within the modal env:
 
-~~~ts
+```ts
 env.isolate(modalEnv);
 env.isolate(inputEnv, modalEnv);
 
-env.is(modalEnv);            // true while the input is current
-env.isCurrent(modalEnv);     // false while the input is current
-env.isCurrent(inputEnv);     // true
-~~~
+env.is(modalEnv); // true while the input is current
+env.isCurrent(modalEnv); // false while the input is current
+env.isCurrent(inputEnv); // true
+```
 
 Use env.is(modalEnv) for Escape if it should work anywhere inside the modal. Use env.isCurrent(inputEnv) for a key the innermost control should handle.
 

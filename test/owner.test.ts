@@ -15,7 +15,12 @@ import {
   setRenderer,
   useStore,
 } from '../src/core/index.ts';
-import { createOutlet, memoryHistory, setupRouter, type Route } from '../src/router/index.ts';
+import {
+  createOutlet,
+  memoryHistory,
+  setupRouter,
+  type Route,
+} from '../src/router/index.ts';
 
 beforeEach(() => {
   setRenderer(domRenderer);
@@ -96,7 +101,9 @@ describe('implicit owner', () => {
 
   it('gives route actions and outlet pages their own frame', async () => {
     const page: Route = { path: '/page' };
-    const router = setupRouter([{ path: '/' }, page], { history: memoryHistory('/') });
+    const router = setupRouter([{ path: '/' }, page], {
+      history: memoryHistory('/'),
+    });
     const ping = createEmitter();
     const seen = vi.fn();
     const root = document.createElement('div');

@@ -127,10 +127,19 @@ env.release(id);
 // @vitest-environment node
 import { createServer, memoryCache } from 'lwnjs/server';
 
-const server = createServer({ template, router, routes, serverRoutes, app: App, cache: memoryCache() });
+const server = createServer({
+  template,
+  router,
+  routes,
+  serverRoutes,
+  app: App,
+  cache: memoryCache(),
+});
 
 it('renders the product page', async () => {
-  const response = (await server.handle(new Request('http://localhost/products/slides')))!;
+  const response = (await server.handle(
+    new Request('http://localhost/products/slides'),
+  ))!;
   expect(response.status).toBe(200);
   expect(await response.text()).toContain('<h1');
   expect(response.headers.get('x-engine-cache')).toBe('MISS');
@@ -146,15 +155,22 @@ it('renders the product page', async () => {
 Hydration tests run the server render and the client in one process (happy-dom environment):
 
 ```ts
-const page = await (await server.handle(new Request('http://localhost/products/slides')))!.text();
-document.body.replaceWith(document.importNode(new DOMParser().parseFromString(page, 'text/html').body, true));
+const page = await (await server.handle(
+  new Request('http://localhost/products/slides'),
+))!.text();
+document.body.replaceWith(
+  document.importNode(
+    new DOMParser().parseFromString(page, 'text/html').body,
+    true,
+  ),
+);
 
 const container = document.querySelector('#app')!;
 const serverHeading = container.querySelector('h1');
 await hydrate(container, App, router);
 
-expect(container.querySelector('h1')).toBe(serverHeading);   // adopted, not rebuilt
-expect(document.querySelector('#__engine')).toBeNull();       // payload consumed
+expect(container.querySelector('h1')).toBe(serverHeading); // adopted, not rebuilt
+expect(document.querySelector('#__engine')).toBeNull(); // payload consumed
 ```
 
 To test client navigation after hydration, stub `fetch` so `/…/__data.json` goes to `server.handle`, and everything else to the real fetch (or to your mocks).

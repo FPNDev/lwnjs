@@ -32,7 +32,10 @@ describe('hydration', () => {
     expect(container.querySelector('header')).toBe(serverHeader);
     expect(container.querySelector('article')).toBe(serverArticle);
     // App code moved the claimed header before the lazy page claimed its nodes (regression).
-    expect([...container.children].map((child) => child.tagName)).toEqual(['HEADER', 'ARTICLE']);
+    expect([...container.children].map((child) => child.tagName)).toEqual([
+      'HEADER',
+      'ARTICLE',
+    ]);
     // The empty text node left as a comment by the server is a text node again.
     expect(serverArticle!.childNodes[1].nodeType).toBe(3);
   });
@@ -43,7 +46,9 @@ describe('hydration', () => {
     await settle();
 
     const fetchData = vi.fn(() =>
-      Promise.resolve(Response.json({ post: { title: 'Post 2', body: 'second' } })),
+      Promise.resolve(
+        Response.json({ post: { title: 'Post 2', body: 'second' } }),
+      ),
     );
     vi.stubGlobal('fetch', fetchData);
     await router.go('/posts/2');

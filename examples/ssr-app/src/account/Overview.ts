@@ -10,7 +10,9 @@ export function Overview(parent: object) {
   const node = html`
     <div>
       <h1 class=${classes.title}>Hi, ${user.name}</h1>
-      <p class=${classes.muted}>Signed in as ${user.email}. This page is rendered per request (SSR).</p>
+      <p class=${classes.muted}>
+        Signed in as ${user.email}. This page is rendered per request (SSR).
+      </p>
     </div>
   `;
   attach(parent, node);

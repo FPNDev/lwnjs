@@ -2,8 +2,7 @@ import { requireOwner } from './owner.ts';
 import { onDestroy } from './tree.ts';
 
 type ListenerOrObject<E extends Event> =
-  | ((event: E) => void)
-  | { handleEvent(event: E): void };
+  ((event: E) => void) | { handleEvent(event: E): void };
 
 type Options = boolean | AddEventListenerOptions;
 
@@ -76,7 +75,9 @@ export function listen(...args: unknown[]) {
   // `listen(target, type, …)` has the type string second; `listen(owner, target, type, …)` third.
   const implicit = typeof args[1] === 'string';
   const owner = implicit ? requireOwner('listen') : (args[0] as object);
-  const [target, type, listener, options] = (implicit ? args : args.slice(1)) as [
+  const [target, type, listener, options] = (
+    implicit ? args : args.slice(1)
+  ) as [
     EventTarget,
     string,
     EventListenerOrEventListenerObject,

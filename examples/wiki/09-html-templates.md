@@ -21,7 +21,9 @@ Typing: pass the root type when you need more than `HTMLElement`:
 ```ts
 const input = html<HTMLInputElement>`<input type="email" />`;
 const slot = html<Comment>`<!---->`;
-const row = html<HTMLTableRowElement>`<tr><td>${name}</td></tr>`;
+const row = html<HTMLTableRowElement>`<tr>
+  <td>${name}</td>
+</tr>`;
 ```
 
 ## `mhtml`: several roots
@@ -36,27 +38,29 @@ Returns `Node[]`, including whitespace text nodes between elements.
 ## `element` and `text`
 
 ```ts
-const canvas = element('canvas');   // typed HTMLCanvasElement
-const label = text('Loading');      // a Text node; change it with label.data = '…'
+const canvas = element('canvas'); // typed HTMLCanvasElement
+const label = text('Loading'); // a Text node; change it with label.data = '…'
 ```
 
 Use these instead of `document.createElement` / `createTextNode` in server-rendered code: they take part in hydration.
 
 ## Values
 
-| Value | Inside content | Inside an attribute |
-|---|---|---|
-| `string`, `number`, `bigint`, `boolean` | a text node with `String(value)` | the text, as is |
-| a `Node` | inserted as is (moved if mounted elsewhere) | its `textContent` |
-| an array | each item, in order (nested arrays flattened) | items joined with spaces |
-| `null` / `undefined` | nothing | empty |
+| Value                                   | Inside content                                | Inside an attribute      |
+| --------------------------------------- | --------------------------------------------- | ------------------------ |
+| `string`, `number`, `bigint`, `boolean` | a text node with `String(value)`              | the text, as is          |
+| a `Node`                                | inserted as is (moved if mounted elsewhere)   | its `textContent`        |
+| an array                                | each item, in order (nested arrays flattened) | items joined with spaces |
+| `null` / `undefined`                    | nothing                                       | empty                    |
 
 **Values are never parsed as HTML.** A string containing `<script>` becomes visible text. Inject markup deliberately (e.g. sanitized markdown) by assigning `innerHTML` on a node you own.
 
 ### Attributes
 
 ```ts
-html`<a href=${url} class="link ${isActive ? 'active' : ''}" title="${hint}">…</a>`;
+html`<a href=${url} class="link ${isActive ? 'active' : ''}" title="${hint}"
+  >…</a
+>`;
 ```
 
 - Quoted, unquoted and mixed (static text plus values) attribute values all work.
@@ -68,6 +72,7 @@ html`<a href=${url} class="link ${isActive ? 'active' : ''}" title="${hint}">…
 ## Caching and performance
 
 The markup is parsed **once per call site**, cached by the identity of the template-literal strings. Every call then:
+
 1. clones the parsed template (`importNode`),
 2. resolves the value slots by `childNodes` paths,
 3. fills them: O(slots).
@@ -90,7 +95,9 @@ Keep references to the nodes you will change, rather than querying for them late
 **Lists from data:**
 
 ```ts
-const items = html`<ul>${todos.map((todo) => html`<li>${todo.title}</li>`)}</ul>`;
+const items = html`<ul>
+  ${todos.map((todo) => html`<li>${todo.title}</li>`)}
+</ul>`;
 ```
 
 That's fine for static lists. For lists that change, use keyed views (see [Components](03-components.md)).
@@ -100,7 +107,7 @@ That's fine for static lists. For lists that change, use keyed views (see [Compo
 ## Limitations
 
 - One value per attribute position; no interpolated attribute names or spread attributes.
-- A literal `>` inside a *static* attribute value before an interpolation confuses slot detection (`title="a > b" class=${x}`). Interpolate that value instead.
+- A literal `>` inside a _static_ attribute value before an interpolation confuses slot detection (`title="a > b" class=${x}`). Interpolate that value instead.
 - Interpolating inside `<script>`, `<style>` or comments isn't supported.
 - Templates must be valid HTML nesting. The parser restructures invalid markup, such as a `<div>` inside a `<p>`.
 

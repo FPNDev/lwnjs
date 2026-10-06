@@ -24,7 +24,10 @@ export function createStore<T>(init: () => T): Store<T> {
  */
 export function attachStore<T>(store: Store<T>): T;
 export function attachStore<T>(node: object, store: Store<T>): T;
-export function attachStore<T>(nodeOrStore: object | Store<T>, maybeStore?: Store<T>): T {
+export function attachStore<T>(
+  nodeOrStore: object | Store<T>,
+  maybeStore?: Store<T>,
+): T {
   const node = maybeStore ? nodeOrStore : requireOwner('attachStore');
   const store = maybeStore ?? (nodeOrStore as Store<T>);
   let values = provided.get(node);
@@ -49,9 +52,14 @@ export function attachStore<T>(nodeOrStore: object | Store<T>, maybeStore?: Stor
  */
 export function useStore<T>(store: Store<T>): T;
 export function useStore<T>(node: object, store: Store<T>): T;
-export function useStore<T>(nodeOrStore: object | Store<T>, maybeStore?: Store<T>): T {
+export function useStore<T>(
+  nodeOrStore: object | Store<T>,
+  maybeStore?: Store<T>,
+): T {
   const store = maybeStore ?? (nodeOrStore as Store<T>);
-  let current: object | undefined = maybeStore ? nodeOrStore : requireOwner('useStore');
+  let current: object | undefined = maybeStore
+    ? nodeOrStore
+    : requireOwner('useStore');
   while (current) {
     const values = provided.get(current);
     if (values?.has(store)) {

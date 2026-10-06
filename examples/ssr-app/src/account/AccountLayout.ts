@@ -18,7 +18,9 @@ export default function AccountLayout(parent: object) {
   const user = useServer(UserData);
   const overview = html<HTMLAnchorElement>`<a href="/account">Overview</a>`;
   const orders = html<HTMLAnchorElement>`<a href="/account/orders">Orders</a>`;
-  const switchUser = html`<button class=${`${classes.button} ${classes.ghost}`}>Switch user</button>`;
+  const switchUser = html`<button class=${`${classes.button} ${classes.ghost}`}>
+    Switch user
+  </button>`;
   const slot = html<Comment>`<!---->`;
   const node = html`
     <div class=${classes.account}>
@@ -51,7 +53,8 @@ export default function AccountLayout(parent: object) {
 
   // SSR in action: a different cookie, a different page from the server.
   listen(switchUser, 'click', () => {
-    const next = (Number(/(?:^|;\s*)user=(\d+)/u.exec(document.cookie)?.[1] ?? 1) % 5) + 1;
+    const next =
+      (Number(/(?:^|;\s*)user=(\d+)/u.exec(document.cookie)?.[1] ?? 1) % 5) + 1;
     document.cookie = `user=${next}; path=/`;
     location.reload();
   });

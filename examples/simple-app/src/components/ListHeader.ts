@@ -8,19 +8,23 @@ export type ListHeader = {
 };
 
 /** The list's name and its delete button. */
-export const ListHeader = component((parent: object, onDelete: () => void): ListHeader => {
-  const title = html`<h1 class=${classes.title}></h1>`;
-  const remove = html`<button class=${classes.delete}>Delete list</button>`;
-  
-  const node = html`<header class=${classes.header}>${title}${remove}</header>`;
-  attach(parent, node);
+export const ListHeader = component(
+  (parent: object, onDelete: () => void): ListHeader => {
+    const title = html`<h1 class=${classes.title}></h1>`;
+    const remove = html`<button class=${classes.delete}>Delete list</button>`;
 
-  listen(remove, 'click', onDelete);
+    const node = html`<header class=${classes.header}>
+      ${title}${remove}
+    </header>`;
+    attach(parent, node);
 
-  return {
-    node,
-    setTitle(value) {
-      title.textContent = value;
-    },
-  };
-});
+    listen(remove, 'click', onDelete);
+
+    return {
+      node,
+      setTitle(value) {
+        title.textContent = value;
+      },
+    };
+  },
+);

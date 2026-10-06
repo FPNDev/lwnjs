@@ -4,14 +4,14 @@ Use the smallest way to hold a value. A local variable is right for a value one 
 
 ## Start with a local variable
 
-~~~ts
+```ts
 let count = 0;
 
 const updateCount = (next: number) => {
   count = next;
   output.textContent = String(count);
 };
-~~~
+```
 
 The component owns both the value and the nodes that display it, so there is no need for a messaging primitive.
 
@@ -19,7 +19,7 @@ The component owns both the value and the nodes that display it, so there is no 
 
 createState(initial) stores a current value and notifies subscribers when you call set or notify.
 
-~~~ts
+```ts
 import { createState } from 'lwnjs/core';
 
 type Todo = { id: string; title: string; done: boolean };
@@ -27,16 +27,16 @@ type Todo = { id: string; title: string; done: boolean };
 const todos = createState<Todo[]>([]);
 todos.set([{ id: 'a', title: 'Read', done: false }]);
 todos.get();
-~~~
+```
 
 State does not compare old and new values. set(value) always notifies, even when the same object is passed. For in-place updates, mutate first and call notify() once:
 
-~~~ts
+```ts
 const items = todos.get();
 const nextTodo: Todo = { id: 'b', title: 'Write docs', done: false };
 items.push(nextTodo);
 todos.notify();
-~~~
+```
 
 This is intentional. Components choose which part of the view to update. A state update does not rerun a component function.
 
@@ -44,7 +44,7 @@ This is intentional. Components choose which part of the view to update. A state
 
 An emitter represents an event with no stored current value. Late subscribers do not receive past events.
 
-~~~ts
+```ts
 import { createEmitter } from 'lwnjs/core';
 
 const messageAdded = createEmitter<string>();
@@ -54,7 +54,7 @@ const unsubscribe = messageAdded.subscribe((message) => {
 });
 messageAdded.emit('connected');
 unsubscribe();
-~~~
+```
 
 Use a promise for one result. For a finite stream, return an emitter for progress and a promise for completion.
 
@@ -62,15 +62,15 @@ Use a promise for one result. For a finite stream, return an emitter for progres
 
 Every subscribe call returns a function that unsubscribes early. If you pass an owner, the engine also unsubscribes when that owner is destroyed.
 
-~~~ts
+```ts
 todos.subscribe(todoListNode, renderTodos);
-~~~
+```
 
 Inside component setup, an owner can be omitted:
 
-~~~ts
+```ts
 todos.subscribe(renderTodos);
-~~~
+```
 
 Outside a setup frame, subscribe(callback) is unowned. Keep its returned unsubscribe function and call it when the listener is no longer needed. The listener runs synchronously when state changes or an event is emitted. One failing listener does not prevent the others from running.
 
@@ -78,8 +78,14 @@ Outside a setup frame, subscribe(callback) is unowned. Keep its returned unsubsc
 
 A store is an identifier for a value provided by an owner. It is not a global singleton. Each attachStore call runs the store initializer and makes that fresh value available to the owner and its logical descendants.
 
-~~~ts
-import { attach, attachStore, component, createStore, useStore } from 'lwnjs/core';
+```ts
+import {
+  attach,
+  attachStore,
+  component,
+  createStore,
+  useStore,
+} from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 
 const ThemeStore = createStore(() => ({ color: 'navy' }));
@@ -99,7 +105,7 @@ const Panel = component((parent: object) => {
   node.style.color = theme.color;
   return node;
 });
-~~~
+```
 
 A store value can contain state, emitters, actions, or plain data. Keep domain mutations inside actions when that gives the app one clear place to maintain its rules.
 
@@ -113,12 +119,12 @@ For a larger app, create stores by concern: account data, chat service, cart, or
 
 ## Choosing the tool
 
-| Need | Use |
-|---|---|
-| One component reads and updates a value | Local variable and update function |
-| Several owners observe a current value | createState |
-| Several owners need to hear that something happened | createEmitter |
-| A descendant needs an ancestor's value or service | Store |
-| One asynchronous result | Promise |
+| Need                                                | Use                                |
+| --------------------------------------------------- | ---------------------------------- |
+| One component reads and updates a value             | Local variable and update function |
+| Several owners observe a current value              | createState                        |
+| Several owners need to hear that something happened | createEmitter                      |
+| A descendant needs an ancestor's value or service   | Store                              |
+| One asynchronous result                             | Promise                            |
 
 For the exact listener rules and store overloads, see the [Core reference](reference-core.md).

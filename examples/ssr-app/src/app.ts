@@ -1,4 +1,10 @@
-import { attach, attachStore, component, domRenderer, setRenderer } from 'lwnjs/core';
+import {
+  attach,
+  attachStore,
+  component,
+  domRenderer,
+  setRenderer,
+} from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 import { createOutlet } from 'lwnjs/router';
 import { CartStore } from './cart';
@@ -34,16 +40,26 @@ export const App = component((container: Element) => {
   frame.append(
     Header(frame),
     html`<main class=${classes.main}>${slot}</main>`,
-    html`<footer class=${classes.footer}>Data from mock.shop and dummyjson · built with LWN</footer>`,
+    html`<footer class=${classes.footer}>
+      Data from mock.shop and dummyjson · built with LWN
+    </footer>`,
   );
   container.append(frame);
 
   const page = createOutlet(frame, slot);
   router.route(frame, HomeRoute, () => page.show(Home));
-  router.route(frame, CollectionRoute, () => page.show(() => import('./pages/Collection')));
-  router.route(frame, ProductRoute, () => page.show(() => import('./pages/Product')));
-  router.route(frame, SearchRoute, () => page.show(() => import('./pages/Search')));
+  router.route(frame, CollectionRoute, () =>
+    page.show(() => import('./pages/Collection')),
+  );
+  router.route(frame, ProductRoute, () =>
+    page.show(() => import('./pages/Product')),
+  );
+  router.route(frame, SearchRoute, () =>
+    page.show(() => import('./pages/Search')),
+  );
   // One action for the whole /account/* subtree: the layout handles its own children.
-  router.route(frame, AccountRoute, () => page.show(() => import('./account/AccountLayout')));
+  router.route(frame, AccountRoute, () =>
+    page.show(() => import('./account/AccountLayout')),
+  );
   router.route(frame, NotFoundRoute, () => page.show(NotFound));
 });

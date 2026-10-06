@@ -32,11 +32,11 @@ import { createOutlet, setupRouter, type Route } from 'lwnjs/router';
 export const HomeRoute: Route = { path: '/' };
 export const UserRoute: Route = { path: /\/users\/(?<id>[^/]+)/ };
 
-setRenderer(domRenderer);                   // once, before anything is shown
+setRenderer(domRenderer); // once, before anything is shown
 export const router = setupRouter([HomeRoute, UserRoute]);
 
 const app = document.getElementById('app')!;
-const page = createOutlet(app);              // shows one page at a time inside #app
+const page = createOutlet(app); // shows one page at a time inside #app
 
 router.route(app, HomeRoute, () => page.show(() => import('./pages/Home')));
 router.route(app, UserRoute, () => page.show(() => import('./pages/User')));
@@ -49,15 +49,14 @@ import { router, UserRoute } from '../main';
 
 export default function User(parent: object) {
   const node = document.createElement('section');
-  attach(parent, node);                      // join the tree first
+  attach(parent, node); // join the tree first
 
-  const name = createState('');
-  name.subscribe(node, (value) => {          // released when `node` is destroyed
+  const setName = (newName: string) => {
     node.textContent = `User ${value}`;
-  });
+  };
 
   router.route(node, UserRoute, () => {
-    name.set(router.getParams()?.groups?.id ?? '');
+    setName(router.getParams()?.groups?.id ?? '');
   });
 
   return node;
@@ -82,10 +81,11 @@ import { attach, component, listen, useStore } from 'lwnjs/core';
 
 export const Counter = component((parent: object) => {
   const node = document.createElement('button');
-  attach(parent, node);                       // the first attach: `node` owns what follows
+  attach(parent, node); // the first attach: `node` owns what follows
 
-  const counter = useStore(CounterStore);     // found through node's logical ancestors
-  counter.value.subscribe((value) => {        // released when `node` is destroyed
+  const counter = useStore(CounterStore); // found through node's logical ancestors
+  counter.value.subscribe((value) => {
+    // released when `node` is destroyed
     node.textContent = String(value);
   });
   listen(node, 'click', () => counter.value.set(counter.value.get() + 1));
@@ -98,16 +98,17 @@ export const Counter = component((parent: object) => {
 
 `component()` gives the function a **setup frame**. The first `attach(parent, node)` inside it makes `node` the frame's owner, and owner-taking calls can drop the node:
 
-| Explicit | Owner-less, during setup |
-|---|---|
-| `listen(node, target, type, fn)` | `listen(target, type, fn)` |
-| `state.subscribe(node, fn)` | `state.subscribe(fn)` |
-| `router.route(node, Route, action)` | `router.route(Route, action)` |
-| `router.routes(node, [A, B], action)` | `router.routes([A, B], action)` |
+| Explicit                                             | Owner-less, during setup                 |
+| ---------------------------------------------------- | ---------------------------------------- |
+| `listen(node, target, type, fn)`                     | `listen(target, type, fn)`               |
+| `state.subscribe(node, fn)`                          | `state.subscribe(fn)`                    |
+| `router.route(node, Route, action)`                  | `router.route(Route, action)`            |
+| `router.routes(node, [A, B], action)`                | `router.routes([A, B], action)`          |
 | `useStore(node, Store)` / `attachStore(node, Store)` | `useStore(Store)` / `attachStore(Store)` |
-| `onDestroy(node, fn)` / `onAttach(node, hook)` | `onDestroy(fn)` / `onAttach(hook)` |
+| `onDestroy(node, fn)` / `onAttach(node, hook)`       | `onDestroy(fn)` / `onAttach(hook)`       |
 
 These places open a frame for you, so their code needs no `component()`:
+
 - **pages** shown by outlets,
 - **route actions:** the owner is the listener's owner,
 - **`onAttach` hooks:** the owner is the attach scope, so whatever they own ends on detach,
@@ -126,8 +127,9 @@ export function Badge() {
   const node = document.createElement('span');
 
   onAttach(node, (scope) => {
-    const theme = useStore(node, ThemeStore);        // resolved against the current parent
-    theme.color.subscribe(scope, (color) => {        // ends on detach
+    const theme = useStore(node, ThemeStore); // resolved against the current parent
+    theme.color.subscribe(scope, (color) => {
+      // ends on detach
       node.style.color = color;
     });
   });
@@ -136,8 +138,8 @@ export function Badge() {
 }
 
 const badge = Badge();
-attach(sidebar, badge);   // subscribes against sidebar's ThemeStore
-attach(header, badge);    // old subscription released, new one against header's
+attach(sidebar, badge); // subscribes against sidebar's ThemeStore
+attach(header, badge); // old subscription released, new one against header's
 ```
 
 ---
@@ -146,19 +148,20 @@ attach(header, badge);    // old subscription released, new one against header's
 
 ### Logical tree and lifecycle
 
-| Function | What it does | Cost |
-|---|---|---|
-| `attach(parent, child)` | Makes `child` a logical child of `parent`, moving it if it had another parent. Runs `onAttach` hooks. | O(1) + hooks |
-| `detach(child)` | Removes `child` from its parent **without** destroying it. Ends its attach scope. | O(1) + hooks |
-| `destroy(node?)` | Destroys `node` and its whole logical subtree. Views are removed through the renderer, root first (one live mutation), then destroy hooks run, children before parents. `undefined` is ignored. | O(subtree) |
-| `onAttach(node, hook)` | `hook(scope)` runs on every attach, and immediately if already attached. `scope` is an owner destroyed on the next detach. A returned function also runs on detach. | O(1) |
-| `onDestroy(node, hook)` | Runs `hook` once when `node` is destroyed. Returns a function that unregisters it. | O(1) |
-| `getParent(node)` | Logical parent, if any. | O(1) |
-| `isAttached(node?)` | Whether `node` has a logical parent. | O(1) |
-| `component(fn)` | Wraps a component in a setup frame for implicit owners. | O(1) |
-| `getOwner()` | The owner of the running setup, if any, e.g. to keep it for after an `await`. | O(1) |
+| Function                | What it does                                                                                                                                                                                    | Cost         |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `attach(parent, child)` | Makes `child` a logical child of `parent`, moving it if it had another parent. Runs `onAttach` hooks.                                                                                           | O(1) + hooks |
+| `detach(child)`         | Removes `child` from its parent **without** destroying it. Ends its attach scope.                                                                                                               | O(1) + hooks |
+| `destroy(node?)`        | Destroys `node` and its whole logical subtree. Views are removed through the renderer, root first (one live mutation), then destroy hooks run, children before parents. `undefined` is ignored. | O(subtree)   |
+| `onAttach(node, hook)`  | `hook(scope)` runs on every attach, and immediately if already attached. `scope` is an owner destroyed on the next detach. A returned function also runs on detach.                             | O(1)         |
+| `onDestroy(node, hook)` | Runs `hook` once when `node` is destroyed. Returns a function that unregisters it.                                                                                                              | O(1)         |
+| `getParent(node)`       | Logical parent, if any.                                                                                                                                                                         | O(1)         |
+| `isAttached(node?)`     | Whether `node` has a logical parent.                                                                                                                                                            | O(1)         |
+| `component(fn)`         | Wraps a component in a setup frame for implicit owners.                                                                                                                                         | O(1)         |
+| `getOwner()`            | The owner of the running setup, if any, e.g. to keep it for after an `await`.                                                                                                                   | O(1)         |
 
 Notes:
+
 - A node is "attached" when it has a **parent**. Roots (an app container) are never attached, even with children.
 - A throwing hook does not stop the others. The error is rethrown asynchronously, so it still shows up in the console and error trackers.
 - `destroy` on a node that never joined the tree still removes its view.
@@ -170,13 +173,13 @@ Two primitives, chosen by intent:
 ```ts
 import { createEmitter, createState } from 'lwnjs/core';
 
-const loading = createState(false);       // has a value
-loading.get();                            // false
-loading.set(true);                        // notifies
+const loading = createState(false); // has a value
+loading.get(); // false
+loading.set(true); // notifies
 
-const deleted = createEmitter<number>();  // fire-and-forget
+const deleted = createEmitter<number>(); // fire-and-forget
 deleted.emit(42);
-const submitted = createEmitter();        // Emitter<void>
+const submitted = createEmitter(); // Emitter<void>
 submitted.emit();
 ```
 
@@ -188,6 +191,7 @@ const off = deleted.subscribe((id) => { … });  // unowned: call off() yourself
 ```
 
 Both forms return an unsubscribe function (O(1)). Delivery rules:
+
 - A notification reaches the listeners subscribed **when it started** and still subscribed when their turn comes. Unsubscribing during a notification never skips a neighbour, and listeners added during a notification wait for the next one.
 - A throwing listener does not stop the others (the error is rethrown asynchronously).
 - `set` always notifies, even with the same value. Mutate objects in place and call `notify()` to announce the change; no copies needed.
@@ -216,10 +220,10 @@ export const ChatStore = createStore(() => ({
 }));
 
 // provider
-const chat = attachStore(pageNode, ChatStore);   // fresh value per provider
+const chat = attachStore(pageNode, ChatStore); // fresh value per provider
 
 // any logical descendant
-const chat = useStore(messageNode, ChatStore);   // nearest provider up the tree
+const chat = useStore(messageNode, ChatStore); // nearest provider up the tree
 ```
 
 - `useStore` walks up logical parents: O(depth), once per component setup. It throws if nothing provides the store, so attach before resolving (or resolve in `onAttach`).
@@ -235,34 +239,34 @@ import { env } from 'lwnjs/core';
 const modalEnv = Symbol('modal');
 const inputEnv = Symbol('input');
 
-env.isolate(modalEnv);             // modal opened
-env.isolate(inputEnv, modalEnv);   // input focused inside the modal
+env.isolate(modalEnv); // modal opened
+env.isolate(inputEnv, modalEnv); // input focused inside the modal
 
-env.is(modalEnv);         // true:  modal is active (it contains the current env)
-env.isCurrent(modalEnv);  // false: the input is innermost
-env.isCurrent(inputEnv);  // true
+env.is(modalEnv); // true:  modal is active (it contains the current env)
+env.isCurrent(modalEnv); // false: the input is innermost
+env.isCurrent(inputEnv); // true
 
-env.release(inputEnv);    // input blurred → modal is current again
-env.release(modalEnv);    // modal closed → releases anything nested in it too
+env.release(inputEnv); // input blurred → modal is current again
+env.release(modalEnv); // modal closed → releases anything nested in it too
 ```
 
-| Call | Meaning | Cost |
-|---|---|---|
+| Call                       | Meaning                                                                                                                                            | Cost        |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | `env.isolate(id, within?)` | `id` becomes current. If `within` is active, `id` nests inside it; otherwise all other envs are released (siblings never stay active by accident). | O(released) |
-| `env.release(id)` | Releases `id` and everything nested in it. | O(released) |
-| `env.is(id)` | `id` is current or contains the current env. | O(1) |
-| `env.isCurrent(id)` | `id` is the innermost env. | O(1) |
-| `env.current` | The innermost env, or `undefined`. | O(1) |
+| `env.release(id)`          | Releases `id` and everything nested in it.                                                                                                         | O(released) |
+| `env.is(id)`               | `id` is current or contains the current env.                                                                                                       | O(1)        |
+| `env.isCurrent(id)`        | `id` is the innermost env.                                                                                                                         | O(1)        |
+| `env.current`              | The innermost env, or `undefined`.                                                                                                                 | O(1)        |
 
 Precedence is a choice of check. Keys the inner env may consume check `isCurrent`; keys that should work anywhere inside check `is`:
 
 ```ts
 listen(modal, document, 'keydown', (event) => {
   if (event.key === 'Escape' && env.is(modalEnv)) {
-    closeModal();                           // works while typing in the input too
+    closeModal(); // works while typing in the input too
   }
   if (event.key === 'Enter' && env.isCurrent(modalEnv)) {
-    confirm();                              // the input gets Enter while it is focused
+    confirm(); // the input gets Enter while it is focused
   }
 });
 ```
@@ -272,7 +276,12 @@ Release the env with its component: `onDestroy(modal, () => env.release(modalEnv
 **Recipe: isolate on focus (DOM).** Use `focusin`/`focusout` (they bubble) and ignore focus moves that stay inside the element:
 
 ```ts
-function isolateOnFocus(owner: object, element: HTMLElement, id: symbol, within?: symbol) {
+function isolateOnFocus(
+  owner: object,
+  element: HTMLElement,
+  id: symbol,
+  within?: symbol,
+) {
   listen(owner, element, 'focusin', () => env.isolate(id, within));
   listen(owner, element, 'focusout', (event) => {
     if (!element.contains(event.relatedTarget as Node | null)) {
@@ -293,9 +302,9 @@ The engine needs three view operations, supplied once with `setRenderer`:
 
 ```ts
 type Renderer<V extends object> = {
-  append(parent: V, view: V): void;       // outlets without a placeholder
+  append(parent: V, view: V): void; // outlets without a placeholder
   insertBefore(anchor: V, view: V): void; // outlets with a placeholder, in-place swaps
-  remove(view: V): void;                  // destroy; must ignore non-view objects
+  remove(view: V): void; // destroy; must ignore non-view objects
 };
 ```
 
@@ -318,8 +327,8 @@ setRenderer<Object3D>({
 ```ts
 type Route = {
   path: string | RegExp;
-  guard?(params): unknown | Promise<unknown>;          // must pass for this route to be the final match
-  guardChildren?(params): unknown | Promise<unknown>;  // must pass before children are searched
+  guard?(params): unknown | Promise<unknown>; // must pass for this route to be the final match
+  guardChildren?(params): unknown | Promise<unknown>; // must pass before children are searched
   children?: readonly Route[];
 };
 ```
@@ -333,27 +342,32 @@ type Route = {
 ### `setupRouter(routes, options?)`
 
 Returns the router and runs the initial navigation. Options:
+
 - `history`: URL source. Default `browserHistory()`, or `memoryHistory()` where there is no `window`.
 - `load(match, url)`: runs after a match and before route actions; navigation waits for it. `lwnjs/ssr` uses it to fetch page data.
 
-| Member | What it does |
-|---|---|
-| `ready` | Promise of the initial navigation. |
-| `match(pathname)` | Matches without navigating (guards run). Resolves to `{ chain, params }` or `undefined`. |
-| `route(owner, route, action)` | Runs `action(previousRoute, previousLocation)` when `route` is in the **active chain**, i.e. the final match **or one of its parents**, so layouts listen to their parent route. Runs right away if it already is. Ends when `owner` is destroyed. Returns an unsubscribe function. |
-| `routes(owner, routes, action)` | Same, for several routes. Fires once per navigation even if several of them are active. |
-| `go(url)` | Pushes `url` and navigates. Resolves after all actions **and the promises they return** settle. Unmatched paths change nothing and do not throw. |
-| `getPath()` | Current pathname. |
-| `getParams()` | `RegExpMatchArray` of the final match (`params.groups.id`), or `null` for string routes. |
-| `dispose()` | Stops listening to history and drops all listeners. |
+| Member                          | What it does                                                                                                                                                                                                                                                                        |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ready`                         | Promise of the initial navigation.                                                                                                                                                                                                                                                  |
+| `match(pathname)`               | Matches without navigating (guards run). Resolves to `{ chain, params }` or `undefined`.                                                                                                                                                                                            |
+| `route(owner, route, action)`   | Runs `action(previousRoute, previousLocation)` when `route` is in the **active chain**, i.e. the final match **or one of its parents**, so layouts listen to their parent route. Runs right away if it already is. Ends when `owner` is destroyed. Returns an unsubscribe function. |
+| `routes(owner, routes, action)` | Same, for several routes. Fires once per navigation even if several of them are active.                                                                                                                                                                                             |
+| `go(url)`                       | Pushes `url` and navigates. Resolves after all actions **and the promises they return** settle. Unmatched paths change nothing and do not throw.                                                                                                                                    |
+| `getPath()`                     | Current pathname.                                                                                                                                                                                                                                                                   |
+| `getParams()`                   | `RegExpMatchArray` of the final match (`params.groups.id`), or `null` for string routes.                                                                                                                                                                                            |
+| `dispose()`                     | Stops listening to history and drops all listeners.                                                                                                                                                                                                                                 |
 
 Listener dispatch is O(depth of the matched chain) via a per-route index, independent of how many listeners exist elsewhere. Concurrent navigations resolve latest-wins.
 
 ```ts
 const Profile: Route = { path: 'profile' };
-const Settings: Route = { path: '/settings', guardChildren: () => auth.loggedIn, children: [Profile] };
+const Settings: Route = {
+  path: '/settings',
+  guardChildren: () => auth.loggedIn,
+  children: [Profile],
+};
 
-router.route(layout, Settings, () => showSettingsLayout());  // fires for /settings/profile too
+router.route(layout, Settings, () => showSettingsLayout()); // fires for /settings/profile too
 router.route(layout, Profile, () => content.show(ProfilePage));
 ```
 
@@ -363,7 +377,9 @@ router.route(layout, Profile, () => content.show(ProfilePage));
 - `memoryHistory(url = '/')`: in-memory, for tests and server rendering.
 
 ```ts
-const router = setupRouter(routes, { history: memoryHistory('/settings/profile') });
+const router = setupRouter(routes, {
+  history: memoryHistory('/settings/profile'),
+});
 ```
 
 ### `aliasRoute(route, path)`
@@ -371,7 +387,7 @@ const router = setupRouter(routes, { history: memoryHistory('/settings/profile')
 Serves a whole route tree under another path. Guards are kept, and listeners registered on the **original** routes (children included) fire for the alias.
 
 ```ts
-const Legacy = aliasRoute(Settings, '/preferences');   // /preferences/profile → Profile listeners
+const Legacy = aliasRoute(Settings, '/preferences'); // /preferences/profile → Profile listeners
 ```
 
 ### Outlets
@@ -399,8 +415,8 @@ content.clear();
 ```ts
 import { element, html, mhtml, text } from 'lwnjs/html';
 
-const title = html`<h1 class=${classes.title}>${user.name}</h1>`;   // one root
-const items = mhtml`<li>a</li><li>b</li>`;                           // several roots
+const title = html`<h1 class=${classes.title}>${user.name}</h1>`; // one root
+const items = mhtml`<li>a</li><li>b</li>`; // several roots
 const card = html`<article title="${hint}">${title}${items}</article>`;
 ```
 
@@ -409,7 +425,7 @@ const card = html`<article title="${hint}">${title}${items}</article>`;
 - **Context-correct.** It parses through `<template>`, so ``html`<tr>…</tr>` `` works.
 - **Hydratable.** Under `hydrate`, `html`, `mhtml`, `element` and `text` adopt the server-rendered nodes instead of creating new ones (see below). Views made with raw `document.createElement` are not hydrated.
 
-Limitations: one value per attribute position (no interpolated attribute *names*), and a literal `>` inside a static attribute value confuses slot detection.
+Limitations: one value per attribute position (no interpolated attribute _names_), and a literal `>` inside a static attribute value confuses slot detection.
 
 ---
 
@@ -434,12 +450,14 @@ export const ProductData = serverToken<Product>('product');
 
 export function App(container: Element) {
   const page = createOutlet(container);
-  router.route(container, ProductRoute, () => page.show(() => import('./pages/Product')));
+  router.route(container, ProductRoute, () =>
+    page.show(() => import('./pages/Product')),
+  );
 }
 
 // pages/Product.ts
 export default function Product(parent: object) {
-  const product = useServer(ProductData);        // O(1); throws if the page has no such data
+  const product = useServer(ProductData); // O(1); throws if the page has no such data
   const node = html`<main><h1>${product.title}</h1></main>`;
   attach(parent, node);
   return node;
@@ -458,9 +476,10 @@ import { defineServerApp, type ServerRoute } from 'lwnjs/server';
 const serverRoutes: ServerRoute[] = [
   {
     route: ProductRoute,
-    mode: 'isr',                    // 'ssr' (default) | 'ssg' | 'isr'
-    revalidate: 60,                 // seconds until stale (isr)
-    paths: async () => (await topProducts()).map((p) => `/products/${p.handle}`), // prerendered by build()
+    mode: 'isr', // 'ssr' (default) | 'ssg' | 'isr'
+    revalidate: 60, // seconds until stale (isr)
+    paths: async () =>
+      (await topProducts()).map((p) => `/products/${p.handle}`), // prerendered by build()
     load: async ({ params, request }, set) => {
       set(ProductData, await getProduct(params!.groups!.handle));
     },
@@ -482,16 +501,17 @@ lwn start   # production: static assets, pages, __data.json, ISR from dist/clien
 
 For a custom server, use the pieces directly: `createServer({ template, router, routes, serverRoutes, app, manifest, cache: fsCache('dist/client') })` and `toNodeHandler(server, { staticDir, revalidateSecret })` for `http`, Connect or Express.
 
-| API | What it does |
-|---|---|
-| `server.handle(request)` | Handles `GET`/`HEAD` for pages (`/path`) and page data (`/path/__data.json`). Returns a `Response`, or `undefined` for unmatched paths (fall through to static files). Header `x-engine-cache`: `BYPASS`, `HIT`, `STALE` or `MISS`. |
-| `server.build({ outDir })` | Prerenders every `paths()` entry of `ssg`/`isr` routes as `<path>/index.html` + `<path>/__data.json`. Read the template first: the root page overwrites `index.html`. |
-| `server.revalidate(path)` | Re-renders a cached page now (on-demand ISR). The old version is served until the new one is ready. |
-| `memoryCache(max?)` / `fsCache(dir)` | Page caches: LRU in memory, or files in static-hosting layout (what `build` writes). |
-| `toNodeHandler(server, options?)` | `(req, res, next?)` middleware for `http`, Connect, Express and Vite. Options: `staticDir` (assets, `/assets/*` cached forever), `revalidateSecret` (on-demand ISR endpoint). |
-| `defineServerApp(config)` | The default export of the server entry, used by the CLI. It creates the server inside the app's bundle, so the server and the components share one engine instance. |
+| API                                  | What it does                                                                                                                                                                                                                        |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `server.handle(request)`             | Handles `GET`/`HEAD` for pages (`/path`) and page data (`/path/__data.json`). Returns a `Response`, or `undefined` for unmatched paths (fall through to static files). Header `x-engine-cache`: `BYPASS`, `HIT`, `STALE` or `MISS`. |
+| `server.build({ outDir })`           | Prerenders every `paths()` entry of `ssg`/`isr` routes as `<path>/index.html` + `<path>/__data.json`. Read the template first: the root page overwrites `index.html`.                                                               |
+| `server.revalidate(path)`            | Re-renders a cached page now (on-demand ISR). The old version is served until the new one is ready.                                                                                                                                 |
+| `memoryCache(max?)` / `fsCache(dir)` | Page caches: LRU in memory, or files in static-hosting layout (what `build` writes).                                                                                                                                                |
+| `toNodeHandler(server, options?)`    | `(req, res, next?)` middleware for `http`, Connect, Express and Vite. Options: `staticDir` (assets, `/assets/*` cached forever), `revalidateSecret` (on-demand ISR endpoint).                                                       |
+| `defineServerApp(config)`            | The default export of the server entry, used by the CLI. It creates the server inside the app's bundle, so the server and the components share one engine instance.                                                                 |
 
 Modes:
+
 - **ssr**: rendered per request. Loaders get the `request` (cookies, headers).
 - **ssg**: rendered once (at build, or on first request) and never expires.
 - **isr**: like `ssg`, but once older than `revalidate` seconds the old page is served and a fresh one renders in the background. Concurrent requests share one render.
@@ -516,37 +536,37 @@ Modes:
 
 ## Complexity summary
 
-| Operation | Cost |
-|---|---|
-| attach / detach / move | O(1) + hooks |
-| destroy | O(subtree), 1 live view mutation |
-| subscribe / unsubscribe / owner release | O(1) |
-| emit / set | O(listeners), no allocations |
-| useStore | O(depth), once per setup |
-| env `is` / `isCurrent` | O(1) |
-| `html` (cached template) | O(slots) clone + fill |
-| hydration claim / `useServer` | O(1) after one O(paths) resolve pass |
-| route dispatch | O(active chain depth) |
-| route match | O(routes), precompiled |
+| Operation                               | Cost                                 |
+| --------------------------------------- | ------------------------------------ |
+| attach / detach / move                  | O(1) + hooks                         |
+| destroy                                 | O(subtree), 1 live view mutation     |
+| subscribe / unsubscribe / owner release | O(1)                                 |
+| emit / set                              | O(listeners), no allocations         |
+| useStore                                | O(depth), once per setup             |
+| env `is` / `isCurrent`                  | O(1)                                 |
+| `html` (cached template)                | O(slots) clone + fill                |
+| hydration claim / `useServer`           | O(1) after one O(paths) resolve pass |
+| route dispatch                          | O(active chain depth)                |
+| route match                             | O(routes), precompiled               |
 
 ---
 
 ## Migrating from `local_modules`
 
-| Before | After |
-|---|---|
-| `new Observable<T>()` used as an event | `createEmitter<T>()`; `notify` → `emit` |
-| `new Observable<T>(true)` + `.value` | `createState<T>(initial)`; `.value` → `get()`, `notify` → `set` |
-| `observable.done(x)` / `subscribeDone` | return `{ emitter, done: Promise }` |
-| `pipe`, async iterator, `of` | removed |
-| `createPool()` + `onDestroy(node, () => pool.clear())` | `source.subscribe(node, fn)`, `listen(node, target, type, fn)` |
-| `onAttach(node, () => cleanup)` | same, or `onAttach(node, (scope) => source.subscribe(scope, fn))` |
-| `render(parent, moduleDefault(import(...)), slot)` | `const outlet = createOutlet(parent, slot)`; `outlet.show(() => import(...))` |
-| page factories `() => Node` | `(parent) => view`, calling `attach(parent, node)` first |
-| `getCurrentRenderParent()` fallback in `useStore` | removed. Attach first, or resolve in `onAttach` |
-| `isolateEnv` / `disposeEnv` / `isEnv` / `isolateViewOnFocus` | `env.isolate` / `env.release` / `env.is` + `isCurrent`; focus recipe above |
-| `setupRouter(routes, getPathname)` | `setupRouter(routes, { history })` |
-| `util/html` | `lwnjs/html` (or keep the app's own) |
+| Before                                                       | After                                                                         |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `new Observable<T>()` used as an event                       | `createEmitter<T>()`; `notify` → `emit`                                       |
+| `new Observable<T>(true)` + `.value`                         | `createState<T>(initial)`; `.value` → `get()`, `notify` → `set`               |
+| `observable.done(x)` / `subscribeDone`                       | return `{ emitter, done: Promise }`                                           |
+| `pipe`, async iterator, `of`                                 | removed                                                                       |
+| `createPool()` + `onDestroy(node, () => pool.clear())`       | `source.subscribe(node, fn)`, `listen(node, target, type, fn)`                |
+| `onAttach(node, () => cleanup)`                              | same, or `onAttach(node, (scope) => source.subscribe(scope, fn))`             |
+| `render(parent, moduleDefault(import(...)), slot)`           | `const outlet = createOutlet(parent, slot)`; `outlet.show(() => import(...))` |
+| page factories `() => Node`                                  | `(parent) => view`, calling `attach(parent, node)` first                      |
+| `getCurrentRenderParent()` fallback in `useStore`            | removed. Attach first, or resolve in `onAttach`                               |
+| `isolateEnv` / `disposeEnv` / `isEnv` / `isolateViewOnFocus` | `env.isolate` / `env.release` / `env.is` + `isCurrent`; focus recipe above    |
+| `setupRouter(routes, getPathname)`                           | `setupRouter(routes, { history })`                                            |
+| `util/html`                                                  | `lwnjs/html` (or keep the app's own)                                          |
 
 ---
 

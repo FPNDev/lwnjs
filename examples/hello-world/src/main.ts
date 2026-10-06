@@ -20,7 +20,7 @@ const Counter = component((parent: object) => {
   const increment = html<HTMLButtonElement>`
     <button aria-label="Increment">+</button>
   `;
-  
+
   const node = html`
     <section class="counter">
       <h1>Hello, LWN</h1>

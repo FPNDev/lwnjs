@@ -13,7 +13,10 @@ export function Home(parent: object) {
 
   // Read the page data once, during setup; children get plain values.
   for (const featured of useServer(FeaturedData)) {
-    const more = html<HTMLAnchorElement>`<a href=${`/collections/${featured.handle}`}>View all</a>`;
+    const more = html<HTMLAnchorElement>`<a
+      href=${`/collections/${featured.handle}`}
+      >View all</a
+    >`;
     routerLink(more);
     const grid = html`<div class=${classes.grid}></div>`;
     for (const product of featured.products) {
@@ -21,7 +24,10 @@ export function Home(parent: object) {
     }
     node.append(html`
       <section class=${classes.section}>
-        <div class=${classes.sectionHeader}><h2>${featured.title}</h2>${more}</div>
+        <div class=${classes.sectionHeader}>
+          <h2>${featured.title}</h2>
+          ${more}
+        </div>
         ${grid}
       </section>
     `);

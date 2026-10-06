@@ -89,7 +89,10 @@ export function destroy(node?: object) {
  */
 export function onAttach(hook: AttachHook): void;
 export function onAttach(node: object, hook: AttachHook): void;
-export function onAttach(nodeOrHook: object | AttachHook, maybeHook?: AttachHook) {
+export function onAttach(
+  nodeOrHook: object | AttachHook,
+  maybeHook?: AttachHook,
+) {
   const node = maybeHook ? nodeOrHook : requireOwner('onAttach');
   const hook = maybeHook ?? (nodeOrHook as AttachHook);
   const entry = entryOf(node);
@@ -106,7 +109,10 @@ export function onAttach(nodeOrHook: object | AttachHook, maybeHook?: AttachHook
  */
 export function onDestroy(hook: () => void): () => void;
 export function onDestroy(node: object, hook: () => void): () => void;
-export function onDestroy(nodeOrHook: object | (() => void), maybeHook?: () => void) {
+export function onDestroy(
+  nodeOrHook: object | (() => void),
+  maybeHook?: () => void,
+) {
   const node = maybeHook ? nodeOrHook : requireOwner('onDestroy');
   const hook = maybeHook ?? (nodeOrHook as () => void);
   const hooks = (entryOf(node).destroyHooks ??= new Set());

@@ -2,16 +2,16 @@
 
 Server APIs run in Node. Import them from `lwnjs/server`. The client side of hydration and page-data access comes from `lwnjs/ssr`.
 
-~~~ts
+```ts
 import { defineServerApp } from 'lwnjs/server';
 import { hydrate, loadServerData, serverToken, useServer } from 'lwnjs/ssr';
-~~~
+```
 
 ## One app shared by server and browser
 
 Keep the shared app setup and route definitions in modules that both entry points can import. Put request handling and server-only loaders in modules that only the server entry imports.
 
-~~~ts
+```ts
 // app.ts
 export const routes = [HomeRoute, ProductRoute];
 export const router = setupRouter(routes, {
@@ -31,7 +31,7 @@ export default defineServerApp({
 
 // entry-client.ts
 await hydrate(document.querySelector('#app')!, App, router);
-~~~
+```
 
 The app function builds views synchronously. Lazy page factories can load through outlets. The server entry returns a description of the app, not a separately constructed server. The CLI creates the server from that description in the server bundle, so the router and components share one engine instance.
 
@@ -39,7 +39,7 @@ The app function builds views synchronously. Lazy page factories can load throug
 
 A server token names one serialized value. Declare it in a module shared by loaders and components.
 
-~~~ts
+```ts
 // data.ts
 export const ProductData = serverToken<Product>('product');
 
@@ -54,7 +54,7 @@ export const ProductData = serverToken<Product>('product');
 
 // Product.ts
 const product = useServer(ProductData);
-~~~
+```
 
 The loader's `set(token, value)` stores the value in page data. Values must be JSON serializable. Use unique token keys because the key is the property name in the serialized payload.
 
@@ -68,7 +68,7 @@ On the first browser visit, hydration reads the embedded server payload. On late
 
 A server route associates server-only behavior with a route object.
 
-~~~ts
+```ts
 import type { ServerRoute } from 'lwnjs/server';
 
 const serverRoutes: ServerRoute[] = [
@@ -83,17 +83,17 @@ const serverRoutes: ServerRoute[] = [
     preload: ['src/pages/Product.ts'],
   },
 ];
-~~~
+```
 
-| Field | Meaning |
-|---|---|
-| `route` | A route object from the shared route definitions. For aliases, use the original route or alias. |
-| `mode` | `ssr`, `ssg`, or `isr`. Default is `ssr`. |
-| `revalidate` | Seconds before an `isr` entry becomes stale. With no value, `isr` behaves like `ssg`. |
-| `status` | HTTP response status for this route, such as `404`. |
-| `paths` | Paths to prerender during `server.build()`. Used by `ssg` and `isr`. |
-| `load` | Async or sync loader that calls `set` with page data. |
-| `preload` | Vite manifest keys for lazy client modules to preload with the page. |
+| Field        | Meaning                                                                                         |
+| ------------ | ----------------------------------------------------------------------------------------------- |
+| `route`      | A route object from the shared route definitions. For aliases, use the original route or alias. |
+| `mode`       | `ssr`, `ssg`, or `isr`. Default is `ssr`.                                                       |
+| `revalidate` | Seconds before an `isr` entry becomes stale. With no value, `isr` behaves like `ssg`.           |
+| `status`     | HTTP response status for this route, such as `404`.                                             |
+| `paths`      | Paths to prerender during `server.build()`. Used by `ssg` and `isr`.                            |
+| `load`       | Async or sync loader that calls `set` with page data.                                           |
+| `preload`    | Vite manifest keys for lazy client modules to preload with the page.                            |
 
 A route loader receives `{ url, params, request }`. `request` is available for per-request SSR loads. It is absent when building static output and when generating or refreshing cacheable SSG and ISR pages. For personalized data such as a signed-in user, use `ssr` and inspect the request. Never put user-specific output in an `ssg` or `isr` route, because those modes reuse cached pages.
 
@@ -101,11 +101,11 @@ The matched chain's most-specific server route determines the page mode and stat
 
 ## Choose a rendering mode
 
-| Mode | First render | Cache behavior | Good fit |
-|---|---|---|---|
-| `ssr` | Each request | Not cached | Cookies, request headers, user-specific pages |
-| `ssg` | During build when listed, or on first request | Kept indefinitely | Stable pages shared by everyone |
-| `isr` | During build when listed, or on first request | Served until stale, then refreshed in background | Shared pages that change periodically |
+| Mode  | First render                                  | Cache behavior                                   | Good fit                                      |
+| ----- | --------------------------------------------- | ------------------------------------------------ | --------------------------------------------- |
+| `ssr` | Each request                                  | Not cached                                       | Cookies, request headers, user-specific pages |
+| `ssg` | During build when listed, or on first request | Kept indefinitely                                | Stable pages shared by everyone               |
+| `isr` | During build when listed, or on first request | Served until stale, then refreshed in background | Shared pages that change periodically         |
 
 In `isr`, a stale response is returned immediately while a refresh runs. If no entry exists yet, the request waits for the first render. Concurrent renders of the same path share one generation.
 
@@ -115,18 +115,18 @@ In `isr`, a stale response is returned immediately while a refresh runs. If no e
 
 `createServer(options)` accepts these fields:
 
-| Option | Meaning |
-|---|---|
-| `template` | Built `index.html`, including the app container |
-| `router` | The shared router. The server navigates it with memory history. |
-| `routes` | The same route list given to the router |
-| `serverRoutes` | Server-only route configuration |
-| `app` | Synchronous function that builds the app into the container |
-| `containerId` | Container element ID. Default is `app`. |
-| `cache` | Cache for `ssg` and `isr`; default is `memoryCache()`. |
-| `timeout` | Maximum render settle time in milliseconds. Default is 10,000. |
-| `manifest` | Vite client manifest for module preloads |
-| `base` | Public base path for preloaded assets. Default is `/`. |
+| Option         | Meaning                                                         |
+| -------------- | --------------------------------------------------------------- |
+| `template`     | Built `index.html`, including the app container                 |
+| `router`       | The shared router. The server navigates it with memory history. |
+| `routes`       | The same route list given to the router                         |
+| `serverRoutes` | Server-only route configuration                                 |
+| `app`          | Synchronous function that builds the app into the container     |
+| `containerId`  | Container element ID. Default is `app`.                         |
+| `cache`        | Cache for `ssg` and `isr`; default is `memoryCache()`.          |
+| `timeout`      | Maximum render settle time in milliseconds. Default is 10,000.  |
+| `manifest`     | Vite client manifest for module preloads                        |
+| `base`         | Public base path for preloaded assets. Default is `/`.          |
 
 Methods returned by `createServer`:
 
@@ -140,7 +140,7 @@ A render uses the configured container inside the HTML template. If that element
 
 A page cache implements three asynchronous methods:
 
-~~~ts
+```ts
 type CacheEntry = {
   html: string;
   data: string;
@@ -153,7 +153,7 @@ type PageCache = {
   set(path: string, entry: CacheEntry): Promise<void>;
   delete(path: string): Promise<void>;
 };
-~~~
+```
 
 - `memoryCache(maxEntries?)` uses an in-memory least-recently-used cache. Its default capacity is 1,000 entries.
 - `fsCache(directory)` stores each path as `index.html` and `__data.json` under that directory. It guards against paths that escape the cache directory.
@@ -179,4 +179,3 @@ The router hook remains inactive in client-only apps and before hydration. Durin
 `toNodeHandler(server, options?)` adapts a server to Node HTTP or Connect-style middleware. Options can serve static files from `staticDir` and enable an on-demand ISR endpoint with `revalidateSecret`. When that secret is configured, a matching request to `POST /api/revalidate?path=/page&secret=...` refreshes the given path.
 
 The Vite-based CLI provides `dev`, `build`, and `start`. See [CLI reference](reference-cli.md) for commands and build output.
-

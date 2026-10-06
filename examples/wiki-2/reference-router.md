@@ -2,7 +2,7 @@
 
 Import router APIs from `lwnjs/router`.
 
-~~~ts
+```ts
 import {
   aliasRoute,
   browserHistory,
@@ -12,13 +12,13 @@ import {
   type Route,
   type RouteParams,
 } from 'lwnjs/router';
-~~~
+```
 
 ## Route objects
 
 A route is a stable object that describes a path, optional guards, and optional children.
 
-~~~ts
+```ts
 type Route = {
   path: string | RegExp;
   guard?: (params: RouteParams) => unknown;
@@ -26,31 +26,28 @@ type Route = {
   children?: readonly Route[];
   aliasOf?: Route;
 };
-~~~
+```
 
 Define route objects once and share those objects between the router, server routes, and route listeners. Route identity matters: the router registers actions against the route objects themselves.
 
 String paths join their parent path with a slash. An empty child path is an index route, which matches the parent's exact path.
 
-~~~ts
+```ts
 const AccountRoute: Route = {
   path: '/account',
-  children: [
-    { path: '' },
-    { path: 'orders' },
-  ],
+  children: [{ path: '' }, { path: 'orders' }],
 };
-~~~
+```
 
 This produces /account and /account/orders. A child path may include a leading slash. The router avoids adding a duplicate slash at the join.
 
 A regular expression is useful when a path has parameters. Named captures are available in `getParams()` through the match array's `groups` property.
 
-~~~ts
+```ts
 const ProductRoute: Route = {
   path: /^\/products\/(?<handle>[\w-]+)$/u,
 };
-~~~
+```
 
 For this route, `router.getParams()?.groups?.handle` contains the matched handle.
 
@@ -60,7 +57,7 @@ Routes are checked in array order. The first full match that passes its guards w
 
 `guardChildren(params)` decides whether matching may continue into the route's children. `guard(params)` decides whether the route itself may be the final match. A guard may return a boolean or a promise. A false-like result rejects that candidate.
 
-~~~ts
+```ts
 const AdminRoute: Route = {
   path: '/admin',
   guardChildren: () => session.isAuthenticated(),
@@ -71,7 +68,7 @@ const AdminRoute: Route = {
     },
   ],
 };
-~~~
+```
 
 Guards run during both navigation and `router.match(pathname)`. Keep them focused on deciding whether a route can match. Use the router's `load` hook for work that must finish before route actions run.
 
@@ -79,25 +76,25 @@ Guards run during both navigation and `router.match(pathname)`. Keep them focuse
 
 `setupRouter(routes, options?)` compiles routes and starts the initial navigation.
 
-~~~ts
+```ts
 const router = setupRouter(routes, {
   history: browserHistory(),
 });
 await router.ready;
-~~~
+```
 
 Without an explicit history adapter, `setupRouter` selects browser history when `window` exists and memory history otherwise. This lets a shared app module create its router on the client and during server rendering.
 
-| Method or property | Behavior |
-|---|---|
-| `ready` | Promise for the initial navigation |
-| `go(url)` | Pushes a URL and resolves after matching, the optional load hook, route actions, and promises returned by those actions |
-| `getPath()` | Current pathname |
-| `getParams()` | Parameters from the current match, or `null` |
-| `match(pathname)` | Matches without navigating, while still running guards |
-| `route(route, action)` | Registers an action for one route |
-| `routes(routeList, action)` | Registers an action for any route in the list |
-| `dispose()` | Stops listening to history and removes route listeners |
+| Method or property          | Behavior                                                                                                                |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `ready`                     | Promise for the initial navigation                                                                                      |
+| `go(url)`                   | Pushes a URL and resolves after matching, the optional load hook, route actions, and promises returned by those actions |
+| `getPath()`                 | Current pathname                                                                                                        |
+| `getParams()`               | Parameters from the current match, or `null`                                                                            |
+| `match(pathname)`           | Matches without navigating, while still running guards                                                                  |
+| `route(route, action)`      | Registers an action for one route                                                                                       |
+| `routes(routeList, action)` | Registers an action for any route in the list                                                                           |
+| `dispose()`                 | Stops listening to history and removes route listeners                                                                  |
 
 The optional `load(match, url)` hook runs after a route matches and before route actions. It may be asynchronous. Newer navigations supersede older pending navigations, so an older match or loader does not replace the latest location.
 
@@ -107,20 +104,20 @@ The optional `load(match, url)` hook runs after a route matches and before route
 
 A route action runs while its route is in the active chain. Parent routes remain active when a child route is selected, which is how layouts keep their actions registered.
 
-~~~ts
+```ts
 const appOwner = {};
 router.route(appOwner, AccountRoute, () => {
   accountOutlet.show(AccountLayout);
 });
-~~~
+```
 
 The explicit owner form is useful outside a component setup frame. Inside `component(...)` or another owner frame, the owner can be omitted:
 
-~~~ts
+```ts
 router.route(AccountRoute, () => {
   return accountOutlet.show(AccountLayout);
 });
-~~~
+```
 
 The action also runs immediately if its route is already active when the listener is registered. Its arguments are the previously active final route and previous URL. Return a promise when navigation should wait for asynchronous work, such as an outlet swap.
 
@@ -128,12 +125,12 @@ Each registration returns an unregister function. Call it to remove that action 
 
 Signatures:
 
-~~~ts
+```ts
 router.route(route, action);
 router.route(owner, route, action);
 router.routes(routeList, action);
 router.routes(owner, routeList, action);
-~~~
+```
 
 Destroying the owner unregisters its route actions. `dispose()` removes all actions and the history listener. Call it when the router itself is no longer needed.
 
@@ -141,13 +138,13 @@ Destroying the owner unregisters its route actions. `dispose()` removes all acti
 
 A history adapter supplies the current URL, navigation, and a change listener.
 
-~~~ts
+```ts
 type History = {
   location(): URL;
   push(url: string): void;
   listen(onChange: () => void): () => void;
 };
-~~~
+```
 
 - `browserHistory()` reads `window.location`, uses `pushState`, and listens for `popstate`.
 - `memoryHistory(initialUrl?)` stores the URL in memory. It is useful for tests and server rendering. The default URL is `/`.
@@ -158,9 +155,9 @@ Pass your own adapter with the same three methods when an application uses anoth
 
 `aliasRoute(route, path)` copies a route and its children under another root path. The copied routes retain a link to their originals, so listeners registered for the original routes also run for alias matches. Guards are retained.
 
-~~~ts
+```ts
 const LegacyAccountRoute = aliasRoute(AccountRoute, '/profile');
-~~~
+```
 
 An alias is useful for an alternate URL that should display the same pages and use the same route actions. Server route configuration may refer to the original route object.
 
@@ -168,12 +165,12 @@ An alias is useful for an alternate URL that should display the same pages and u
 
 An outlet shows one view at a position and destroys the previous view after the replacement is mounted. Create the engine renderer before the first outlet uses it.
 
-~~~ts
+```ts
 const outlet = createOutlet(owner, placeholder);
 const shown = await outlet.show(Page);
 await outlet.show(() => import('./Page'));
 outlet.clear();
-~~~
+```
 
 - `owner` is the logical parent of every view shown by the outlet.
 - `placeholder` is optional. When present, views are inserted before it and it stays in place. Without one, views are appended under `owner`.
@@ -186,4 +183,3 @@ outlet.clear();
 Outlet factories run in a setup frame, so owner-less listeners and subscriptions created by the page are released with it. Each shown view is attached to `owner`. The renderer mounts and removes its view. During server rendering and hydration, outlet work is tracked so the page does not finish before lazy views settle.
 
 If the outlet has no renderer, it throws `Outlet: no renderer set. Call setRenderer() at startup.` See [Core reference](reference-core.md) for renderer setup.
-

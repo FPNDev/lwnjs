@@ -8,26 +8,32 @@ A component is a function that builds a piece of UI once and wires its behaviour
 import { attach, component, listen } from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 
-export const SearchBox = component((parent: object, onSearch: (term: string) => void) => {
-  // 1. Build the view.
-  const input = html<HTMLInputElement>`<input type="search" placeholder="Search" />`;
-  const node = html`<form class="search">${input}</form>`;
+export const SearchBox = component(
+  (parent: object, onSearch: (term: string) => void) => {
+    // 1. Build the view.
+    const input = html<HTMLInputElement>`<input
+      type="search"
+      placeholder="Search"
+    />`;
+    const node = html`<form class="search">${input}</form>`;
 
-  // 2. Join the logical tree. From here on, `node` owns everything.
-  attach(parent, node);
+    // 2. Join the logical tree. From here on, `node` owns everything.
+    attach(parent, node);
 
-  // 3. Wire behaviour. All of it ends when `node` is destroyed.
-  listen(node, 'submit', (event) => {
-    event.preventDefault();
-    onSearch(input.value.trim());
-  });
+    // 3. Wire behaviour. All of it ends when `node` is destroyed.
+    listen(node, 'submit', (event) => {
+      event.preventDefault();
+      onSearch(input.value.trim());
+    });
 
-  // 4. Hand back the view, or a controller.
-  return node;
-});
+    // 4. Hand back the view, or a controller.
+    return node;
+  },
+);
 ```
 
 The rules:
+
 - **The first argument is the parent**, the logical node this component belongs to. Other arguments are whatever the component needs: data, callbacks.
 - **Attach first.** `attach(parent, node)` should come right after the root is built, before anything that needs an owner.
 - **Don't mount yourself.** Where the view goes in the DOM is the caller's decision: `parent.append(SearchBox(parent, run))`, or inside a template. That keeps components reusable in any position, including portals.
@@ -39,26 +45,26 @@ Owner-taking APIs need to know which node a subscription or listener belongs to.
 
 `component(fn)` wraps a function so each call runs in its own frame. In a frame, the **first** `attach(parent, node)` makes `node` the frame's owner. After that, these forms use it:
 
-| Explicit (works anywhere) | Owner-less (during setup) |
-|---|---|
-| `listen(node, target, type, fn, options?)` | `listen(target, type, fn, options?)` |
-| `state.subscribe(node, fn)` / `emitter.subscribe(node, fn)` | `state.subscribe(fn)` |
-| `router.route(node, Route, action)` | `router.route(Route, action)` |
-| `router.routes(node, [A, B], action)` | `router.routes([A, B], action)` |
-| `useStore(node, Store)` | `useStore(Store)` |
-| `attachStore(node, Store)` | `attachStore(Store)` |
-| `onDestroy(node, fn)` | `onDestroy(fn)` |
-| `onAttach(node, hook)` | `onAttach(hook)` |
+| Explicit (works anywhere)                                   | Owner-less (during setup)            |
+| ----------------------------------------------------------- | ------------------------------------ |
+| `listen(node, target, type, fn, options?)`                  | `listen(target, type, fn, options?)` |
+| `state.subscribe(node, fn)` / `emitter.subscribe(node, fn)` | `state.subscribe(fn)`                |
+| `router.route(node, Route, action)`                         | `router.route(Route, action)`        |
+| `router.routes(node, [A, B], action)`                       | `router.routes([A, B], action)`      |
+| `useStore(node, Store)`                                     | `useStore(Store)`                    |
+| `attachStore(node, Store)`                                  | `attachStore(Store)`                 |
+| `onDestroy(node, fn)`                                       | `onDestroy(fn)`                      |
+| `onAttach(node, hook)`                                      | `onAttach(hook)`                     |
 
 ### Where frames come from
 
-| Frame | Owner |
-|---|---|
-| `component(fn)` | the first node attached inside it |
-| A page shown by an outlet (`outlet.show(Page)`) | the first node the page attaches |
-| A route action (`router.route(Route, () => { … })`) | the route listener's owner |
-| An `onAttach` hook | the attach scope (ends on detach) |
-| The app root under `hydrate()` and server rendering | the first node the app attaches |
+| Frame                                               | Owner                             |
+| --------------------------------------------------- | --------------------------------- |
+| `component(fn)`                                     | the first node attached inside it |
+| A page shown by an outlet (`outlet.show(Page)`)     | the first node the page attaches  |
+| A route action (`router.route(Route, () => { … })`) | the route listener's owner        |
+| An `onAttach` hook                                  | the attach scope (ends on detach) |
+| The app root under `hydrate()` and server rendering | the first node the app attaches   |
 
 So pages and route actions need no wrapper. Components you call directly from other components do.
 
@@ -89,26 +95,28 @@ export type TodoFooter = {
   update(list: TodoList): void;
 };
 
-export const TodoFooter = component((parent: object, onClearDone: () => void): TodoFooter => {
-  const left = html`<span></span>`;
-  const clear = html<HTMLButtonElement>`<button>Clear done</button>`;
-  const node = html`<footer>${left}${clear}</footer>`;
-  attach(parent, node);
-  listen(clear, 'click', onClearDone);
+export const TodoFooter = component(
+  (parent: object, onClearDone: () => void): TodoFooter => {
+    const left = html`<span></span>`;
+    const clear = html<HTMLButtonElement>`<button>Clear done</button>`;
+    const node = html`<footer>${left}${clear}</footer>`;
+    attach(parent, node);
+    listen(clear, 'click', onClearDone);
 
-  return {
-    node,
-    update(list) {
-      const open = countOpen(list);
-      left.textContent = `${open} left`;
-      clear.disabled = open === list.todos.length;
-    },
-  };
-});
+    return {
+      node,
+      update(list) {
+        const open = countOpen(list);
+        left.textContent = `${open} left`;
+        clear.disabled = open === list.todos.length;
+      },
+    };
+  },
+);
 ```
 
 - Keep controllers small: `update(data)`, `setTitle(text)`, `focus()`.
-- Callbacks go *in* as arguments, so the component reports events without knowing who listens.
+- Callbacks go _in_ as arguments, so the component reports events without knowing who listens.
 - A type and a value may share a name (`type TodoFooter` and `const TodoFooter`).
 
 ## Composition
@@ -120,7 +128,7 @@ const Page = component((parent: object) => {
   const node = html`<section></section>`;
   attach(parent, node);
 
-  const header = ListHeader(node, onDelete);   // child owned by `node`
+  const header = ListHeader(node, onDelete); // child owned by `node`
   const form = NewTodoForm(node, onAdd);
   node.append(header.node, form);
 
@@ -131,7 +139,9 @@ const Page = component((parent: object) => {
 **Or compose views in a template.** Nodes interpolated into `html` are inserted as they are:
 
 ```ts
-const node = html`<div class="card">${Avatar(card, user)}${Name(card, user)}</div>`;
+const node = html`<div class="card">
+  ${Avatar(card, user)}${Name(card, user)}
+</div>`;
 ```
 
 You need the parent node before its children exist, so templates that contain child components usually build the outer node first and append the children, as above. Purely visual pieces (no behaviour, no owner) can be interpolated directly.
@@ -151,18 +161,18 @@ function render(items: Item[]) {
   for (const [index, item] of items.entries()) {
     let row = views.get(item.id);
     if (!row) {
-      row = Row(list, item);              // a component: owned by `list`
+      row = Row(list, item); // a component: owned by `list`
       views.set(item.id, row);
     }
     row.update(item);
     row.seen = pass;
     if (list.children[index] !== row.node) {
-      list.insertBefore(row.node, list.children[index] ?? null);   // move only when out of place
+      list.insertBefore(row.node, list.children[index] ?? null); // move only when out of place
     }
   }
   for (const [id, row] of views) {
     if (row.seen !== pass) {
-      destroy(row.node);                  // view, listeners, sub-components: all gone
+      destroy(row.node); // view, listeners, sub-components: all gone
       views.delete(id);
     }
   }
@@ -181,8 +191,8 @@ The logical parent and the DOM parent are independent, so a portal is two lines:
 ```ts
 export const Modal = component((owner: object, title: string) => {
   const node = html`<div class="backdrop"><div class="dialog">…</div></div>`;
-  attach(owner, node);          // owned by whoever opened it
-  document.body.append(node);   // mounted at the end of <body>
+  attach(owner, node); // owned by whoever opened it
+  document.body.append(node); // mounted at the end of <body>
   listen(document, 'keydown', (event) => {
     if (event.key === 'Escape') {
       destroy(node);
@@ -204,7 +214,7 @@ attach(dock, conversation.node);
 dock.append(conversation.node);
 ```
 
-Things that depend on *where* the component is (its parent's store, a placement mode) are re-read in `onAttach`, which runs after every attach:
+Things that depend on _where_ the component is (its parent's store, a placement mode) are re-read in `onAttach`, which runs after every attach:
 
 ```ts
 onAttach(() => {
@@ -224,8 +234,9 @@ A component can also be created without a parent and attached later:
 export function Badge() {
   const node = html`<span class="badge"></span>`;
   onAttach(node, (scope) => {
-    const theme = useStore(node, ThemeStore);   // whatever the current parent provides
-    theme.color.subscribe(scope, (color) => {   // ends on detach
+    const theme = useStore(node, ThemeStore); // whatever the current parent provides
+    theme.color.subscribe(scope, (color) => {
+      // ends on detach
       node.style.color = color;
     });
   });
@@ -239,10 +250,11 @@ Use this for components that move around. Use the standard pattern otherwise.
 ## Lifecycle hooks in components
 
 ```ts
-onDestroy(() => clearInterval(timer));        // cleanup
-onAttach((scope) => {                          // per attachment
+onDestroy(() => clearInterval(timer)); // cleanup
+onAttach((scope) => {
+  // per attachment
   focusTrap.enable();
-  return () => focusTrap.disable();           // runs on detach
+  return () => focusTrap.disable(); // runs on detach
 });
 ```
 

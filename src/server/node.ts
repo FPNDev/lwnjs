@@ -36,10 +36,16 @@ const CONTENT_TYPES: Record<string, string> = {
 async function serveFile(dir: string, path: string, outgoing: ServerResponse) {
   const root = join(dir, sep);
   const file = join(dir, normalize(decodeURIComponent(path)));
-  if (!file.startsWith(root) || !(await stat(file).catch(() => null))?.isFile()) {
+  if (
+    !file.startsWith(root) ||
+    !(await stat(file).catch(() => null))?.isFile()
+  ) {
     return false;
   }
-  outgoing.setHeader('content-type', CONTENT_TYPES[extname(file)] ?? 'application/octet-stream');
+  outgoing.setHeader(
+    'content-type',
+    CONTENT_TYPES[extname(file)] ?? 'application/octet-stream',
+  );
   if (path.startsWith('/assets/')) {
     outgoing.setHeader('cache-control', 'public, max-age=31536000, immutable');
   }
@@ -53,7 +59,9 @@ async function respond(response: Response, outgoing: ServerResponse) {
   for (const [name, value] of response.headers) {
     outgoing.setHeader(name, value);
   }
-  outgoing.end(response.body ? Buffer.from(await response.arrayBuffer()) : undefined);
+  outgoing.end(
+    response.body ? Buffer.from(await response.arrayBuffer()) : undefined,
+  );
 }
 
 /**
@@ -64,16 +72,26 @@ async function respond(response: Response, outgoing: ServerResponse) {
  * @param options Static folder and revalidation.
  * @returns The middleware.
  */
-export function toNodeHandler(server: Handler, options: NodeHandlerOptions = {}) {
+export function toNodeHandler(
+  server: Handler,
+  options: NodeHandlerOptions = {},
+) {
   return async (
     incoming: IncomingMessage,
     outgoing: ServerResponse,
     next?: (error?: unknown) => void,
   ) => {
     try {
-      const url = new URL(incoming.url ?? '/', `http://${incoming.headers.host ?? 'localhost'}`);
+      const url = new URL(
+        incoming.url ?? '/',
+        `http://${incoming.headers.host ?? 'localhost'}`,
+      );
 
-      if (options.revalidateSecret && incoming.method === 'POST' && url.pathname === '/api/revalidate') {
+      if (
+        options.revalidateSecret &&
+        incoming.method === 'POST' &&
+        url.pathname === '/api/revalidate'
+      ) {
         if (url.searchParams.get('secret') !== options.revalidateSecret) {
           outgoing.statusCode = 401;
           outgoing.end();
@@ -87,8 +105,13 @@ export function toNodeHandler(server: Handler, options: NodeHandlerOptions = {})
         return;
       }
 
-      const isAsset = extname(url.pathname) !== '' && !url.pathname.endsWith('/__data.json');
-      if (isAsset && options.staticDir && (await serveFile(options.staticDir, url.pathname, outgoing))) {
+      const isAsset =
+        extname(url.pathname) !== '' && !url.pathname.endsWith('/__data.json');
+      if (
+        isAsset &&
+        options.staticDir &&
+        (await serveFile(options.staticDir, url.pathname, outgoing))
+      ) {
         return;
       }
 
@@ -98,7 +121,9 @@ export function toNodeHandler(server: Handler, options: NodeHandlerOptions = {})
           headers.set(name, Array.isArray(value) ? value.join(', ') : value);
         }
       }
-      const response = await server.handle(new Request(url, { method: incoming.method, headers }));
+      const response = await server.handle(
+        new Request(url, { method: incoming.method, headers }),
+      );
       if (response) {
         await respond(response, outgoing);
       } else if (next) {

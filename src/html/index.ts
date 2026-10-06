@@ -20,7 +20,9 @@ export function html<T extends Node = HTMLElement>(
 ): T {
   const nodes = mhtml(strings, ...values);
   if (nodes.length !== 1) {
-    throw new Error(`html: expected exactly one root node, got ${nodes.length}. Use mhtml for several.`);
+    throw new Error(
+      `html: expected exactly one root node, got ${nodes.length}. Use mhtml for several.`,
+    );
   }
 
   return nodes[0] as T;
@@ -32,7 +34,10 @@ export function html<T extends Node = HTMLElement>(
  * @param values Template interpolations.
  * @returns The template's root nodes.
  */
-export function mhtml(strings: TemplateStringsArray, ...values: Interpolation[]): Node[] {
+export function mhtml(
+  strings: TemplateStringsArray,
+  ...values: Interpolation[]
+): Node[] {
   return create(() => instantiate(strings, values));
 }
 
@@ -42,7 +47,9 @@ export function mhtml(strings: TemplateStringsArray, ...values: Interpolation[])
  * @returns The element.
  */
 export function element<T extends keyof HTMLElementTagNameMap>(tagName: T) {
-  return create(() => [document.createElement(tagName)])[0] as HTMLElementTagNameMap[T];
+  return create(() => [
+    document.createElement(tagName),
+  ])[0] as HTMLElementTagNameMap[T];
 }
 
 /**

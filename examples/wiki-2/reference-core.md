@@ -2,23 +2,39 @@
 
 Import these APIs from lwnjs/core.
 
-~~~ts
+```ts
 import {
-  attach, detach, destroy, onAttach, onDestroy, getParent, isAttached,
-  component, getOwner, createState, createEmitter, createStore, attachStore,
-  useStore, env, listen, setRenderer, getRenderer, domRenderer,
+  attach,
+  detach,
+  destroy,
+  onAttach,
+  onDestroy,
+  getParent,
+  isAttached,
+  component,
+  getOwner,
+  createState,
+  createEmitter,
+  createStore,
+  attachStore,
+  useStore,
+  env,
+  listen,
+  setRenderer,
+  getRenderer,
+  domRenderer,
 } from 'lwnjs/core';
-~~~
+```
 
 ## Ownership links
 
-| API | Signature | Behavior |
-|---|---|---|
-| attach | attach(parent, child): void | Adds child under parent, or moves it from its old parent. Runs attach hooks. |
-| detach | detach(child): void | Removes child from its parent but leaves it and its direct resources alive. Ends its attach scope. |
-| destroy | destroy(node?): void | Removes the view through the current renderer, destroys descendants, and runs cleanup hooks. Undefined is ignored. |
-| getParent | getParent(node): object or undefined | Returns the logical parent. |
-| isAttached | isAttached(node?): boolean | True when the node has a logical parent. A root can own children and still return false. |
+| API        | Signature                            | Behavior                                                                                                           |
+| ---------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| attach     | attach(parent, child): void          | Adds child under parent, or moves it from its old parent. Runs attach hooks.                                       |
+| detach     | detach(child): void                  | Removes child from its parent but leaves it and its direct resources alive. Ends its attach scope.                 |
+| destroy    | destroy(node?): void                 | Removes the view through the current renderer, destroys descendants, and runs cleanup hooks. Undefined is ignored. |
+| getParent  | getParent(node): object or undefined | Returns the logical parent.                                                                                        |
+| isAttached | isAttached(node?): boolean           | True when the node has a logical parent. A root can own children and still return false.                           |
 
 attach and detach are O(1) plus hooks. destroy is O(size of subtree). The ownership model does not detect cycles, so do not attach a node below itself or any descendant.
 
@@ -43,7 +59,7 @@ Pages shown by outlets, router actions, onAttach hooks, and app setup under hydr
 
 ## State and emitter
 
-~~~ts
+```ts
 type State<T> = {
   get(): T;
   set(value: T): void;
@@ -60,7 +76,7 @@ type Subscribe<T> = {
   (listener: (value: T) => void): () => void;
   (owner: object, listener: (value: T) => void): () => void;
 };
-~~~
+```
 
 - createState(initialValue) stores a current value.
 - set(value) replaces the value and notifies on every call. There is no equality check.
@@ -74,7 +90,7 @@ Listeners run in subscription order. A delivery reaches listeners subscribed whe
 
 ## Stores
 
-~~~ts
+```ts
 type Store<T> = {
   readonly init: () => T;
 };
@@ -82,7 +98,7 @@ type Store<T> = {
 const ThemeStore = createStore(() => ({ color: 'navy' }));
 const theme = attachStore(node, ThemeStore);
 const sameTheme = useStore(childNode, ThemeStore);
-~~~
+```
 
 - createStore(init) returns an identifier. The initializer runs each time the store is provided.
 - attachStore(store) provides the value on the current setup owner. attachStore(node, store) names the provider explicitly.
@@ -95,13 +111,13 @@ const sameTheme = useStore(childNode, ThemeStore);
 
 env holds one current symbol and an optional chain of containing symbols.
 
-| Member | Behavior |
-|---|---|
+| Member                   | Behavior                                                                                  |
+| ------------------------ | ----------------------------------------------------------------------------------------- |
 | env.isolate(id, within?) | Makes id current. If within is active, nests id inside it. Otherwise releases other envs. |
-| env.release(id) | Releases id and any envs nested inside it. |
-| env.is(id) | True when id is active, including as a containing env. |
-| env.isCurrent(id) | True only when id is innermost. |
-| env.current | Innermost symbol, or undefined. |
+| env.release(id)          | Releases id and any envs nested inside it.                                                |
+| env.is(id)               | True when id is active, including as a containing env.                                    |
+| env.isCurrent(id)        | True only when id is innermost.                                                           |
+| env.current              | Innermost symbol, or undefined.                                                           |
 
 is and isCurrent are O(1). Isolating or releasing work is proportional to the envs removed. env is module-level state; pair it with owner cleanup.
 
@@ -113,12 +129,12 @@ Both forms return a function that removes the listener early. Destruction also r
 
 ## Renderers
 
-~~~ts
+```ts
 type Renderer<V extends object> = {
   append(parent: V, view: V): void;
   insertBefore(anchor: V, view: V): void;
   remove(view: V): void;
 };
-~~~
+```
 
 setRenderer(renderer) sets module-level renderer state for outlets and destroy. getRenderer() returns it. domRenderer is the DOM implementation. See [HTML and renderer reference](reference-html-renderers.md).

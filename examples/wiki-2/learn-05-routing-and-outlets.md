@@ -4,7 +4,7 @@ The router matches the current URL against route objects. An outlet shows the vi
 
 ## Define route objects once
 
-~~~ts
+```ts
 import { setupRouter, type Route } from 'lwnjs/router';
 
 export const HomeRoute: Route = { path: '/' };
@@ -13,7 +13,7 @@ export const ProductRoute: Route = {
 };
 export const routes = [HomeRoute, ProductRoute];
 export const router = setupRouter(routes);
-~~~
+```
 
 A route object is an identity. The router and components should import the same object rather than create lookalike route objects in separate modules.
 
@@ -23,7 +23,7 @@ String paths can be nested. A child path of orders under /account matches /accou
 
 An outlet owns the current page view and replaces it when another view is shown.
 
-~~~ts
+```ts
 import { attach, component, domRenderer, setRenderer } from 'lwnjs/core';
 import { createOutlet, setupRouter, type Route } from 'lwnjs/router';
 import { html } from 'lwnjs/html';
@@ -41,7 +41,7 @@ const App = component((parent: object) => {
 
   return node;
 });
-~~~
+```
 
 The component is attached under the app node logically, while the outlet mounts its view at the comment in the main element. The placeholder stays in place as the page changes.
 
@@ -49,19 +49,19 @@ The component is attached under the app node logically, while the outlet mounts 
 
 A page factory receives its parent and returns a view:
 
-~~~ts
+```ts
 export default function Product(parent: object) {
   const node = html`<article><h1>Product</h1></article>`;
   attach(parent, node);
   return node;
 }
-~~~
+```
 
 A dynamic import is a loader. The outlet accepts the module's default export automatically:
 
-~~~ts
+```ts
 page.show(() => import('./pages/Product'));
-~~~
+```
 
 The first visit loads the module. Later visits can reuse it from the browser module cache.
 
@@ -69,12 +69,12 @@ The first visit loads the module. Later visits can reuse it from the browser mod
 
 Register an action for the route that should affect the outlet:
 
-~~~ts
+```ts
 router.route(ProductRoute, () => {
   const handle = router.getParams()?.groups?.handle;
   return page.show(() => import('./pages/Product'));
 });
-~~~
+```
 
 The action runs when its route is in the active route chain. It also runs immediately if registered while that route is already active. Actions run in their owner's setup frame. Return the promise from page.show when navigation should wait for that view to finish.
 
@@ -86,13 +86,13 @@ Calling show with the same factory again keeps the current view. A lazy page is 
 
 The page can listen to its route and update its own nodes:
 
-~~~ts
+```ts
 router.route(ProductRoute, () => {
   const handle = router.getParams()?.groups?.handle ?? '';
   const product = products.find((item) => item.handle === handle);
   title.textContent = product?.title ?? 'Product not found';
 });
-~~~
+```
 
 The page does not need to be rebuilt when only the route parameters change. Its route action updates the title and any other node that depends on the selected product.
 

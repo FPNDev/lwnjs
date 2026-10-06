@@ -55,7 +55,9 @@ export function setupRouter(
     }
     listener.ranFor = completed;
     // Actions run in their owner's frame: owner-less calls inside them belong to it.
-    const result = runInFrame(listener.owner, () => listener.action(previousRoute, previousLocation));
+    const result = runInFrame(listener.owner, () =>
+      listener.action(previousRoute, previousLocation),
+    );
     if (result instanceof Promise) {
       pending.push(result);
     }
@@ -187,8 +189,14 @@ export function setupRouter(
       return params;
     },
     /** Runs `action` while any of `routes` is active. Without `owner`: the current owner. */
-    routes(...args: [readonly Route[], RouteAction] | [object, readonly Route[], RouteAction]) {
-      return args.length === 2 ? onRoutes(requireOwner('router.routes'), ...args) : onRoutes(...args);
+    routes(
+      ...args:
+        | [readonly Route[], RouteAction]
+        | [object, readonly Route[], RouteAction]
+    ) {
+      return args.length === 2
+        ? onRoutes(requireOwner('router.routes'), ...args)
+        : onRoutes(...args);
     },
     /** Runs `action` while `route` is active. Without `owner`: the current owner. */
     route(...args: [Route, RouteAction] | [object, Route, RouteAction]) {

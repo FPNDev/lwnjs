@@ -19,7 +19,10 @@ export default function Product(parent: object) {
   const price = html`<div class=${classes.price}></div>`;
   const description = html`<p class=${classes.muted}></p>`;
   const add = html`<button class=${classes.button}>Add to cart</button>`;
-  const node = html`<article class=${classes.product}>${image}<div>${title}${price}${add}${description}</div></article>`;
+  const node = html`<article class=${classes.product}>
+    ${image}
+    <div>${title}${price}${add}${description}</div>
+  </article>`;
   attach(parent, node);
   const cart = useStore(CartStore);
 

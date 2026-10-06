@@ -34,7 +34,7 @@ export const TodoFilters = component(
         button.classList.add(classes.selected);
         onChange(filter as Filter);
       });
-      
+
       if (filter === 'all') {
         selected = button;
         button.classList.add(classes.selected);

@@ -47,7 +47,8 @@ export function createOutlet(owner: object, placeholder?: object): Outlet {
   // Outside any scope (after hydration) the key is empty: the scope still marks setup for `useServer`.
   const scopeKey = nextScopeKey() ?? '';
   // Factories run in a frame of their own: pages need no `component()` wrapper.
-  const build = (run: ViewSource) => withScope(scopeKey, () => runInFrame(undefined, () => run(owner)));
+  const build = (run: ViewSource) =>
+    withScope(scopeKey, () => runInFrame(undefined, () => run(owner)));
 
   onDestroy(owner, () => {
     version++;
@@ -82,30 +83,29 @@ export function createOutlet(owner: object, placeholder?: object): Outlet {
   };
 
   const show = async (nextSource: ViewSource) => {
-      if (view && nextSource === source) {
-        return view;
-      }
+    if (view && nextSource === source) {
+      return view;
+    }
 
-      const current = ++version;
-      const result = build(nextSource);
-      if (!(result instanceof Promise)) {
-        return mount(nextSource, nextSource as ViewFactory, result);
-      }
+    const current = ++version;
+    const result = build(nextSource);
+    if (!(result instanceof Promise)) {
+      return mount(nextSource, nextSource as ViewFactory, result);
+    }
 
-      const loaded = await (result as ReturnType<ViewLoader>);
-      if (current !== version) {
-        return;
-      }
+    const loaded = await (result as ReturnType<ViewLoader>);
+    if (current !== version) {
+      return;
+    }
 
-      const nextFactory =
-        typeof loaded === 'function' ? loaded : loaded.default;
-      if (view && nextFactory === factory) {
-        source = nextSource;
+    const nextFactory = typeof loaded === 'function' ? loaded : loaded.default;
+    if (view && nextFactory === factory) {
+      source = nextSource;
 
-        return view;
-      }
+      return view;
+    }
 
-      return mount(nextSource, nextFactory, build(nextFactory) as object);
+    return mount(nextSource, nextFactory, build(nextFactory) as object);
   };
 
   return {

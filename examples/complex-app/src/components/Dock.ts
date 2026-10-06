@@ -1,10 +1,4 @@
-import {
-  attach,
-  attachStore,
-  component,
-  destroy,
-  onDestroy,
-} from 'lwnjs/core';
+import { attach, attachStore, component, destroy, onDestroy } from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 import { PlacementStore } from '../store/ui';
 import type { Conversation } from './Conversation';

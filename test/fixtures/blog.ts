@@ -1,8 +1,17 @@
 import { vi } from 'vitest';
 import { attach, domRenderer, setRenderer } from '../../src/core/index.ts';
 import { html, text } from '../../src/html/index.ts';
-import { createOutlet, memoryHistory, setupRouter, type Route } from '../../src/router/index.ts';
-import { createServer, memoryCache, type ServerRoute } from '../../src/server/index.ts';
+import {
+  createOutlet,
+  memoryHistory,
+  setupRouter,
+  type Route,
+} from '../../src/router/index.ts';
+import {
+  createServer,
+  memoryCache,
+  type ServerRoute,
+} from '../../src/server/index.ts';
 import { loadServerData, serverToken, useServer } from '../../src/ssr/index.ts';
 
 setRenderer(domRenderer);
@@ -35,7 +44,10 @@ export function setupApp(
     const post = useServer(PostData);
     const title = html`<h1>${post.title}</h1>`;
     const status = text('');
-    const node = html`<article>${title}${status}<p>${post.body}</p></article>`;
+    const node = html`<article>
+      ${title}${status}
+      <p>${post.body}</p>
+    </article>`;
     attach(parent, node);
     // The outlet keeps this page across post navigations; the page follows the route itself.
     router.route(node, PostRoute, () => {
@@ -58,8 +70,12 @@ export function setupApp(
     attach(container, header);
     const page = createOutlet(container);
     router.route(container, Home, () => page.show(HomePage));
-    router.route(container, PostRoute, () => page.show(() => Promise.resolve({ default: PostPage })));
-    router.route(container, Missing, () => page.show(() => html`<p>Not found</p>`));
+    router.route(container, PostRoute, () =>
+      page.show(() => Promise.resolve({ default: PostPage })),
+    );
+    router.route(container, Missing, () =>
+      page.show(() => html`<p>Not found</p>`),
+    );
   }
 
   const loads = vi.fn();
@@ -69,7 +85,10 @@ export function setupApp(
       load: ({ params }, set) => {
         loads();
         const id = params?.groups?.id ?? '';
-        set(PostData, { title: `Post ${id}`, body: `<script>alert("${id}")</script></script>` });
+        set(PostData, {
+          title: `Post ${id}`,
+          body: `<script>alert("${id}")</script></script>`,
+        });
       },
       ...postConfig,
     },
@@ -88,5 +107,7 @@ export function setupApp(
   return { router, routes, App, server, loads };
 }
 
-export const get = (server: ReturnType<typeof setupApp>['server'], path: string) =>
-  server.handle(new Request(`http://localhost${path}`));
+export const get = (
+  server: ReturnType<typeof setupApp>['server'],
+  path: string,
+) => server.handle(new Request(`http://localhost${path}`));

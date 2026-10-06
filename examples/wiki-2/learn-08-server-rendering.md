@@ -4,12 +4,12 @@ LWN can render the same app to HTML on the server, then let the browser attach l
 
 ## Choose a rendering mode
 
-| Mode | When it renders | Useful for |
-|---|---|---|
-| SSR | Every request | Content that depends on a cookie, request header, or user |
-| SSG | At build time or on first request, then stays cached | Shared content that rarely changes |
-| ISR | Like SSG, then regenerates after a freshness window | Shared content that changes periodically |
-| Client-only | In the browser | Per-visitor data or highly interactive content |
+| Mode        | When it renders                                      | Useful for                                                |
+| ----------- | ---------------------------------------------------- | --------------------------------------------------------- |
+| SSR         | Every request                                        | Content that depends on a cookie, request header, or user |
+| SSG         | At build time or on first request, then stays cached | Shared content that rarely changes                        |
+| ISR         | Like SSG, then regenerates after a freshness window  | Shared content that changes periodically                  |
+| Client-only | In the browser                                       | Per-visitor data or highly interactive content            |
 
 A page can have shared server-rendered content and client-only state. For example, the shop example renders the cart count as zero on both server and client, then reads the visitor's cart from localStorage in the browser.
 
@@ -23,15 +23,15 @@ The client-safe helpers are in lwnjs/ssr. Node rendering and caches are in lwnjs
 
 Create a token that identifies one typed piece of page data:
 
-~~~ts
+```ts
 import { serverToken } from 'lwnjs/ssr';
 
 export const ProductData = serverToken<Product | null>('product');
-~~~
+```
 
 A server route loads data before rendering. The page reads it during synchronous setup:
 
-~~~ts
+```ts
 import { attach } from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 import { useServer } from 'lwnjs/ssr';
@@ -39,11 +39,13 @@ import { ProductData } from '../data';
 
 export default function Product(parent: object) {
   const product = useServer(ProductData);
-  const node = html`<article><h1>${product?.title ?? 'Not found'}</h1></article>`;
+  const node = html`<article>
+    <h1>${product?.title ?? 'Not found'}</h1>
+  </article>`;
   attach(parent, node);
   return node;
 }
-~~~
+```
 
 Read server data only during setup, such as in a page factory or a route action. Keep the value in a local variable for event handlers. Data is serialized, so pass only the fields the page needs and ensure values are JSON-serializable.
 
@@ -51,7 +53,7 @@ Read server data only during setup, such as in a page factory or a route action.
 
 The shared app creates the router and uses loadServerData as its load hook. The client entry calls hydrate. The Node entry exports a server app description:
 
-~~~ts
+```ts
 // Shared app
 export const router = setupRouter(routes, { load: loadServerData(routes) });
 
@@ -65,7 +67,7 @@ export default defineServerApp({
   serverRoutes,
   app: App,
 });
-~~~
+```
 
 A server route associates a route object with a mode, loader, optional prerendered paths, and optional lazy module preloads. Loaders for the matched route chain run in parallel, so a layout and its page can load independent data together.
 

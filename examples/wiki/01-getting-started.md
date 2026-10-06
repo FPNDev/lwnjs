@@ -7,6 +7,7 @@ npm install lwnjs
 ```
 
 Optional peer dependencies, only when you need them:
+
 - `linkedom`: the DOM used for server rendering (`lwnjs/server`).
 - `vite`: used by the `lwn` CLI (`dev`, `build`, `start`).
 
@@ -36,7 +37,13 @@ Three steps: tell the engine how to place views, build a component, mount it.
 
 ```ts
 // main.ts
-import { attach, component, domRenderer, listen, setRenderer } from 'lwnjs/core';
+import {
+  attach,
+  component,
+  domRenderer,
+  listen,
+  setRenderer,
+} from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 
 // 1. Once, before anything is shown: views are DOM nodes.
@@ -64,6 +71,7 @@ container.append(Counter(container));
 ```
 
 What happened:
+
 - `setRenderer(domRenderer)` tells the engine to use DOM operations when it mounts and unmounts views (outlets, `destroy`).
 - `component()` gives the function a **setup frame**. The first `attach(parent, node)` inside it makes `node` the owner of every owner-less call that follows. Here, `listen(plus, 'click', …)` is removed when `node` is destroyed.
 - `html` builds DOM from a template. Strings become text, never markup. Nodes are inserted as they are.
@@ -80,7 +88,10 @@ export const router = setupRouter([HomeRoute, ItemRoute]);
 
 const App = component((parent: object) => {
   const slot = html<Comment>`<!---->`;
-  const node = html`<div><nav>…</nav><main>${slot}</main></div>`;
+  const node = html`<div>
+    <nav>…</nav>
+    <main>${slot}</main>
+  </div>`;
   attach(parent, node);
 
   const page = createOutlet(node, slot);

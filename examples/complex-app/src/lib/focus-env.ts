@@ -9,7 +9,11 @@ import { env, listen, onDestroy } from 'lwnjs/core';
  * @param id Env to isolate.
  * @param within Env that contains this one.
  */
-export function isolateOnFocus(element: HTMLElement, id: symbol, within?: symbol) {
+export function isolateOnFocus(
+  element: HTMLElement,
+  id: symbol,
+  within?: symbol,
+) {
   listen(element, 'focusin', () => {
     env.isolate(id, within);
   });

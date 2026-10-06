@@ -44,7 +44,7 @@ lists.notify();
 todo.done = !todo.done;
 lists.notify();
 
-presence.get().set(peerId, 'online');   // a Map
+presence.get().set(peerId, 'online'); // a Map
 presence.notify();
 ```
 
@@ -67,7 +67,7 @@ const messageAdded = createEmitter<Message>();
 messageAdded.subscribe((message) => list.add(message));
 messageAdded.emit(message);
 
-const closed = createEmitter();   // Emitter<void>
+const closed = createEmitter(); // Emitter<void>
 closed.emit();
 ```
 
@@ -78,19 +78,19 @@ An emitter has no current value. Late subscribers don't get past events.
 Both primitives share one `subscribe`:
 
 ```ts
-state.subscribe(owner, fn);   // ends when `owner` is destroyed
-state.subscribe(fn);          // during setup: owned by the current owner
-                              // outside setup: unowned, ends only via the returned function
+state.subscribe(owner, fn); // ends when `owner` is destroyed
+state.subscribe(fn); // during setup: owned by the current owner
+// outside setup: unowned, ends only via the returned function
 ```
 
 Every form returns an unsubscribe function: O(1) and idempotent.
 
-| Situation | What to write |
-|---|---|
-| A component reacting to a store | `store.value.subscribe(fn)` during setup |
-| A subscription created later (in a handler) | `store.value.subscribe(node, fn)`, with the owner explicit |
-| A store persisting itself | `value.subscribe(fn)` inside the store's `init`. It's owned by the providing component, so it lives as long as the store |
-| A module-level service that lives forever | `subscribe(fn)` outside any setup: unowned |
+| Situation                                   | What to write                                                                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| A component reacting to a store             | `store.value.subscribe(fn)` during setup                                                                                 |
+| A subscription created later (in a handler) | `store.value.subscribe(node, fn)`, with the owner explicit                                                               |
+| A store persisting itself                   | `value.subscribe(fn)` inside the store's `init`. It's owned by the providing component, so it lives as long as the store |
+| A module-level service that lives forever   | `subscribe(fn)` outside any setup: unowned                                                                               |
 
 ## Delivery rules
 
@@ -133,7 +133,10 @@ function download(url: string) {
 }
 
 const { progress, done } = download(url);
-const stop = progress.subscribe(node, (fraction) => bar.style.width = `${fraction * 100}%`);
+const stop = progress.subscribe(
+  node,
+  (fraction) => (bar.style.width = `${fraction * 100}%`),
+);
 await done;
 stop();
 ```
@@ -155,10 +158,10 @@ lists.notify();
 
 ## Choosing
 
-| You have | Use |
-|---|---|
-| A value one component reads | `let` + setter |
+| You have                           | Use                               |
+| ---------------------------------- | --------------------------------- |
+| A value one component reads        | `let` + setter                    |
 | A value several components observe | `createState`, usually in a store |
-| Something that happens | `createEmitter` |
-| A one-off async result | a `Promise` |
-| A sequence that ends | an emitter + a promise |
+| Something that happens             | `createEmitter`                   |
+| A one-off async result             | a `Promise`                       |
+| A sequence that ends               | an emitter + a promise            |

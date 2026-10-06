@@ -76,18 +76,18 @@ async function search(term: string) {
 
 ## Performance notes
 
-| Operation | Cost |
-|---|---|
-| attach / detach / move | O(1) + hooks |
-| destroy | O(subtree), one live DOM mutation |
-| subscribe / unsubscribe / owner release | O(1) |
-| emit / set / notify | O(listeners), no allocations |
-| env `is` / `isCurrent` / `current` | O(1) |
-| `useStore` | O(depth), once per setup |
-| `html` (cached) | clone + O(slots) |
-| route dispatch | O(depth of the active chain) |
-| route match | O(routes), precompiled |
-| hydration claim / `useServer` | O(1) after one resolve pass |
+| Operation                               | Cost                              |
+| --------------------------------------- | --------------------------------- |
+| attach / detach / move                  | O(1) + hooks                      |
+| destroy                                 | O(subtree), one live DOM mutation |
+| subscribe / unsubscribe / owner release | O(1)                              |
+| emit / set / notify                     | O(listeners), no allocations      |
+| env `is` / `isCurrent` / `current`      | O(1)                              |
+| `useStore`                              | O(depth), once per setup          |
+| `html` (cached)                         | clone + O(slots)                  |
+| route dispatch                          | O(depth of the active chain)      |
+| route match                             | O(routes), precompiled            |
+| hydration claim / `useServer`           | O(1) after one resolve pass       |
 
 ## Checklist for a new component
 

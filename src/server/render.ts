@@ -19,7 +19,18 @@ export type RenderOptions = {
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
 /** Elements whose content is raw text: separator comments inside them would show up as text. */
-const RAW_TEXT = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'TITLE', 'XMP', 'IFRAME', 'NOEMBED', 'NOFRAMES', 'PLAINTEXT', 'TEMPLATE']);
+const RAW_TEXT = new Set([
+  'SCRIPT',
+  'STYLE',
+  'TEXTAREA',
+  'TITLE',
+  'XMP',
+  'IFRAME',
+  'NOEMBED',
+  'NOFRAMES',
+  'PLAINTEXT',
+  'TEMPLATE',
+]);
 
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -61,7 +72,10 @@ function normalize(parent: Node, replaced: Map<Node, Node>) {
     }
 
     previousIsText = false;
-    if (child.nodeType === ELEMENT_NODE && !RAW_TEXT.has((child as Element).tagName)) {
+    if (
+      child.nodeType === ELEMENT_NODE &&
+      !RAW_TEXT.has((child as Element).tagName)
+    ) {
       normalize(child, replaced);
     }
   }
@@ -70,7 +84,12 @@ function normalize(parent: Node, replaced: Map<Node, Node>) {
 }
 
 /** Collects the `childNodes` path of every wanted node in one walk. O(nodes). */
-function collectPaths(parent: Node, prefix: string, wanted: Set<Node>, paths: Map<Node, string>) {
+function collectPaths(
+  parent: Node,
+  prefix: string,
+  wanted: Set<Node>,
+  paths: Map<Node, string>,
+) {
   for (const [position, child] of parent.childNodes.entries()) {
     const path = prefix ? `${prefix}.${position}` : String(position);
     if (wanted.has(child)) {
@@ -156,7 +175,9 @@ export function renderPage(
     const { document } = parseHTML(options.template);
     const container = document.querySelector(`#${options.containerId}`);
     if (!container) {
-      throw new Error(`Template has no element with id "${options.containerId}"`);
+      throw new Error(
+        `Template has no element with id "${options.containerId}"`,
+      );
     }
 
     const scope = globalThis as { document?: unknown };
@@ -178,7 +199,10 @@ export function renderPage(
 
     const timeout = timeoutAfter(options.timeout);
     try {
-      await Promise.race([options.router.go(url.pathname + url.search), timeout.promise]);
+      await Promise.race([
+        options.router.go(url.pathname + url.search),
+        timeout.promise,
+      ]);
       withScope('r', () => {
         runInFrame(undefined, () => {
           options.app(container);

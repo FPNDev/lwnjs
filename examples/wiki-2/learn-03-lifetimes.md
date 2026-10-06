@@ -8,13 +8,13 @@ These links are not a virtual view tree. Ordinary updates do not walk them. They
 
 A logical node can be any object: a DOM element, a plain object, a WebSocket wrapper, or a scene object. A node can own children even when it is not a view.
 
-~~~ts
+```ts
 const session = {};
 attach(appNode, session);
 onDestroy(session, () => {
   socket.close();
 });
-~~~
+```
 
 The app node owns the session. Destroying the session closes the socket. No DOM element is required.
 
@@ -28,12 +28,12 @@ detach(child) removes the relationship but leaves the child alive. Its listeners
 
 destroy(node) ends the node and its logical descendants. The renderer removes each view, then children and registered cleanup hooks are processed. Calling destroy() with no node is harmless, which is useful for optional values.
 
-~~~ts
+```ts
 const dialog = Dialog(owner);
 document.body.append(dialog);
 
 destroy(dialog);
-~~~
+```
 
 Use destroy when a view or resource is finished. Use detach when it may be attached again later.
 
@@ -41,12 +41,12 @@ Use destroy when a view or resource is finished. Use detach when it may be attac
 
 Some work should exist only while a component is attached to a particular parent. Register it in onAttach:
 
-~~~ts
+```ts
 onAttach((scope) => {
   const placement = useStore(node, PlacementStore);
   placement.changed.subscribe(scope, updateButtons);
 });
-~~~
+```
 
 The hook runs after attachment, including immediately when it is registered on an already attached node. It receives a scope owner that ends at the next detach or move. A function returned from the hook is also called when that scope ends.
 
@@ -58,26 +58,26 @@ Direct listeners and subscriptions on the component root are not attach-scoped. 
 
 Choose an owner with the same intended lifetime as the resource.
 
-~~~ts
+```ts
 const timer = setInterval(refresh, 1000);
 onDestroy(() => {
   clearInterval(timer);
 });
-~~~
+```
 
 The owner-less onDestroy form uses the current setup owner. Outside setup, pass the owner explicitly:
 
-~~~ts
+```ts
 onDestroy(node, () => {
   clearInterval(timer);
 });
-~~~
+```
 
 listen(owner, target, type, handler) removes a DOM event listener when its owner is destroyed. A subscription can also take an explicit owner. These patterns cover most cleanup needs.
 
 For a group that should end independently, create a plain object and attach it under the larger component:
 
-~~~ts
+```ts
 const requestGroup = {};
 attach(pageNode, requestGroup);
 results.subscribe(requestGroup, renderResults);
@@ -85,7 +85,7 @@ results.subscribe(requestGroup, renderResults);
 function finishRequest() {
   destroy(requestGroup);
 }
-~~~
+```
 
 Destroying the group releases its subscription but leaves the page alive.
 
@@ -93,10 +93,10 @@ Destroying the group releases its subscription but leaves the page alive.
 
 Moving a mounted component changes two independent relationships. First move its ownership, then move its DOM view:
 
-~~~ts
+```ts
 attach(dockNode, conversation.node);
 dockElement.append(conversation.node);
-~~~
+```
 
 The component itself is not recreated. Its local variables, DOM state, and direct subscriptions remain. onAttach runs for the new parent, so location-dependent work can be refreshed.
 

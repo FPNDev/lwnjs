@@ -1,12 +1,24 @@
 import type { PageCache } from './cache.ts';
-import { createServer, type ServerOptions, type ViteManifest } from './server.ts';
+import {
+  createServer,
+  type ServerOptions,
+  type ViteManifest,
+} from './server.ts';
 
 /** Everything about a server-rendered app except what the build provides. */
-export type ServerAppConfig = Omit<ServerOptions, 'template' | 'manifest' | 'base' | 'cache'>;
+export type ServerAppConfig = Omit<
+  ServerOptions,
+  'template' | 'manifest' | 'base' | 'cache'
+>;
 
 export type ServerApp = {
   /** Creates the server once the template (and, in production, the manifest and cache) are known. */
-  create(options: { template: string; manifest?: ViteManifest; base?: string; cache?: PageCache }): ReturnType<typeof createServer>;
+  create(options: {
+    template: string;
+    manifest?: ViteManifest;
+    base?: string;
+    cache?: PageCache;
+  }): ReturnType<typeof createServer>;
 };
 
 /**

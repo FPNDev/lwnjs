@@ -37,9 +37,12 @@ function createTodos() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   });
 
-  const changed = () =>{  lists.notify(); };
+  const changed = () => {
+    lists.notify();
+  };
   const find = (id: string) => all.find((list) => list.id === id);
-  const findTodo = (listId: string, todoId: string) => find(listId)!.todos.find((todo) => todo.id === todoId)!;
+  const findTodo = (listId: string, todoId: string) =>
+    find(listId)!.todos.find((todo) => todo.id === todoId)!;
 
   return {
     lists,
@@ -50,7 +53,11 @@ function createTodos() {
       lists.set(all);
     },
     addList(name: string) {
-      const list: TodoList = { id: crypto.randomUUID().slice(0, 8), name, todos: [] };
+      const list: TodoList = {
+        id: crypto.randomUUID().slice(0, 8),
+        name,
+        todos: [],
+      };
       all.push(list);
       changed();
 

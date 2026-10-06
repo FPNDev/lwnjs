@@ -3,7 +3,12 @@ import type { Router } from '../router/router.ts';
 import type { Route, RouteParams } from '../router/types.ts';
 import type { ServerToken } from '../ssr/data.ts';
 import { routeIds } from '../ssr/payload.ts';
-import { type CacheEntry, fsCache, memoryCache, type PageCache } from './cache.ts';
+import {
+  type CacheEntry,
+  fsCache,
+  memoryCache,
+  type PageCache,
+} from './cache.ts';
 import { renderPage } from './render.ts';
 
 export type LoadContext = {
@@ -76,7 +81,9 @@ const DATA_FILE = '__data.json';
 
 /** Cache key for a pathname: no trailing slash, except for the root. */
 function pageKey(pathname: string) {
-  return pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  return pathname.length > 1 && pathname.endsWith('/')
+    ? pathname.slice(0, -1)
+    : pathname;
 }
 
 /**
@@ -107,7 +114,8 @@ export function createServer(options: ServerOptions) {
   const configsFor = (chain: readonly Route[]) => {
     const found: ServerRoute[] = [];
     for (const route of chain) {
-      const config = configs.get(route) ?? (route.aliasOf && configs.get(route.aliasOf));
+      const config =
+        configs.get(route) ?? (route.aliasOf && configs.get(route.aliasOf));
       if (config) {
         found.push(config);
       }
@@ -124,7 +132,11 @@ export function createServer(options: ServerOptions) {
     const loads: Promise<void>[] = [];
     for (const config of configsFor(match.chain)) {
       if (config.load) {
-        loads.push(Promise.resolve(config.load({ url, params: match.params, request }, set)));
+        loads.push(
+          Promise.resolve(
+            config.load({ url, params: match.params, request }, set),
+          ),
+        );
       }
     }
     await Promise.all(loads);
@@ -159,9 +171,19 @@ export function createServer(options: ServerOptions) {
     return [...files].map((file) => base + file);
   };
 
-  const generate = async (url: URL, match: RouteMatch, request?: Request): Promise<CacheEntry> => {
+  const generate = async (
+    url: URL,
+    match: RouteMatch,
+    request?: Request,
+  ): Promise<CacheEntry> => {
     const data = await loadData(match, url, request);
-    const html = await renderPage(url, data, dataRoutes, preloadsFor(match.chain), renderOptions);
+    const html = await renderPage(
+      url,
+      data,
+      dataRoutes,
+      preloadsFor(match.chain),
+      renderOptions,
+    );
 
     return {
       html,
@@ -187,7 +209,10 @@ export function createServer(options: ServerOptions) {
     return running;
   };
 
-  const page = async (url: URL, request?: Request): Promise<PageResult | undefined> => {
+  const page = async (
+    url: URL,
+    request?: Request,
+  ): Promise<PageResult | undefined> => {
     const match = await options.router.match(url.pathname);
     if (!match) {
       return undefined;
@@ -195,7 +220,10 @@ export function createServer(options: ServerOptions) {
     const config = configsFor(match.chain).at(-1);
     const mode = config?.mode ?? 'ssr';
     if (mode === 'ssr') {
-      return { entry: await generate(url, match, request), cacheStatus: 'BYPASS' };
+      return {
+        entry: await generate(url, match, request),
+        cacheStatus: 'BYPASS',
+      };
     }
 
     const key = pageKey(url.pathname);
@@ -218,7 +246,10 @@ export function createServer(options: ServerOptions) {
   };
 
   /** Page data only: SSR pages skip the render, cached pages serve the data they were rendered with. */
-  const pageData = async (url: URL, request: Request): Promise<PageResult | undefined> => {
+  const pageData = async (
+    url: URL,
+    request: Request,
+  ): Promise<PageResult | undefined> => {
     const match = await options.router.match(url.pathname);
     if (!match) {
       return undefined;
@@ -229,7 +260,12 @@ export function createServer(options: ServerOptions) {
     const data = await loadData(match, url, request);
 
     return {
-      entry: { html: '', data: JSON.stringify(data), status: 200, createdAt: Date.now() },
+      entry: {
+        html: '',
+        data: JSON.stringify(data),
+        status: 200,
+        createdAt: Date.now(),
+      },
       cacheStatus: 'BYPASS',
     };
   };
@@ -249,7 +285,10 @@ export function createServer(options: ServerOptions) {
       let result: PageResult | undefined;
       try {
         result = isData
-          ? await pageData(new URL(pageKey(url.pathname.slice(0, -DATA_FILE.length)), url), request)
+          ? await pageData(
+              new URL(pageKey(url.pathname.slice(0, -DATA_FILE.length)), url),
+              request,
+            )
           : await page(url, request);
       } catch (error) {
         console.error(error);
@@ -262,13 +301,18 @@ export function createServer(options: ServerOptions) {
 
       const { entry, cacheStatus } = result;
 
-      return new Response(request.method === 'HEAD' ? null : isData ? entry.data : entry.html, {
-        status: isData ? 200 : entry.status,
-        headers: {
-          'content-type': isData ? 'application/json' : 'text/html; charset=utf-8',
-          'x-engine-cache': cacheStatus,
+      return new Response(
+        request.method === 'HEAD' ? null : isData ? entry.data : entry.html,
+        {
+          status: isData ? 200 : entry.status,
+          headers: {
+            'content-type': isData
+              ? 'application/json'
+              : 'text/html; charset=utf-8',
+            'x-engine-cache': cacheStatus,
+          },
         },
-      });
+      );
     },
 
     /**

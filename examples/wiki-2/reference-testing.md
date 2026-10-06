@@ -4,11 +4,11 @@ The engine APIs are ordinary TypeScript functions, so tests can call components 
 
 ## Configure a DOM environment
 
-~~~sh
+```sh
 npm install -D vitest happy-dom
-~~~
+```
 
-~~~ts
+```ts
 // vitest.config.ts
 import { defineConfig } from 'vitest/config';
 
@@ -17,24 +17,24 @@ export default defineConfig({
     environment: 'happy-dom',
   },
 });
-~~~
+```
 
 Server tests should use Node so browser globals cannot hide server-only behavior. Vitest can select the environment per file:
 
-~~~ts
+```ts
 // @vitest-environment node
-~~~
+```
 
 Install the DOM renderer before tests that use outlets or destruction to remove DOM views:
 
-~~~ts
+```ts
 import { beforeEach } from 'vitest';
 import { domRenderer, setRenderer } from 'lwnjs/core';
 
 beforeEach(() => {
   setRenderer(domRenderer);
 });
-~~~
+```
 
 The renderer is module-level state. Setting it in shared test setup gives each test a known DOM implementation.
 
@@ -42,7 +42,7 @@ The renderer is module-level state. Setting it in shared test setup gives each t
 
 A component can use a plain object as its owner. It does not need a mounted container unless the component behavior depends on a parent element.
 
-~~~ts
+```ts
 import { destroy, domRenderer, setRenderer } from 'lwnjs/core';
 import { NewTodoForm } from '../src/components/NewTodoForm';
 
@@ -63,7 +63,7 @@ it('trims the submitted title and clears the input', () => {
   expect(input.value).toBe('');
   destroy(owner);
 });
-~~~
+```
 
 Call `destroy(owner)` during cleanup. It removes owned listeners and subscriptions, including listeners attached to `document` or `window`. For a test that can throw before its assertions complete, put destruction in an `afterEach` cleanup or a `try/finally` block.
 
@@ -71,7 +71,7 @@ Call `destroy(owner)` during cleanup. It removes owned listeners and subscriptio
 
 State and store logic does not need a DOM.
 
-~~~ts
+```ts
 const root = {};
 const todos = attachStore(root, TodosStore);
 const list = todos.addList('Work');
@@ -80,11 +80,11 @@ todos.addTodo(list.id, 'Write documentation');
 
 expect(todos.find(list.id)?.todos).toHaveLength(1);
 destroy(root);
-~~~
+```
 
 When a component reads a store, provide it above the component before building that component:
 
-~~~ts
+```ts
 const root = {};
 const todos = attachStore(root, TodosStore);
 const sidebar = Sidebar(root);
@@ -93,7 +93,7 @@ todos.addList('Groceries');
 
 expect(sidebar.querySelectorAll('li')).toHaveLength(1);
 destroy(root);
-~~~
+```
 
 Reset browser storage such as `localStorage` between tests when the application persists state there. An in-memory test should not depend on data left by another test.
 
@@ -101,7 +101,7 @@ Reset browser storage such as `localStorage` between tests when the application 
 
 Explicit owners make cleanup easy to assert.
 
-~~~ts
+```ts
 it('stops notifying an owner after destroy', () => {
   const ping = createEmitter();
   const seen = vi.fn();
@@ -113,7 +113,7 @@ it('stops notifying an owner after destroy', () => {
 
   expect(seen).not.toHaveBeenCalled();
 });
-~~~
+```
 
 Unowned subscriptions created outside a setup frame are not automatically cleaned up. Save and call the unsubscribe function, or subscribe with an explicit owner.
 
@@ -123,7 +123,7 @@ The `env` object is also module-level state. If a test calls `env.isolate(id)`, 
 
 Use `memoryHistory` to select the initial URL. Router navigation can then run without `window.history`.
 
-~~~ts
+```ts
 const router = setupRouter(routes, {
   history: memoryHistory('/'),
 });
@@ -139,7 +139,7 @@ expect(router.getParams()?.groups?.handle).toBe('tea');
 
 router.dispose();
 destroy(owner);
-~~~
+```
 
 `router.go` resolves after matching, the load hook, route actions, and promises returned by those actions. `router.match(path)` checks a route without navigating, though it still evaluates guards.
 
@@ -147,14 +147,14 @@ destroy(owner);
 
 Outlet changes may be asynchronous when a page is loaded dynamically. Await the returned promise instead of waiting for an arbitrary timer.
 
-~~~ts
+```ts
 const host = document.createElement('div');
 const outlet = createOutlet(host);
 await outlet.show(() => import('../src/pages/Product'));
 
 expect(host.querySelector('h1')).not.toBeNull();
 destroy(host);
-~~~
+```
 
 The first dynamic import under a test runner may include a transform step, so fixed timeouts are especially unreliable.
 
@@ -162,7 +162,7 @@ The first dynamic import under a test runner may include a transform step, so fi
 
 Use Node for server tests and call the server's request handler directly.
 
-~~~ts
+```ts
 // @vitest-environment node
 import { createServer, memoryCache } from 'lwnjs/server';
 
@@ -183,7 +183,7 @@ it('renders a product page', async () => {
   expect(response?.status).toBe(200);
   expect(await response?.text()).toContain('<h1');
 });
-~~~
+```
 
 Stub or inject network calls in server loaders so the test is fast and deterministic. When testing ISR expiry, use fake timers for the clock and move time past the route's `revalidate` interval.
 
@@ -193,7 +193,7 @@ Stub or inject network calls in server loaders so the test is fast and determini
 
 A hydration test can render on the server, parse that HTML into the DOM test environment, then run the client app against the same markup.
 
-~~~ts
+```ts
 const response = await server.handle(
   new Request('http://localhost/products/tea'),
 );
@@ -208,9 +208,8 @@ await hydrate(container, App, router);
 
 expect(container.querySelector('h1')).toBe(serverHeading);
 expect(document.querySelector('#__engine')).toBeNull();
-~~~
+```
 
 Comparing node identity proves that the client adopted the server node instead of replacing it. The payload script is consumed during hydration.
 
 For client navigation after hydration, route the data request for `/path/__data.json` to `server.handle` in the test's `fetch` stub. Keep unrelated requests directed to the original fetch implementation or the test's own mock.
-

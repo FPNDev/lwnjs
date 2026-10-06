@@ -27,12 +27,12 @@ Call `setRenderer` before the first outlet shows anything. Without a renderer, `
 
 ## Which operations happen when
 
-| Engine action | Renderer calls |
-|---|---|
-| `outlet.show(...)` with a placeholder | `insertBefore(placeholder, view)` |
-| `outlet.show(...)` without one | `append(owner, view)` |
-| Switching views | `insertBefore(oldView, newView)`, then `remove(oldView)` via destroy |
-| `destroy(node)` | `remove(node)`, then `remove(child)` for every descendant |
+| Engine action                         | Renderer calls                                                       |
+| ------------------------------------- | -------------------------------------------------------------------- |
+| `outlet.show(...)` with a placeholder | `insertBefore(placeholder, view)`                                    |
+| `outlet.show(...)` without one        | `append(owner, view)`                                                |
+| Switching views                       | `insertBefore(oldView, newView)`, then `remove(oldView)` via destroy |
+| `destroy(node)`                       | `remove(node)`, then `remove(child)` for every descendant            |
 
 Everything else (`parent.append(child)` in your components, moving views, portals) is your own code calling your view system directly.
 

@@ -19,8 +19,17 @@ export async function exportPublicKey(key: CryptoKey) {
   return toBase64(await crypto.subtle.exportKey('raw', key));
 }
 
-export async function deriveSessionKey(privateKey: CryptoKey, peerPublicKey: string) {
-  const publicKey = await crypto.subtle.importKey('raw', fromBase64(peerPublicKey), ECDH, false, []);
+export async function deriveSessionKey(
+  privateKey: CryptoKey,
+  peerPublicKey: string,
+) {
+  const publicKey = await crypto.subtle.importKey(
+    'raw',
+    fromBase64(peerPublicKey),
+    ECDH,
+    false,
+    [],
+  );
 
   return crypto.subtle.deriveKey(
     { name: 'ECDH', public: publicKey },
@@ -38,7 +47,11 @@ export type Sealed = {
 
 export async function encrypt(key: CryptoKey, text: string): Promise<Sealed> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text));
+  const data = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(text),
+  );
 
   return { iv: toBase64(iv), data: toBase64(data) };
 }
@@ -59,13 +72,21 @@ export async function decrypt(key: CryptoKey, sealed: Sealed) {
  * a call). If it matches, nobody sits in the middle.
  */
 export async function safetyNumber(publicKeyA: string, publicKeyB: string) {
-  const [first, second] = publicKeyA < publicKeyB ? [publicKeyA, publicKeyB] : [publicKeyB, publicKeyA];
+  const [first, second] =
+    publicKeyA < publicKeyB
+      ? [publicKeyA, publicKeyB]
+      : [publicKeyB, publicKeyA];
   const hash = new Uint8Array(
-    await crypto.subtle.digest('SHA-256', new TextEncoder().encode(first + second)),
+    await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(first + second),
+    ),
   );
   const groups: string[] = [];
   for (let index = 0; index < 24; index += 2) {
-    groups.push(String(((hash[index] << 8) | hash[index + 1]) % 100_000).padStart(5, '0'));
+    groups.push(
+      String(((hash[index] << 8) | hash[index + 1]) % 100_000).padStart(5, '0'),
+    );
   }
 
   return groups.join(' ');

@@ -1,7 +1,14 @@
 import { attach, component, useStore } from 'lwnjs/core';
 import { html, text } from 'lwnjs/html';
 import { formatTime, initial } from '../lib/format';
-import { ChatRoute, HomeRoute, chatUrl, currentPeerId, router, routerLink } from '../router';
+import {
+  ChatRoute,
+  HomeRoute,
+  chatUrl,
+  currentPeerId,
+  router,
+  routerLink,
+} from '../router';
 import type { Contact } from '../services/db';
 import { ChatStore, type Presence } from '../store/chat';
 import classes from './Sidebar.module.scss';
@@ -54,7 +61,9 @@ const ContactRow = component((parent: object, contact: Contact): ContactRow => {
 /** Contacts, newest conversation first, with presence and unread counts. */
 export const ContactList = component((parent: object) => {
   const list = html`<ul class=${classes.contacts}></ul>`;
-  const empty = html`<p class=${classes.empty}>No chats yet. Share your ID or start a new chat.</p>`;
+  const empty = html`<p class=${classes.empty}>
+    No chats yet. Share your ID or start a new chat.
+  </p>`;
   const node = html`<nav>${list}${empty}</nav>`;
   attach(parent, node);
   const chat = useStore(ChatStore);

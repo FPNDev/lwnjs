@@ -32,7 +32,10 @@ const MARKER = '__engine';
 const nodeMarker = new RegExp(`^${MARKER}(\\d+)$`, 'u');
 const attributeMarker = new RegExp(`${MARKER}(\\d+)__`, 'u');
 
-const templates = new WeakMap<Document, WeakMap<TemplateStringsArray, Template>>();
+const templates = new WeakMap<
+  Document,
+  WeakMap<TemplateStringsArray, Template>
+>();
 
 function isNode(value: Interpolation): value is Node {
   return typeof value === 'object' && value !== null && 'nodeType' in value;
@@ -85,7 +88,11 @@ function findSlots(parent: Node, path: number[], slots: Template['slots']) {
     if (child.nodeType === 8) {
       const match = nodeMarker.exec((child as Comment).data);
       if (match) {
-        slots.push({ kind: 'node', path: path.slice(), index: Number(match[1]) });
+        slots.push({
+          kind: 'node',
+          path: path.slice(),
+          index: Number(match[1]),
+        });
       }
     } else if (child.nodeType === 1) {
       for (const attribute of (child as Element).attributes) {
@@ -153,7 +160,10 @@ function resolve(root: Node, path: number[]) {
  * @param values Interpolated values.
  * @returns The root nodes.
  */
-export function instantiate(strings: TemplateStringsArray, values: readonly Interpolation[]) {
+export function instantiate(
+  strings: TemplateStringsArray,
+  values: readonly Interpolation[],
+) {
   const { content, slots } = getTemplate(strings);
   const fragment = document.importNode(content, true);
 

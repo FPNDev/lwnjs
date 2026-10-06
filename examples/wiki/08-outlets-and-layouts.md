@@ -8,7 +8,10 @@ An **outlet** is a slot that shows one view at a time. Route actions call `outle
 import { createOutlet } from 'lwnjs/router';
 
 const slot = html<Comment>`<!---->`;
-const node = html`<div class="app"><header>…</header><main>${slot}</main></div>`;
+const node = html`<div class="app">
+  <header>…</header>
+  <main>${slot}</main>
+</div>`;
 attach(parent, node);
 
 const page = createOutlet(node, slot);
@@ -22,9 +25,9 @@ The owner and the placeholder's DOM parent can differ: pages are logical childre
 ## Showing views
 
 ```ts
-page.show(Home);                                // a factory: (parent) => view
-page.show(() => import('./pages/Product'));     // a loader: its default export or the module itself
-page.clear();                                   // destroy the current view
+page.show(Home); // a factory: (parent) => view
+page.show(() => import('./pages/Product')); // a loader: its default export or the module itself
+page.clear(); // destroy the current view
 ```
 
 `show` returns a promise of the shown view, or `undefined` if a newer `show`/`clear` superseded it.
@@ -74,17 +77,24 @@ A layout is a page that owns **its own outlet** for its children. App shows the 
 // routes
 export const OverviewRoute: Route = { path: '' };
 export const OrdersRoute: Route = { path: 'orders' };
-export const AccountRoute: Route = { path: '/account', children: [OverviewRoute, OrdersRoute] };
+export const AccountRoute: Route = {
+  path: '/account',
+  children: [OverviewRoute, OrdersRoute],
+};
 
 // app.ts
-router.route(AccountRoute, () => page.show(() => import('./account/AccountLayout')));
+router.route(AccountRoute, () =>
+  page.show(() => import('./account/AccountLayout')),
+);
 
 // account/AccountLayout.ts
 export default function AccountLayout(parent: object) {
   const slot = html<Comment>`<!---->`;
   const node = html`
     <div class="account">
-      <nav><a href="/account">Overview</a><a href="/account/orders">Orders</a></nav>
+      <nav>
+        <a href="/account">Overview</a><a href="/account/orders">Orders</a>
+      </nav>
       <section>${slot}</section>
     </div>
   `;
@@ -99,6 +109,7 @@ export default function AccountLayout(parent: object) {
 ```
 
 What happens:
+
 - **`/` → `/account`**: App's action shows the layout. During the layout's setup, its listener for `OverviewRoute` runs right away (the index route is active) and shows the overview.
 - **`/account` → `/account/orders`**: App's action runs again with the same loader, so the layout stays. The layout's `OrdersRoute` action swaps only the inner page.
 - **`/account/orders` → `/`**: App shows the home page and destroys the layout, its outlet, its inner page and all its route listeners.

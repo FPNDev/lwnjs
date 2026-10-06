@@ -31,40 +31,41 @@ App ─┬─ Sidebar ─┬─ ListRow (a)               <div.layout>
 
 ## Contents
 
-| # | Page | What it covers |
-|---|---|---|
-| 1 | [Getting started](01-getting-started.md) | Install, a client-only app, a server-rendered app, project layout |
-| 2 | [The logical tree](02-logical-tree.md) | `attach`, `detach`, `destroy`, ordering, moving, ownership rules |
-| 3 | [Components](03-components.md) | The component pattern, `component()`, implicit owners, controllers, composition, portals, lists, reattachable components |
-| 4 | [State and events](04-state-and-events.md) | Plain variables, `createState`, `createEmitter`, `notify`, delivery rules, owned vs unowned subscriptions |
-| 5 | [Stores](05-stores.md) | `createStore`, `attachStore`, `useStore`, scoping, services, async-initialized stores |
-| 6 | [Isolated envs](06-envs.md) | Keyboard ownership, `env.isolate`, `is`, `isCurrent`, nesting, focus, modals, shortcuts |
-| 7 | [Routing](07-routing.md) | Routes, matching, params, guards, nested and index routes, aliases, the router API, history |
-| 8 | [Outlets and layouts](08-outlets-and-layouts.md) | `createOutlet`, lazy pages, keeping pages across params, layouts with their own outlet |
-| 9 | [HTML templates](09-html-templates.md) | `html`, `mhtml`, `element`, `text`, value rules, typing, caching, limits |
-| 10 | [Renderers](10-renderers.md) | The renderer contract, `domRenderer`, writing your own (canvas, three.js) |
-| 11 | [Server rendering](11-server-rendering.md) | SSR, SSG, ISR, server data, hydration, caching, the CLI, custom hosting |
-| 12 | [Testing](12-testing.md) | Components, routes, stores and server rendering under test |
-| 13 | [Best practices](13-best-practices.md) | Structure, performance, patterns that scale |
-| 14 | [API reference](14-api-reference.md) | Every export, with signatures and semantics |
-| 15 | [Troubleshooting and FAQ](15-troubleshooting.md) | Every error message explained, common questions |
+| #   | Page                                             | What it covers                                                                                                           |
+| --- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| 1   | [Getting started](01-getting-started.md)         | Install, a client-only app, a server-rendered app, project layout                                                        |
+| 2   | [The logical tree](02-logical-tree.md)           | `attach`, `detach`, `destroy`, ordering, moving, ownership rules                                                         |
+| 3   | [Components](03-components.md)                   | The component pattern, `component()`, implicit owners, controllers, composition, portals, lists, reattachable components |
+| 4   | [State and events](04-state-and-events.md)       | Plain variables, `createState`, `createEmitter`, `notify`, delivery rules, owned vs unowned subscriptions                |
+| 5   | [Stores](05-stores.md)                           | `createStore`, `attachStore`, `useStore`, scoping, services, async-initialized stores                                    |
+| 6   | [Isolated envs](06-envs.md)                      | Keyboard ownership, `env.isolate`, `is`, `isCurrent`, nesting, focus, modals, shortcuts                                  |
+| 7   | [Routing](07-routing.md)                         | Routes, matching, params, guards, nested and index routes, aliases, the router API, history                              |
+| 8   | [Outlets and layouts](08-outlets-and-layouts.md) | `createOutlet`, lazy pages, keeping pages across params, layouts with their own outlet                                   |
+| 9   | [HTML templates](09-html-templates.md)           | `html`, `mhtml`, `element`, `text`, value rules, typing, caching, limits                                                 |
+| 10  | [Renderers](10-renderers.md)                     | The renderer contract, `domRenderer`, writing your own (canvas, three.js)                                                |
+| 11  | [Server rendering](11-server-rendering.md)       | SSR, SSG, ISR, server data, hydration, caching, the CLI, custom hosting                                                  |
+| 12  | [Testing](12-testing.md)                         | Components, routes, stores and server rendering under test                                                               |
+| 13  | [Best practices](13-best-practices.md)           | Structure, performance, patterns that scale                                                                              |
+| 14  | [API reference](14-api-reference.md)             | Every export, with signatures and semantics                                                                              |
+| 15  | [Troubleshooting and FAQ](15-troubleshooting.md) | Every error message explained, common questions                                                                          |
 
 ## Entry points
 
-| Import | Contains |
-|---|---|
-| `lwnjs/core` | the logical tree, lifecycle hooks, `component`, `createState`, `createEmitter`, stores, `env`, `listen`, renderers |
-| `lwnjs/router` | `setupRouter`, routes, history adapters, `createOutlet`, `aliasRoute` |
-| `lwnjs/html` | `html`, `mhtml`, `element`, `text` |
-| `lwnjs/ssr` | client side of server rendering: `serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer` |
-| `lwnjs/server` | Node only: `defineServerApp`, `createServer`, `fsCache`, `memoryCache`, `toNodeHandler` |
-| `lwn` (CLI) | `lwn dev`, `lwn build`, `lwn start` |
+| Import         | Contains                                                                                                           |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `lwnjs/core`   | the logical tree, lifecycle hooks, `component`, `createState`, `createEmitter`, stores, `env`, `listen`, renderers |
+| `lwnjs/router` | `setupRouter`, routes, history adapters, `createOutlet`, `aliasRoute`                                              |
+| `lwnjs/html`   | `html`, `mhtml`, `element`, `text`                                                                                 |
+| `lwnjs/ssr`    | client side of server rendering: `serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer`               |
+| `lwnjs/server` | Node only: `defineServerApp`, `createServer`, `fsCache`, `memoryCache`, `toNodeHandler`                            |
+| `lwn` (CLI)    | `lwn dev`, `lwn build`, `lwn start`                                                                                |
 
 Bundlers include only what you import. A bundle that uses `createState` alone is about 1.5 kB minified.
 
 ## Example apps
 
 These live next to this wiki and are referenced throughout:
+
 - `hello-world`: one component.
 - `simple-app`: todo lists with stores, keyed lists, envs and a lazy page.
 - `complex-app`: a peer-to-peer encrypted chat with portals, moving live components, envs and logical nodes that aren't views.

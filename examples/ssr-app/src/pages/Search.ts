@@ -10,9 +10,16 @@ import classes from '../styles/ui.module.scss';
  * per visitor and change with every keystroke: nothing to prerender or cache.
  */
 export default function Search(parent: object) {
-  const input = html<HTMLInputElement>`<input class=${classes.search} type="search" placeholder="Search products…" />`;
+  const input = html<HTMLInputElement>`<input
+    class=${classes.search}
+    type="search"
+    placeholder="Search products…"
+  />`;
   const status = html`<p class=${classes.muted}>Type to search.</p>`;
-  const node = html`<div><h1 class=${classes.title}>Search</h1>${input}${status}</div>`;
+  const node = html`<div>
+    <h1 class=${classes.title}>Search</h1>
+    ${input}${status}
+  </div>`;
   attach(parent, node);
 
   let grid: HTMLElement | undefined;

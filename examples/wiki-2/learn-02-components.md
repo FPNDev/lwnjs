@@ -4,7 +4,7 @@ A component is a function that creates a view and connects it to behavior. It ru
 
 ## A component function
 
-~~~ts
+```ts
 import { attach, component, listen } from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 
@@ -14,7 +14,10 @@ type SearchBoxOptions = {
 
 export const SearchBox = component(
   (parent: object, options: SearchBoxOptions) => {
-    const input = html<HTMLInputElement>`<input type="search" placeholder="Search">`;
+    const input = html<HTMLInputElement>`<input
+      type="search"
+      placeholder="Search"
+    />`;
     const node = html`<form>${input}<button>Search</button></form>`;
 
     attach(parent, node);
@@ -27,14 +30,14 @@ export const SearchBox = component(
     return node;
   },
 );
-~~~
+```
 
 The parent argument describes logical ownership. It does not have to be the view's DOM parent. The caller decides where to mount the returned view:
 
-~~~ts
+```ts
 const search = SearchBox(appNode, { onSearch });
 mainElement.append(search);
-~~~
+```
 
 This separation lets the same component work inside a page, a modal, or a different renderer.
 
@@ -42,7 +45,7 @@ This separation lets the same component work inside a page, a modal, or a differ
 
 Build the component root, then attach it before making owner-less calls such as listen, subscribe, useStore, or onDestroy.
 
-~~~ts
+```ts
 const node = html`<section></section>`;
 attach(parent, node);
 
@@ -50,7 +53,7 @@ listen(window, 'resize', updateLayout);
 onDestroy(() => {
   releaseSomething();
 });
-~~~
+```
 
 The setup frame uses the first attached node as its owner. Calls made after that point belong to the component root.
 
@@ -58,7 +61,7 @@ The setup frame uses the first attached node as its owner. Calls made after that
 
 Wrap reusable components with component() when they may use owner-less engine APIs. Each wrapped call opens a separate setup frame, so its first attached node owns its own listeners and subscriptions.
 
-~~~ts
+```ts
 const Page = component((parent: object) => {
   const node = html`<main></main>`;
   attach(parent, node);
@@ -69,7 +72,7 @@ const Page = component((parent: object) => {
 
   return node;
 });
-~~~
+```
 
 If Header is a plain function and it attaches its root, that attachment happens in the page's active frame. Owner-less calls inside the plain function can then belong to the page. A child that needs its own lifetime should be wrapped with component().
 
@@ -79,13 +82,13 @@ A page shown by an outlet already receives a setup frame. Route actions and onAt
 
 Components stay easier to reuse when they receive inputs and callbacks rather than importing details from the caller.
 
-~~~ts
+```ts
 type TodoFormOptions = {
   onAdd(title: string): void;
 };
 
 const TodoForm = component((parent: object, options: TodoFormOptions) => {
-  const input = html<HTMLInputElement>`<input>`;
+  const input = html<HTMLInputElement>`<input />`;
   const form = html`<form>${input}<button>Add</button></form>`;
   attach(parent, form);
 
@@ -100,7 +103,7 @@ const TodoForm = component((parent: object, options: TodoFormOptions) => {
 
   return form;
 });
-~~~
+```
 
 The form reports a title. It does not need to know which store saves it or which page will display the result.
 
@@ -108,7 +111,7 @@ The form reports a title. It does not need to know which store saves it or which
 
 A plain node is enough when the caller only mounts and destroys a component. Return a controller when the caller needs to update it later:
 
-~~~ts
+```ts
 type CounterView = {
   node: HTMLElement;
   setValue(value: number): void;
@@ -126,7 +129,7 @@ const Counter = component((parent: object): CounterView => {
     },
   };
 });
-~~~
+```
 
 Keep the controller focused on a few operations, such as update(data), focus(), or setTitle(text). Callbacks are inputs; a controller is an output.
 
@@ -134,13 +137,13 @@ Keep the controller focused on a few operations, such as update(data), focus(), 
 
 If only one component uses a value, store it in a local variable and update the view next to the change.
 
-~~~ts
+```ts
 let expanded = false;
 
 listen(toggle, 'click', () => {
   expanded = !expanded;
   details.hidden = !expanded;
 });
-~~~
+```
 
 Use createState when other independent parts of the app need to observe a value. The next chapter explains how owners keep those subscriptions and other work tied to the right lifetime.

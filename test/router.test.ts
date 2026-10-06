@@ -21,7 +21,9 @@ describe('router', () => {
   it('fires listeners of parent routes for nested matches (B29)', async () => {
     const profile: Route = { path: 'profile' };
     const settings: Route = { path: '/settings', children: [profile] };
-    const router = setupRouter([settings], { history: memoryHistory('/settings/profile') });
+    const router = setupRouter([settings], {
+      history: memoryHistory('/settings/profile'),
+    });
 
     const owner = {};
     const layout = vi.fn();
@@ -40,9 +42,18 @@ describe('router', () => {
     const account: Route = { path: '/account', children: [overview, orders] };
     const router = setupRouter([account], { history: memoryHistory('/') });
 
-    expect((await router.match('/account'))?.chain).toEqual([account, overview]);
-    expect((await router.match('/account/'))?.chain).toEqual([account, overview]);
-    expect((await router.match('/account/orders'))?.chain).toEqual([account, orders]);
+    expect((await router.match('/account'))?.chain).toEqual([
+      account,
+      overview,
+    ]);
+    expect((await router.match('/account/'))?.chain).toEqual([
+      account,
+      overview,
+    ]);
+    expect((await router.match('/account/orders'))?.chain).toEqual([
+      account,
+      orders,
+    ]);
   });
 
   it('does not throw on unmatched paths (B25)', async () => {
@@ -54,7 +65,9 @@ describe('router', () => {
 
   it('go resolves after route actions settle (B27)', async () => {
     const page: Route = { path: '/page' };
-    const router = setupRouter([{ path: '/' }, page], { history: memoryHistory('/') });
+    const router = setupRouter([{ path: '/' }, page], {
+      history: memoryHistory('/'),
+    });
     let done = false;
     router.route({}, page, async () => {
       await flush();
@@ -67,11 +80,17 @@ describe('router', () => {
 
   it('keeps guards on aliases and fires original child listeners (B23)', async () => {
     const child: Route = { path: 'child' };
-    const guarded: Route = { path: '/a', guardChildren: () => false, children: [child] };
+    const guarded: Route = {
+      path: '/a',
+      guardChildren: () => false,
+      children: [child],
+    };
     const alias = aliasRoute(guarded, '/b');
     const open: Route = { path: '/c', children: [child] };
     const openAlias = aliasRoute(open, '/d');
-    const router = setupRouter([guarded, alias, open, openAlias], { history: memoryHistory('/') });
+    const router = setupRouter([guarded, alias, open, openAlias], {
+      history: memoryHistory('/'),
+    });
 
     const action = vi.fn();
     router.route({}, child, action);
@@ -102,7 +121,9 @@ describe('router', () => {
   it('fires a listener once even if it lists a route and its alias (B30)', async () => {
     const page: Route = { path: '/page' };
     const alias = aliasRoute(page, '/alias');
-    const router = setupRouter([page, alias], { history: memoryHistory('/alias') });
+    const router = setupRouter([page, alias], {
+      history: memoryHistory('/alias'),
+    });
     await flush();
 
     const action = vi.fn();
@@ -132,7 +153,9 @@ describe('router', () => {
 
   it('stops listeners when their owner is destroyed', async () => {
     const page: Route = { path: '/page' };
-    const router = setupRouter([{ path: '/' }, page], { history: memoryHistory('/') });
+    const router = setupRouter([{ path: '/' }, page], {
+      history: memoryHistory('/'),
+    });
     const owner = {};
     const action = vi.fn();
     router.route(owner, page, action);
@@ -186,7 +209,9 @@ describe('outlet', () => {
     const loader = () => Promise.resolve({ default: factory });
 
     const shown = await outlet.show(loader);
-    expect(await outlet.show(() => Promise.resolve({ default: factory }))).toBe(shown);
+    expect(await outlet.show(() => Promise.resolve({ default: factory }))).toBe(
+      shown,
+    );
     expect(owner.childNodes).toHaveLength(1);
   });
 

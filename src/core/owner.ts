@@ -33,7 +33,9 @@ export function runInFrame<T>(owner: object | undefined, setup: () => T): T {
  * @param setup The component function.
  * @returns The same function, running in its own frame.
  */
-export function component<A extends unknown[], R>(setup: (...args: A) => R): (...args: A) => R {
+export function component<A extends unknown[], R>(
+  setup: (...args: A) => R,
+): (...args: A) => R {
   return (...args) => runInFrame(undefined, () => setup(...args));
 }
 

@@ -27,18 +27,28 @@ export default function ListPage(parent: object) {
     todos.removeList(listId);
     void router.go('/');
   });
-  const form = NewTodoForm(node, (title) =>{  todos.addTodo(listId, title); });
+  const form = NewTodoForm(node, (title) => {
+    todos.addTodo(listId, title);
+  });
   const filters = TodoFilters(node, (next) => {
     filter = next;
     render();
   });
   const items = TodoItems(node, {
-    toggle: (id) =>{  todos.toggleTodo(listId, id); },
-    rename: (id, title) =>{  todos.renameTodo(listId, id, title); },
-    remove: (id) =>{  todos.removeTodo(listId, id); },
+    toggle: (id) => {
+      todos.toggleTodo(listId, id);
+    },
+    rename: (id, title) => {
+      todos.renameTodo(listId, id, title);
+    },
+    remove: (id) => {
+      todos.removeTodo(listId, id);
+    },
   });
-  const footer = TodoFooter(node, () =>{  todos.clearDone(listId); });
-  
+  const footer = TodoFooter(node, () => {
+    todos.clearDone(listId);
+  });
+
   node.append(header.node, form, filters, ...items.nodes, footer.node);
 
   function render() {

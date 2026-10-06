@@ -45,12 +45,18 @@ type ShopProduct = {
 
 type Edges<T> = { edges: { node: T }[] };
 
-const PRODUCT_FIELDS = 'handle title featuredImage { url } priceRange { minVariantPrice { amount currencyCode } }';
+const PRODUCT_FIELDS =
+  'handle title featuredImage { url } priceRange { minVariantPrice { amount currencyCode } }';
 
 const money = (amount: string | number, currency: string) =>
-  new Intl.NumberFormat('en', { style: 'currency', currency }).format(Number(amount));
+  new Intl.NumberFormat('en', { style: 'currency', currency }).format(
+    Number(amount),
+  );
 
-async function shop<T>(query: string, variables: Record<string, unknown> = {}): Promise<T> {
+async function shop<T>(
+  query: string,
+  variables: Record<string, unknown> = {},
+): Promise<T> {
   const response = await fetch('https://mock.shop/api', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -69,7 +75,9 @@ function summary(product: ShopProduct): ProductSummary {
   return {
     handle: product.handle,
     title: product.title,
-    image: product.featuredImage ? `${product.featuredImage.url}?width=480` : '',
+    image: product.featuredImage
+      ? `${product.featuredImage.url}?width=480`
+      : '',
     price: money(amount, currencyCode),
   };
 }
@@ -84,25 +92,49 @@ function summaries(products: Edges<ShopProduct>) {
 }
 
 export async function featuredCollections(): Promise<CollectionSummary[]> {
-  const data = await shop<{ collections: Edges<{ handle: string; title: string; products: Edges<ShopProduct> }> }>(
+  const data = await shop<{
+    collections: Edges<{
+      handle: string;
+      title: string;
+      products: Edges<ShopProduct>;
+    }>;
+  }>(
     `{ collections(first: 4) { edges { node { handle title products(first: 4) { edges { node { ${PRODUCT_FIELDS} } } } } } } }`,
   );
   const list: CollectionSummary[] = [];
   for (const { node } of data.collections.edges) {
-    list.push({ handle: node.handle, title: node.title, products: summaries(node.products) });
+    list.push({
+      handle: node.handle,
+      title: node.title,
+      products: summaries(node.products),
+    });
   }
 
   return list;
 }
 
-export async function collection(handle: string): Promise<CollectionSummary | null> {
-  const data = await shop<{ collection: { handle: string; title: string; products: Edges<ShopProduct> } | null }>(
+export async function collection(
+  handle: string,
+): Promise<CollectionSummary | null> {
+  const data = await shop<{
+    collection: {
+      handle: string;
+      title: string;
+      products: Edges<ShopProduct>;
+    } | null;
+  }>(
     `query ($handle: String!) { collection(handle: $handle) { handle title products(first: 24) { edges { node { ${PRODUCT_FIELDS} } } } } }`,
     { handle },
   );
   const found = data.collection;
 
-  return found && { handle: found.handle, title: found.title, products: summaries(found.products) };
+  return (
+    found && {
+      handle: found.handle,
+      title: found.title,
+      products: summaries(found.products),
+    }
+  );
 }
 
 export async function product(handle: string): Promise<ProductDetail | null> {
@@ -111,7 +143,12 @@ export async function product(handle: string): Promise<ProductDetail | null> {
     { handle },
   );
 
-  return data.product && { ...summary(data.product), description: data.product.description ?? '' };
+  return (
+    data.product && {
+      ...summary(data.product),
+      description: data.product.description ?? '',
+    }
+  );
 }
 
 /** Called from the browser: search results are per visitor, nothing to prerender or cache. */
@@ -125,16 +162,33 @@ export async function searchProducts(term: string) {
 }
 
 export async function user(id: number): Promise<User> {
-  const response = await fetch(`https://dummyjson.com/users/${id}?select=firstName,lastName,email,image`);
-  const data = (await response.json()) as { id: number; firstName: string; lastName: string; email: string; image: string };
+  const response = await fetch(
+    `https://dummyjson.com/users/${id}?select=firstName,lastName,email,image`,
+  );
+  const data = (await response.json()) as {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image: string;
+  };
 
-  return { id: data.id, name: `${data.firstName} ${data.lastName}`, email: data.email, image: data.image };
+  return {
+    id: data.id,
+    name: `${data.firstName} ${data.lastName}`,
+    email: data.email,
+    image: data.image,
+  };
 }
 
 export async function orders(userId: number): Promise<Order[]> {
   const response = await fetch(`https://dummyjson.com/carts/user/${userId}`);
   const data = (await response.json()) as {
-    carts: { id: number; total: number; products: { title: string; quantity: number }[] }[];
+    carts: {
+      id: number;
+      total: number;
+      products: { title: string; quantity: number }[];
+    }[];
   };
   const list: Order[] = [];
   for (const cart of data.carts) {

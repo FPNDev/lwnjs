@@ -10,13 +10,15 @@ import { createState, createStore } from 'lwnjs/core';
 function createTodos() {
   const all: TodoList[] = load();
   const lists = createState(all);
-  lists.subscribe((value) => save(value));       // persistence, owned by the provider
+  lists.subscribe((value) => save(value)); // persistence, owned by the provider
 
   return {
     lists,
     find: (id: string) => all.find((list) => list.id === id),
     addTodo(listId: string, title: string) {
-      all.find((list) => list.id === listId)!.todos.push({ id: crypto.randomUUID(), title, done: false });
+      all
+        .find((list) => list.id === listId)!
+        .todos.push({ id: crypto.randomUUID(), title, done: false });
       lists.notify();
     },
     // …more actions
@@ -38,7 +40,7 @@ export const TodosStore = createStore(createTodos);
 const App = component((parent: object) => {
   const node = html`<div class="app"></div>`;
   attach(parent, node);
-  const todos = attachStore(TodosStore);      // runs init, provides on `node`
+  const todos = attachStore(TodosStore); // runs init, provides on `node`
   // …
 });
 
@@ -46,7 +48,7 @@ const App = component((parent: object) => {
 const Sidebar = component((parent: object) => {
   const node = html`<aside></aside>`;
   attach(parent, node);
-  const todos = useStore(TodosStore);         // nearest provider up the logical tree
+  const todos = useStore(TodosStore); // nearest provider up the logical tree
   todos.lists.subscribe(render);
   // …
 });
@@ -80,12 +82,12 @@ onAttach(() => header.place(useStore(node, PlacementStore)));
 **UI stores:** app-wide UI services (`toasts.show(text)`, a dock, a modal host), filled by the root component right after attaching:
 
 ```ts
-const ui = attachStore(UiStore);   // createStore(() => ({}) as Ui)
+const ui = attachStore(UiStore); // createStore(() => ({}) as Ui)
 ui.toasts = Toasts(node);
 ui.dock = Dock(node);
 ```
 
-**Context stores:** small values describing *where* something is (`PlacementStore`, a theme), provided by layouts.
+**Context stores:** small values describing _where_ something is (`PlacementStore`, a theme), provided by layouts.
 
 ## Stores that need async initialization
 

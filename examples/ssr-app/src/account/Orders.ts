@@ -15,7 +15,11 @@ export default function Orders(parent: object) {
     for (const item of order.items) {
       items.append(html`<li>${item.title} × ${item.quantity}</li>`);
     }
-    node.append(html`<div class=${classes.order}><strong>Order #${order.id} · ${order.total}</strong>${items}</div>`);
+    node.append(
+      html`<div class=${classes.order}>
+        <strong>Order #${order.id} · ${order.total}</strong>${items}
+      </div>`,
+    );
   }
   if (orders.length === 0) {
     node.append(html`<p class=${classes.muted}>No orders yet.</p>`);

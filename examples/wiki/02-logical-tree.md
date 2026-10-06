@@ -5,6 +5,7 @@ Everything in LWN hangs off one structure: a tree of **logical nodes** that reco
 ## Logical nodes
 
 A logical node is **any object**:
+
 - a DOM element (the usual case: a component's root),
 - a plain `{}` used as an owner for a group of things,
 - a non-visual resource: a WebSocket wrapper, a WebRTC connection, a worker handle,
@@ -41,16 +42,18 @@ Destroys `node` and its whole logical subtree. **O(subtree)**.
 
 ```ts
 destroy(dialogNode);
-destroy(maybeUndefined);   // undefined is ignored
+destroy(maybeUndefined); // undefined is ignored
 ```
 
 The order is deliberate:
+
 1. **The root view is removed first**, through the renderer (`renderer.remove(node)`). That is one live DOM mutation; everything below is removed from an already detached tree, which is cheap.
 2. **Children are destroyed**, recursively, children before parents. Each child's view is removed too, which matters for portals mounted elsewhere.
 3. **The node is detached** from its parent; its `onAttach` scope ends.
 4. **`onDestroy` hooks run.** Owner-scoped subscriptions, listeners and route listeners end here.
 
 Notes:
+
 - A node that never joined the tree still has its view removed.
 - Destroying twice is harmless: the second call finds no record.
 - A throwing hook doesn't stop the others; the error is rethrown asynchronously, so it still reaches the console and error trackers.
@@ -58,8 +61,8 @@ Notes:
 ## Reading the tree
 
 ```ts
-getParent(node);   // logical parent or undefined, O(1)
-isAttached(node);  // has a logical parent? O(1); roots are never "attached"
+getParent(node); // logical parent or undefined, O(1)
+isAttached(node); // has a logical parent? O(1); roots are never "attached"
 ```
 
 There is deliberately no API to list children or walk the tree. Components keep references to what they create, which is faster and clearer than querying a tree.
@@ -81,9 +84,9 @@ Both have owner-less forms inside setup frames: `onDestroy(fn)` and `onAttach(ho
 **One owner per thing.** Every subscription, listener and timer should have exactly one owner: the node whose lifetime it shares.
 
 ```ts
-listen(window, 'resize', relayout);                // owned by the current component
-state.subscribe(render);                           // owned by the current component
-onDestroy(() => clearInterval(timer));             // a timer, cleaned up with its owner
+listen(window, 'resize', relayout); // owned by the current component
+state.subscribe(render); // owned by the current component
+onDestroy(() => clearInterval(timer)); // a timer, cleaned up with its owner
 ```
 
 **Grouping with a plain object.** When a set of things must end together but has no view, give them their own node (plain object, symbol, etc):
@@ -101,7 +104,7 @@ onDestroy(session, () => socket.close());
 ```ts
 let buttons: HTMLElement | undefined;
 function showButtons(kind: 'page' | 'dock') {
-  destroy(buttons);                       // old buttons and their listeners
+  destroy(buttons); // old buttons and their listeners
   const group = html`<span></span>`;
   attach(header, group);
   // … listen(group, button, 'click', …)
@@ -113,12 +116,12 @@ function showButtons(kind: 'page' | 'dock') {
 
 ## Complexity
 
-| Operation | Cost |
-|---|---|
-| `attach`, `detach`, move | O(1) + hooks |
-| `destroy` | O(subtree), one live view mutation |
-| `getParent`, `isAttached` | O(1) |
-| `onDestroy` register and unregister | O(1) |
+| Operation                           | Cost                               |
+| ----------------------------------- | ---------------------------------- |
+| `attach`, `detach`, move            | O(1) + hooks                       |
+| `destroy`                           | O(subtree), one live view mutation |
+| `getParent`, `isAttached`           | O(1)                               |
+| `onDestroy` register and unregister | O(1)                               |
 
 Children are kept in a `Set`, so attaching, detaching and moving never scan siblings.
 

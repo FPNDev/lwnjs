@@ -67,9 +67,11 @@ describe('emitter / state', () => {
 
   it('keeps calling listeners after one throws, rethrowing asynchronously (B3)', () => {
     const deferred: (() => void)[] = [];
-    const queueMicrotask = vi.spyOn(globalThis, 'queueMicrotask').mockImplementation((task) => {
-      deferred.push(task);
-    });
+    const queueMicrotask = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation((task) => {
+        deferred.push(task);
+      });
     const events = createEmitter<number>();
     const seen: number[] = [];
     events.subscribe(() => {

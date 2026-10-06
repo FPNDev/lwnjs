@@ -3,6 +3,7 @@
 The same components render to HTML on the server and **hydrate** in the browser: the client adopts the server's DOM instead of rebuilding it. Pages can be rendered per request (SSR), once at build time (SSG), or cached and refreshed in the background (ISR).
 
 Two entry points are involved:
+
 - `lwnjs/ssr`: client-safe, imported by app code (`serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer`).
 - `lwnjs/server`: Node only, imported by the server entry (`defineServerApp`, `createServer`, caches, `toNodeHandler`).
 
@@ -40,14 +41,15 @@ export default defineServerApp({ router, routes, serverRoutes, app: App });
 
 ## Modes
 
-| Mode | Rendered | Cached | Use for |
-|---|---|---|---|
-| `ssr` (default) | every request | never | content that depends on the request: cookies, the signed-in user, headers |
-| `ssg` | once, at build (or first request) | forever | the same for everyone, rarely changes |
-| `isr` | like `ssg`, refreshed in the background after `revalidate` s | until stale | the same for everyone, changes over time |
-| client | not on the server | n/a | per visitor or per interaction: search results, carts, drafts |
+| Mode            | Rendered                                                     | Cached      | Use for                                                                   |
+| --------------- | ------------------------------------------------------------ | ----------- | ------------------------------------------------------------------------- |
+| `ssr` (default) | every request                                                | never       | content that depends on the request: cookies, the signed-in user, headers |
+| `ssg`           | once, at build (or first request)                            | forever     | the same for everyone, rarely changes                                     |
+| `isr`           | like `ssg`, refreshed in the background after `revalidate` s | until stale | the same for everyone, changes over time                                  |
+| client          | not on the server                                            | n/a         | per visitor or per interaction: search results, carts, drafts             |
 
 Deciding:
+
 - **Is the page the same for every visitor?** If not → `ssr`.
 - **Does it change?** Never → `ssg`. Sometimes → `isr` with a `revalidate` matching how stale it may be.
 - **Is a part of it per visitor** (cart badge, "hi, name")? Render it neutral on the server and fill it in on the client after hydration.
@@ -72,21 +74,22 @@ export const serverRoutes: ServerRoute[] = [
     route: ProductRoute,
     mode: 'isr',
     revalidate: 60,
-    paths: async () => (await topProducts()).map((p) => `/products/${p.handle}`),
+    paths: async () =>
+      (await topProducts()).map((p) => `/products/${p.handle}`),
     load: async ({ params }, set) => {
       set(ProductData, await product(params?.groups?.handle ?? ''));
     },
     preload: ['src/pages/Product.ts'],
   },
   {
-    route: AccountRoute,               // a layout: loads the user for every /account/* page
+    route: AccountRoute, // a layout: loads the user for every /account/* page
     mode: 'ssr',
     load: async ({ request }, set) => {
       set(UserData, await userFromCookie(request));
     },
   },
   {
-    route: OrdersRoute,                // its page: loads in parallel with the layout's loader
+    route: OrdersRoute, // its page: loads in parallel with the layout's loader
     mode: 'ssr',
     load: async ({ request }, set) => {
       set(OrdersData, await ordersFor(request));
@@ -96,15 +99,15 @@ export const serverRoutes: ServerRoute[] = [
 ];
 ```
 
-| Field | Meaning |
-|---|---|
-| `route` | The route object (or the original of an alias) |
-| `mode` | `'ssr'` (default), `'ssg'` or `'isr'` |
-| `revalidate` | Seconds until an `isr` page is stale. Without it, `isr` behaves like `ssg` |
-| `status` | HTTP status for the page, e.g. 404 |
-| `paths()` | Paths to prerender in `build` (`ssg`/`isr`) |
+| Field                | Meaning                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| `route`              | The route object (or the original of an alias)                                          |
+| `mode`               | `'ssr'` (default), `'ssg'` or `'isr'`                                                   |
+| `revalidate`         | Seconds until an `isr` page is stale. Without it, `isr` behaves like `ssg`              |
+| `status`             | HTTP status for the page, e.g. 404                                                      |
+| `paths()`            | Paths to prerender in `build` (`ssg`/`isr`)                                             |
 | `load(context, set)` | Loads page data. `context` is `{ url, params, request? }` (no `request` during `build`) |
-| `preload` | Vite manifest keys of the route's lazy modules, for `<link rel="modulepreload">` |
+| `preload`            | Vite manifest keys of the route's lazy modules, for `<link rel="modulepreload">`        |
 
 - **Which settings apply:** the deepest configured route in the matched chain decides `mode`, `revalidate` and `status`.
 - **Loaders:** **all** loaders in the chain run, in parallel. A layout's loader and its page's loader cooperate.
@@ -163,7 +166,12 @@ Everything a loader `set`s is serialized into the page (and into `__data.json`).
 
 ```ts
 function summary(product: ApiProduct): ProductSummary {
-  return { handle: product.handle, title: product.title, image: product.image?.url ?? '', price: format(product.price) };
+  return {
+    handle: product.handle,
+    title: product.title,
+    image: product.image?.url ?? '',
+    price: format(product.price),
+  };
 }
 ```
 
@@ -214,6 +222,7 @@ Without a payload (a client-only page), `hydrate` just mounts the app.
 ## Client navigation
 
 After hydration, `loadServerData` (the router's `load` hook) runs before route actions:
+
 - For routes with server data (any route in the chain with a `load`), it fetches `/path/__data.json`.
 - For routes without, it sets empty data and makes no request.
 - Latest wins: a slow response for an old navigation never overwrites newer data.
@@ -226,13 +235,14 @@ After hydration, `loadServerData` (the router's `load` hook) runs before route a
 import { fsCache, memoryCache, type PageCache } from 'lwnjs/server';
 ```
 
-| Cache | Behaviour |
-|---|---|
-| `memoryCache(maxEntries = 1000)` | LRU in memory, all operations O(1) |
-| `fsCache(dir)` | `<dir>/<path>/index.html` + `<dir>/<path>/__data.json`: static-hosting layout, file time as the render time; refuses paths outside `dir` |
-| custom | implement `{ get(path), set(path, entry), delete(path) }` (Redis, KV stores) |
+| Cache                            | Behaviour                                                                                                                                |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `memoryCache(maxEntries = 1000)` | LRU in memory, all operations O(1)                                                                                                       |
+| `fsCache(dir)`                   | `<dir>/<path>/index.html` + `<dir>/<path>/__data.json`: static-hosting layout, file time as the render time; refuses paths outside `dir` |
+| custom                           | implement `{ get(path), set(path, entry), delete(path) }` (Redis, KV stores)                                                             |
 
 Request handling for `ssg`/`isr`:
+
 - **HIT:** cached and fresh → served.
 - **STALE:** cached but older than `revalidate` → served, and a fresh render starts in the background.
 - **MISS:** not cached → rendered now, stored, served.
@@ -272,27 +282,37 @@ The CLI is a thin layer over these:
 ```ts
 import { createServer, fsCache, toNodeHandler } from 'lwnjs/server';
 
-const server = createServer({ template, router, routes, serverRoutes, app: App, manifest, cache: fsCache('dist/client') });
+const server = createServer({
+  template,
+  router,
+  routes,
+  serverRoutes,
+  app: App,
+  manifest,
+  cache: fsCache('dist/client'),
+});
 
-await server.handle(request);           // standard Request → Response | undefined
-await server.build({ outDir });         // prerender
+await server.handle(request); // standard Request → Response | undefined
+await server.build({ outDir }); // prerender
 await server.revalidate('/products/x');
 
-http.createServer(toNodeHandler(server, { staticDir: 'dist/client', revalidateSecret }));
-app.use(toNodeHandler(server));         // Express / Connect: unhandled requests go to next()
+http.createServer(
+  toNodeHandler(server, { staticDir: 'dist/client', revalidateSecret }),
+);
+app.use(toNodeHandler(server)); // Express / Connect: unhandled requests go to next()
 ```
 
 `handle` uses Web-standard `Request`/`Response`, so the server works on any runtime that has them and can run `linkedom`.
 
-| `createServer` option | Default | Meaning |
-|---|---|---|
-| `template` | required | the built `index.html`, with the container element |
-| `router`, `routes`, `app` | required | the app's router, route tree and root function |
-| `serverRoutes` | `[]` | modes, loaders, paths, preloads |
-| `containerId` | `'app'` | id of the container element |
-| `cache` | `memoryCache()` | page cache for `ssg`/`isr` |
-| `timeout` | `10000` | ms a render may take to settle |
-| `manifest`, `base` | none, `'/'` | Vite manifest and asset base for `preload` |
+| `createServer` option     | Default         | Meaning                                            |
+| ------------------------- | --------------- | -------------------------------------------------- |
+| `template`                | required        | the built `index.html`, with the container element |
+| `router`, `routes`, `app` | required        | the app's router, route tree and root function     |
+| `serverRoutes`            | `[]`            | modes, loaders, paths, preloads                    |
+| `containerId`             | `'app'`         | id of the container element                        |
+| `cache`                   | `memoryCache()` | page cache for `ssg`/`isr`                         |
+| `timeout`                 | `10000`         | ms a render may take to settle                     |
+| `manifest`, `base`        | none, `'/'`     | Vite manifest and asset base for `preload`         |
 
 ## Errors and status codes
 

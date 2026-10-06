@@ -13,17 +13,18 @@ There is no server code in the app: the `lwn` CLI runs Vite in dev, builds both 
 
 ## Which page uses what, and why
 
-| Page | Mode | Why |
-|---|---|---|
-| `/` featured collections | **SSG** | Same for everyone, rarely changes. Built once at build time. |
-| `/collections/:handle` | **ISR**, 300 s | Same for everyone, changes now and then. Prerendered, served from cache, refreshed in the background. |
-| `/products/:handle` | **ISR**, 60 s | Prices change. Featured products are prerendered; any other product renders on its first request and is cached after (`MISS`, then `HIT`). |
-| `/search` | **SSG shell + client data** | Results are per visitor and per keystroke: the page is static, and the browser calls the API itself. |
-| `/account`, `/account/orders` | **SSR** | Depends on the signed-in user (a cookie). Rendered on every request, never cached. "Switch user" changes the cookie. |
-| cart | **client only** | Per visitor, lives in localStorage. The server renders it empty; the browser fills it in after hydration. |
-| unknown paths | SSR, status 404 | |
+| Page                          | Mode                        | Why                                                                                                                                        |
+| ----------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/` featured collections      | **SSG**                     | Same for everyone, rarely changes. Built once at build time.                                                                               |
+| `/collections/:handle`        | **ISR**, 300 s              | Same for everyone, changes now and then. Prerendered, served from cache, refreshed in the background.                                      |
+| `/products/:handle`           | **ISR**, 60 s               | Prices change. Featured products are prerendered; any other product renders on its first request and is cached after (`MISS`, then `HIT`). |
+| `/search`                     | **SSG shell + client data** | Results are per visitor and per keystroke: the page is static, and the browser calls the API itself.                                       |
+| `/account`, `/account/orders` | **SSR**                     | Depends on the signed-in user (a cookie). Rendered on every request, never cached. "Switch user" changes the cookie.                       |
+| cart                          | **client only**             | Per visitor, lives in localStorage. The server renders it empty; the browser fills it in after hydration.                                  |
+| unknown paths                 | SSR, status 404             |                                                                                                                                            |
 
 Rules of thumb:
+
 - **The same for everyone?** Cache it: SSG if it never changes, ISR if it does.
 - **Depends on the request?** SSR.
 - **Depends on the visitor's interaction?** Keep it on the client.

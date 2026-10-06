@@ -23,7 +23,7 @@ export const NewTodoForm = component(
       if (title) {
         input.value = '';
         input.blur();
-        
+
         onAdd(title);
       }
     });

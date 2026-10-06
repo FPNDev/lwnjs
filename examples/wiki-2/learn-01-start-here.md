@@ -4,15 +4,15 @@ This page builds a small client-side app and introduces the pattern used through
 
 ## Install
 
-~~~sh
+```sh
 npm install lwnjs
-~~~
+```
 
 The package publishes ESM modules with TypeScript declarations. A bundler must support package exports. The examples use Vite, but the engine does not require a particular bundler for client-side use.
 
 For a strict TypeScript app, these settings are a useful starting point:
 
-~~~json
+```json
 {
   "compilerOptions": {
     "target": "ES2022",
@@ -22,14 +22,20 @@ For a strict TypeScript app, these settings are a useful starting point:
     "strict": true
   }
 }
-~~~
+```
 
 ## Build a counter
 
 Create src/main.ts:
 
-~~~ts
-import { attach, component, domRenderer, listen, setRenderer } from 'lwnjs/core';
+```ts
+import {
+  attach,
+  component,
+  domRenderer,
+  listen,
+  setRenderer,
+} from 'lwnjs/core';
 import { html } from 'lwnjs/html';
 
 setRenderer(domRenderer);
@@ -41,9 +47,7 @@ const Counter = component((parent: object) => {
   const node = html`
     <section>
       <h1>Counter</h1>
-      ${decrement}
-      ${output}
-      ${increment}
+      ${decrement} ${output} ${increment}
     </section>
   `;
 
@@ -68,13 +72,13 @@ const Counter = component((parent: object) => {
 
 const container = document.querySelector('#app')!;
 container.append(Counter(container));
-~~~
+```
 
 The page needs a mount point:
 
-~~~html
+```html
 <div id="app"></div>
-~~~
+```
 
 The app has three parts:
 
@@ -90,15 +94,15 @@ attach(parent, node) records ownership. It does not insert a DOM node. Once atta
 
 The owner-less listener form works because component() establishes a setup frame:
 
-~~~ts
+```ts
 listen(increment, 'click', handler);
-~~~
+```
 
 You can always make the owner explicit:
 
-~~~ts
+```ts
 listen(node, increment, 'click', handler);
-~~~
+```
 
 The explicit form also works later in event handlers, timers, and other callbacks.
 

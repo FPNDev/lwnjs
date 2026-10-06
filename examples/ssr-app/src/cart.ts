@@ -12,7 +12,9 @@ const KEY = 'lwnjs-shop-cart';
  * header badge and the drawer both observe it, hence `createState`.
  */
 function createCart() {
-  const lines: CartLine[] = isServer ? [] : (JSON.parse(localStorage.getItem(KEY) ?? '[]') as CartLine[]);
+  const lines: CartLine[] = isServer
+    ? []
+    : (JSON.parse(localStorage.getItem(KEY) ?? '[]') as CartLine[]);
   const state = createState(lines);
   state.subscribe(() => {
     localStorage.setItem(KEY, JSON.stringify(lines));
@@ -38,7 +40,10 @@ function createCart() {
       state.notify();
     },
     remove(handle: string) {
-      lines.splice(lines.findIndex((item) => item.handle === handle), 1);
+      lines.splice(
+        lines.findIndex((item) => item.handle === handle),
+        1,
+      );
       state.notify();
     },
   };

@@ -6,7 +6,7 @@ Use the error text to find the relevant API, then check the owner, route, or ren
 
 Owner-less calls need an active synchronous setup frame. A frame is opened by `component(...)`, outlet page factories, route actions, and `onAttach` hooks. In a component, attach its root before making calls that need the implicit owner.
 
-~~~ts
+```ts
 const Panel = component((parent: object) => {
   const node = html`<section></section>`;
   attach(parent, node);
@@ -16,7 +16,7 @@ const Panel = component((parent: object) => {
 
   return node;
 });
-~~~
+```
 
 Frames do not continue through an `await`, event handler, timer, or subscription callback. Pass the owner explicitly to the API in those callbacks. If an async operation needs its owner, capture `getOwner()` during setup, before starting the operation.
 
@@ -94,4 +94,3 @@ Only routes configured as `ssg` or `isr` with a `paths` function are prerendered
 `detach(node)` removes the node from its parent but keeps the node and destroy-scoped resources alive. `destroy(node)` ends the node and its logical descendants. If a resource should end every time a movable component is detached, create it in `onAttach` or its returned cleanup rather than in one-time component setup.
 
 See [Lifetimes and ownership](learn-03-lifetimes.md), [Core reference](reference-core.md), and [Server reference](reference-server.md) for the full behavior.
-
