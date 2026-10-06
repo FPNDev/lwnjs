@@ -7,6 +7,6 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['<yourdomain>.ngrok-free.dev'],
+    allowedHosts: ['eloquence-colonize-sponge.ngrok-free.dev'],
   },
 });

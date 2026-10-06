@@ -29,7 +29,7 @@ export type RunOptions = {
 type Middleware = (incoming: IncomingMessage, outgoing: ServerResponse) => void;
 
 function resolve(options: RunOptions) {
-  const root = options.root ?? process.cwd();
+  const root = options.root ?? import.meta.dirname;
   const entry = options.entry ?? 'src/entry-server.ts';
   const outDir = join(root, options.outDir ?? 'dist');
 

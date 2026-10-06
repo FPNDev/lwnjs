@@ -13,15 +13,16 @@ export function Home(parent: object) {
 
   // Read the page data once, during setup; children get plain values.
   for (const featured of useServer(FeaturedData)) {
-    const more = html<HTMLAnchorElement>`<a
-      href=${`/collections/${featured.handle}`}
-      >View all</a
-    >`;
+    const more = html<HTMLAnchorElement>`
+      <a href=${`/collections/${featured.handle}`}>View all</a>
+    `;
     routerLink(more);
-    
-    const grid = html`<div class=${classes.grid}>
-      ${featured.products.map((product) => ProductCard(node, product))}
-    </div>`;
+
+    const grid = html`
+      <div class=${classes.grid}>
+        ${featured.products.map((product) => ProductCard(node, product))}
+      </div>
+    `;
 
     node.append(html`
       <section class=${classes.section}>
