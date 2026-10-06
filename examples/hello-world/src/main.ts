@@ -4,8 +4,8 @@ import {
   domRenderer,
   listen,
   setRenderer,
-} from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+} from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 
 // Tell the engine how to place views. Once, before anything is shown.
 setRenderer(domRenderer);
@@ -23,7 +23,7 @@ const Counter = component((parent: object) => {
   
   const node = html`
     <section class="counter">
-      <h1>Hello, engine-ts</h1>
+      <h1>Hello, LWN</h1>
       <div class="row">${decrement}${value}${increment}</div>
       <small>Press ↑ / ↓ too</small>
     </section>

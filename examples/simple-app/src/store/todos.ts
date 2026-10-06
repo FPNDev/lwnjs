@@ -1,4 +1,4 @@
-import { createState, createStore } from 'engine-ts/core';
+import { createState, createStore } from 'lwnjs/core';
 
 export type Todo = {
   id: string;
@@ -12,7 +12,7 @@ export type TodoList = {
   todos: Todo[];
 };
 
-export const STORAGE_KEY = 'engine-ts-todos';
+export const STORAGE_KEY = 'lwnjs-todos';
 
 function read(): TodoList[] {
   try {

@@ -1,6 +1,6 @@
-import { attach, attachStore, component, domRenderer, setRenderer } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
-import { createOutlet } from 'engine-ts/router';
+import { attach, attachStore, component, domRenderer, setRenderer } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
+import { createOutlet } from 'lwnjs/router';
 import { CartStore } from './cart';
 import { Header } from './components/Header';
 import { Home } from './pages/Home';
@@ -34,7 +34,7 @@ export const App = component((container: Element) => {
   frame.append(
     Header(frame),
     html`<main class=${classes.main}>${slot}</main>`,
-    html`<footer class=${classes.footer}>Data from mock.shop and dummyjson · built with engine-ts</footer>`,
+    html`<footer class=${classes.footer}>Data from mock.shop and dummyjson · built with LWN</footer>`,
   );
   container.append(frame);
 

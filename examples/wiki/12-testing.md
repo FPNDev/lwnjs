@@ -1,6 +1,6 @@
 # 12. Testing
 
-engine-ts code is plain functions over plain objects, so it tests well with any runner. These examples use Vitest with happy-dom for client code and the Node environment for server code.
+LWN code is plain functions over plain objects, so it tests well with any runner. These examples use Vitest with happy-dom for client code and the Node environment for server code.
 
 ## Setup
 
@@ -21,7 +21,7 @@ Call `setRenderer(domRenderer)` once (in a `beforeEach` or a setup file).
 ## Components
 
 ```ts
-import { destroy, domRenderer, setRenderer } from 'engine-ts/core';
+import { destroy, domRenderer, setRenderer } from 'lwnjs/core';
 import { NewTodoForm } from '../src/components/NewTodoForm';
 
 beforeEach(() => setRenderer(domRenderer));
@@ -125,7 +125,7 @@ env.release(id);
 
 ```ts
 // @vitest-environment node
-import { createServer, memoryCache } from 'engine-ts/server';
+import { createServer, memoryCache } from 'lwnjs/server';
 
 const server = createServer({ template, router, routes, serverRoutes, app: App, cache: memoryCache() });
 

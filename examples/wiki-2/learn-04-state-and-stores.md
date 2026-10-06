@@ -20,7 +20,7 @@ The component owns both the value and the nodes that display it, so there is no 
 createState(initial) stores a current value and notifies subscribers when you call set or notify.
 
 ~~~ts
-import { createState } from 'engine-ts/core';
+import { createState } from 'lwnjs/core';
 
 type Todo = { id: string; title: string; done: boolean };
 
@@ -45,7 +45,7 @@ This is intentional. Components choose which part of the view to update. A state
 An emitter represents an event with no stored current value. Late subscribers do not receive past events.
 
 ~~~ts
-import { createEmitter } from 'engine-ts/core';
+import { createEmitter } from 'lwnjs/core';
 
 const messageAdded = createEmitter<string>();
 const seen: string[] = [];
@@ -79,8 +79,8 @@ Outside a setup frame, subscribe(callback) is unowned. Keep its returned unsubsc
 A store is an identifier for a value provided by an owner. It is not a global singleton. Each attachStore call runs the store initializer and makes that fresh value available to the owner and its logical descendants.
 
 ~~~ts
-import { attach, attachStore, component, createStore, useStore } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, attachStore, component, createStore, useStore } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 
 const ThemeStore = createStore(() => ({ color: 'navy' }));
 

@@ -3,8 +3,8 @@
 The same components render to HTML on the server and **hydrate** in the browser: the client adopts the server's DOM instead of rebuilding it. Pages can be rendered per request (SSR), once at build time (SSG), or cached and refreshed in the background (ISR).
 
 Two entry points are involved:
-- `engine-ts/ssr`: client-safe, imported by app code (`serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer`).
-- `engine-ts/server`: Node only, imported by the server entry (`defineServerApp`, `createServer`, caches, `toNodeHandler`).
+- `lwnjs/ssr`: client-safe, imported by app code (`serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer`).
+- `lwnjs/server`: Node only, imported by the server entry (`defineServerApp`, `createServer`, caches, `toNodeHandler`).
 
 Server rendering produces HTML; it uses `linkedom` as the server DOM (an optional peer dependency).
 
@@ -57,7 +57,7 @@ Deciding:
 Server routes attach server-only behaviour to your route objects. They live in a module the client never imports.
 
 ```ts
-import type { ServerRoute } from 'engine-ts/server';
+import type { ServerRoute } from 'lwnjs/server';
 
 export const serverRoutes: ServerRoute[] = [
   {
@@ -176,7 +176,7 @@ function summary(product: ApiProduct): ProductSummary {
    - navigate the app's router to the URL,
    - call `App(container)` in the root render scope,
    - wait until every outlet load has settled (lazy pages render too), bounded by `timeout`.
-4. **Serialize:** normalize text nodes (see Hydration), record the `childNodes` path of every view created through `engine-ts/html`, and embed `<script id="__engine" type="application/json">` with the data and the paths (`<` escaped, so data can't close the script). Add `modulepreload` links for the route's `preload` modules. Output the document.
+4. **Serialize:** normalize text nodes (see Hydration), record the `childNodes` path of every view created through `lwnjs/html`, and embed `<script id="__engine" type="application/json">` with the data and the paths (`<` escaped, so data can't close the script). Add `modulepreload` links for the route's `preload` modules. Output the document.
 5. **Clean up:** destroy the app root (route listeners and subscriptions end), restore globals, release the lock.
 
 Loaders run concurrently across requests; only the render itself is serialized. Lazy imports are warm after the first render, so the lock costs little.
@@ -223,7 +223,7 @@ After hydration, `loadServerData` (the router's `load` hook) runs before route a
 ## Caching (SSG and ISR)
 
 ```ts
-import { fsCache, memoryCache, type PageCache } from 'engine-ts/server';
+import { fsCache, memoryCache, type PageCache } from 'lwnjs/server';
 ```
 
 | Cache | Behaviour |
@@ -248,9 +248,9 @@ With `preload` on a server route and the Vite client manifest passed to the serv
 ## The CLI
 
 ```sh
-engine-ts dev     # Vite middleware + SSR from source; reloads the server entry on change
-engine-ts build   # client bundle + manifest → dist/client; server bundle → dist/server; prerender
-engine-ts start   # production server on dist/
+lwn dev     # Vite middleware + SSR from source; reloads the server entry on change
+lwn build   # client bundle + manifest → dist/client; server bundle → dist/server; prerender
+lwn start   # production server on dist/
 ```
 
 - **`build`:**
@@ -270,7 +270,7 @@ engine-ts start   # production server on dist/
 The CLI is a thin layer over these:
 
 ```ts
-import { createServer, fsCache, toNodeHandler } from 'engine-ts/server';
+import { createServer, fsCache, toNodeHandler } from 'lwnjs/server';
 
 const server = createServer({ template, router, routes, serverRoutes, app: App, manifest, cache: fsCache('dist/client') });
 

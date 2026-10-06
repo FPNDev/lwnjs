@@ -1,5 +1,5 @@
-import { attach, component, env, listen, useStore } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component, env, listen, useStore } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import {
   HomeRoute,
   ListRoute,

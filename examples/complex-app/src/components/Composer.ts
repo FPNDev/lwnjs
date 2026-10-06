@@ -1,5 +1,5 @@
-import { attach, component, env, listen } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component, env, listen } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import { isolateOnFocus } from '../lib/focus-env';
 import classes from './Conversation.module.scss';
 

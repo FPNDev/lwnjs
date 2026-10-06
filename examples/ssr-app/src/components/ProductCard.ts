@@ -1,5 +1,5 @@
-import { attach, component } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import type { ProductSummary } from '../api';
 import { routerLink } from '../routes';
 import classes from '../styles/ui.module.scss';

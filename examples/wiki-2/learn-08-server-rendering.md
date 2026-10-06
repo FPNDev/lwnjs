@@ -1,6 +1,6 @@
 # 08. Server rendering
 
-engine-ts can render the same app to HTML on the server, then let the browser attach listeners and continue from those nodes. The server can render every request, render known paths during a build, or cache and refresh pages over time.
+LWN can render the same app to HTML on the server, then let the browser attach listeners and continue from those nodes. The server can render every request, render known paths during a build, or cache and refresh pages over time.
 
 ## Choose a rendering mode
 
@@ -17,14 +17,14 @@ A page can have shared server-rendered content and client-only state. For exampl
 
 The app, routes, data tokens, and page components can be shared by server and browser. Put database access, secrets, and server route loaders in a module that only the server entry imports.
 
-The client-safe helpers are in engine-ts/ssr. Node rendering and caches are in engine-ts/server.
+The client-safe helpers are in lwnjs/ssr. Node rendering and caches are in lwnjs/server.
 
 ## Describe page data
 
 Create a token that identifies one typed piece of page data:
 
 ~~~ts
-import { serverToken } from 'engine-ts/ssr';
+import { serverToken } from 'lwnjs/ssr';
 
 export const ProductData = serverToken<Product | null>('product');
 ~~~
@@ -32,9 +32,9 @@ export const ProductData = serverToken<Product | null>('product');
 A server route loads data before rendering. The page reads it during synchronous setup:
 
 ~~~ts
-import { attach } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
-import { useServer } from 'engine-ts/ssr';
+import { attach } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
+import { useServer } from 'lwnjs/ssr';
 import { ProductData } from '../data';
 
 export default function Product(parent: object) {
@@ -71,7 +71,7 @@ A server route associates a route object with a mode, loader, optional prerender
 
 ## What hydration requires
 
-Hydration adopts existing nodes when app code creates views in the same order as the server render. The engine records creation paths for views created through engine-ts/html. It resolves those paths before running client app code so DOM moves during setup do not shift later lookups.
+Hydration adopts existing nodes when app code creates views in the same order as the server render. The engine records creation paths for views created through lwnjs/html. It resolves those paths before running client app code so DOM moves during setup do not shift later lookups.
 
 Keep view creation synchronous and structurally consistent between server and browser:
 

@@ -1,6 +1,6 @@
 # hello-world
 
-The smallest engine-ts app: a counter.
+The smallest LWN app: a counter.
 
 ```sh
 npm install
@@ -15,4 +15,4 @@ What it shows, all in [src/main.ts](src/main.ts):
 - `listen(node, target, type, fn)` is `addEventListener` that is removed when `node` is destroyed. That includes the `window` key listener, which in plain DOM code is the classic leak.
 - `html` templates: strings become text (never HTML), nodes are inserted as is.
 
-Requires the engine to be built once: `cd ../../engine-ts && npm run build`.
+Requires the engine to be built once: `cd ../.. && npm run build`.

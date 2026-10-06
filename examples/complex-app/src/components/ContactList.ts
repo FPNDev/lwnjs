@@ -1,5 +1,5 @@
-import { attach, component, useStore } from 'engine-ts/core';
-import { html, text } from 'engine-ts/html';
+import { attach, component, useStore } from 'lwnjs/core';
+import { html, text } from 'lwnjs/html';
 import { formatTime, initial } from '../lib/format';
 import { ChatRoute, HomeRoute, chatUrl, currentPeerId, router, routerLink } from '../router';
 import type { Contact } from '../services/db';

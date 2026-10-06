@@ -1,4 +1,6 @@
-# engine-ts
+# LWN
+
+[![npm version](https://img.shields.io/npm/v/lwnjs.svg)](https://www.npmjs.com/package/lwnjs)
 
 A small UI engine built around a **logical tree**. Components are plain functions that create views and attach them to a parent. The tree decides when things live and die: subscriptions, listeners, stores and child components are released when their owner is destroyed.
 
@@ -7,11 +9,11 @@ A small UI engine built around a **logical tree**. Components are plain function
 - **No runtime dependencies, tree-shakeable.** ESM, one file per module, `sideEffects: false`. A bundle that imports only `createState` is about 1.6 kB minified. The router, outlets and env are never bundled unless you import them.
 
 ```
-engine-ts/core     logical tree, lifecycle, state/emitters, stores, isolated envs, listen, renderer
-engine-ts/router   routes, history adapters, outlets
-engine-ts/html     html`` templates: parsed once per call site, XSS-safe, hydratable
-engine-ts/ssr      client side of server rendering: useServer, hydrate, navigation data
-engine-ts/server   Node: SSR / SSG / ISR, page cache, build, Node adapter (peer dep: linkedom)
+lwnjs/core     logical tree, lifecycle, state/emitters, stores, isolated envs, listen, renderer
+lwnjs/router   routes, history adapters, outlets
+lwnjs/html     html`` templates: parsed once per call site, XSS-safe, hydratable
+lwnjs/ssr      client side of server rendering: useServer, hydrate, navigation data
+lwnjs/server   Node: SSR / SSG / ISR, page cache, build, Node adapter (peer dep: linkedom)
 ```
 
 ---
@@ -19,13 +21,13 @@ engine-ts/server   Node: SSR / SSG / ISR, page cache, build, Node adapter (peer 
 ## Getting started
 
 ```sh
-npm install engine-ts   # or "engine-ts": "file:../engine-ts" while unpublished
+npm install lwnjs
 ```
 
 ```ts
 // main.ts
-import { domRenderer, setRenderer } from 'engine-ts/core';
-import { createOutlet, setupRouter, type Route } from 'engine-ts/router';
+import { domRenderer, setRenderer } from 'lwnjs/core';
+import { createOutlet, setupRouter, type Route } from 'lwnjs/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const UserRoute: Route = { path: /\/users\/(?<id>[^/]+)/ };
@@ -42,7 +44,7 @@ router.route(app, UserRoute, () => page.show(() => import('./pages/User')));
 
 ```ts
 // pages/User.ts
-import { attach, createState } from 'engine-ts/core';
+import { attach, createState } from 'lwnjs/core';
 import { router, UserRoute } from '../main';
 
 export default function User(parent: object) {
@@ -76,7 +78,7 @@ A component is a function that:
 4. returns the view, or a controller object containing it.
 
 ```ts
-import { attach, component, listen, useStore } from 'engine-ts/core';
+import { attach, component, listen, useStore } from 'lwnjs/core';
 
 export const Counter = component((parent: object) => {
   const node = document.createElement('button');
@@ -140,7 +142,7 @@ attach(header, badge);    // old subscription released, new one against header's
 
 ---
 
-## engine-ts/core
+## lwnjs/core
 
 ### Logical tree and lifecycle
 
@@ -166,7 +168,7 @@ Notes:
 Two primitives, chosen by intent:
 
 ```ts
-import { createEmitter, createState } from 'engine-ts/core';
+import { createEmitter, createState } from 'lwnjs/core';
 
 const loading = createState(false);       // has a value
 loading.get();                            // false
@@ -206,7 +208,7 @@ function download(url: string) {
 Values provided by a node to its logical descendants, like context.
 
 ```ts
-import { attachStore, createStore, useStore } from 'engine-ts/core';
+import { attachStore, createStore, useStore } from 'lwnjs/core';
 
 export const ChatStore = createStore(() => ({
   loading: createState(false),
@@ -228,7 +230,7 @@ const chat = useStore(messageNode, ChatStore);   // nearest provider up the tree
 One env is **current** at a time, optionally nested in another. Use it to route keyboard shortcuts and other global input to the right place: an input inside a modal handles Enter, while Escape still reaches the modal.
 
 ```ts
-import { env } from 'engine-ts/core';
+import { env } from 'lwnjs/core';
 
 const modalEnv = Symbol('modal');
 const inputEnv = Symbol('input');
@@ -309,7 +311,7 @@ setRenderer<Object3D>({
 
 ---
 
-## engine-ts/router
+## lwnjs/router
 
 ### Routes
 
@@ -332,7 +334,7 @@ type Route = {
 
 Returns the router and runs the initial navigation. Options:
 - `history`: URL source. Default `browserHistory()`, or `memoryHistory()` where there is no `window`.
-- `load(match, url)`: runs after a match and before route actions; navigation waits for it. `engine-ts/ssr` uses it to fetch page data.
+- `load(match, url)`: runs after a match and before route actions; navigation waits for it. `lwnjs/ssr` uses it to fetch page data.
 
 | Member | What it does |
 |---|---|
@@ -392,10 +394,10 @@ content.clear();
 
 ---
 
-## engine-ts/html
+## lwnjs/html
 
 ```ts
-import { element, html, mhtml, text } from 'engine-ts/html';
+import { element, html, mhtml, text } from 'lwnjs/html';
 
 const title = html`<h1 class=${classes.title}>${user.name}</h1>`;   // one root
 const items = mhtml`<li>a</li><li>b</li>`;                           // several roots
@@ -411,18 +413,18 @@ Limitations: one value per attribute position (no interpolated attribute *names*
 
 ---
 
-## Server rendering: engine-ts/ssr + engine-ts/server
+## Server rendering: lwnjs/ssr + lwnjs/server
 
 The same app code renders on the server (Node, DOM from `linkedom`) and hydrates in the browser.
-`engine-ts/ssr` is client-safe. `engine-ts/server` is Node-only, so keep it out of the client bundle.
+`lwnjs/ssr` is client-safe. `lwnjs/server` is Node-only, so keep it out of the client bundle.
 
 ### The app
 
 ```ts
 // app.ts (shared)
-import { setRenderer, domRenderer } from 'engine-ts/core';
-import { createOutlet, setupRouter, type Route } from 'engine-ts/router';
-import { loadServerData, serverToken } from 'engine-ts/ssr';
+import { setRenderer, domRenderer } from 'lwnjs/core';
+import { createOutlet, setupRouter, type Route } from 'lwnjs/router';
+import { loadServerData, serverToken } from 'lwnjs/ssr';
 
 setRenderer(domRenderer);
 export const ProductRoute: Route = { path: /\/products\/(?<handle>[\w-]+)/ };
@@ -451,7 +453,7 @@ await hydrate(document.querySelector('#app')!, App, router);
 
 ```ts
 // entry-server.ts (Node only)
-import { defineServerApp, type ServerRoute } from 'engine-ts/server';
+import { defineServerApp, type ServerRoute } from 'lwnjs/server';
 
 const serverRoutes: ServerRoute[] = [
   {
@@ -471,9 +473,9 @@ export default defineServerApp({ router, routes, serverRoutes, app: App });
 ```
 
 ```sh
-engine-ts dev     # Vite middleware + SSR from source, reloads on change
-engine-ts build   # client bundle + manifest, server bundle, prerender of ssg/isr paths
-engine-ts start   # production: static assets, pages, __data.json, ISR from dist/client
+lwn dev     # Vite middleware + SSR from source, reloads on change
+lwn build   # client bundle + manifest, server bundle, prerender of ssg/isr paths
+lwn start   # production: static assets, pages, __data.json, ISR from dist/client
 ```
 
 `PORT` sets the port. `REVALIDATE_SECRET` enables `POST /api/revalidate?path=…&secret=…`. With `vite` installed (optional peer), the CLI handles the Vite side.
@@ -498,7 +500,7 @@ Modes:
 
 1. **Loaders first.** The server matches the URL, then runs the `load` of every server route in the matched chain (layout + page) in parallel, outside the render lock.
 2. **Render.** Renders run one at a time, because they share module state (the global `document`, the app's router). The server navigates the app's router to the URL, calls `App(container)`, and waits until every outlet load has settled (`timeout`, default 10 s).
-3. **Payload.** Next to the HTML it embeds `<script id="__engine" type="application/json">`, with `<` escaped. It holds the page data and, for every view created through `engine-ts/html`, its `childNodes` path. Views are keyed by render scope: the root, then one scope per outlet. That keeps keys stable even when lazy pages resolve in a different order on the client.
+3. **Payload.** Next to the HTML it embeds `<script id="__engine" type="application/json">`, with `<` escaped. It holds the page data and, for every view created through `lwnjs/html`, its `childNodes` path. Views are keyed by render scope: the root, then one scope per outlet. That keeps keys stable even when lazy pages resolve in a different order on the client.
 4. **Hydrate.** `hydrate` resolves all paths to nodes up front. App code then runs normally, but each `html`/`element`/`text` call returns the server node it corresponds to. Event handlers and subscriptions attach to the existing DOM. When the outlets settle, unclaimed nodes are released and the payload script is removed.
 5. **Navigation.** Later navigations go through the router `load` hook. For routes with server data it fetches `/path/__data.json` (served by `handle` or by the SSG files) before route actions run.
 
@@ -544,7 +546,7 @@ Modes:
 | `getCurrentRenderParent()` fallback in `useStore` | removed. Attach first, or resolve in `onAttach` |
 | `isolateEnv` / `disposeEnv` / `isEnv` / `isolateViewOnFocus` | `env.isolate` / `env.release` / `env.is` + `isCurrent`; focus recipe above |
 | `setupRouter(routes, getPathname)` | `setupRouter(routes, { history })` |
-| `util/html` | `engine-ts/html` (or keep the app's own) |
+| `util/html` | `lwnjs/html` (or keep the app's own) |
 
 ---
 

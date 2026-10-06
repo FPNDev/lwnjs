@@ -1,6 +1,6 @@
-import { attach } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
-import { useServer } from 'engine-ts/ssr';
+import { attach } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
+import { useServer } from 'lwnjs/ssr';
 import { ProductCard } from '../components/ProductCard';
 import { FeaturedData } from '../data';
 import { routerLink } from '../routes';

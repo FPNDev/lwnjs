@@ -13,7 +13,7 @@ const optionNames: Record<string, keyof RunOptions> = {
   revalidateSecret: 'revalidateSecret',
 };
 
-const usage = `Usage: engine-ts [dev | build | start] [options]
+const usage = `Usage: lwn [dev | build | start] [options]
 
 Options:
   --root <path>                 Project folder

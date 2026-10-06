@@ -42,7 +42,7 @@ function request<T>(req: IDBRequest<T>) {
 
 /** A small promise wrapper over the three object stores the app needs. */
 export async function openDb() {
-  const opening = indexedDB.open('engine-ts-chat', 1);
+  const opening = indexedDB.open('lwnjs-chat', 1);
   opening.onupgradeneeded = () => {
     const db = opening.result;
     db.createObjectStore('meta');

@@ -1,4 +1,4 @@
-import { env, listen, onDestroy } from 'engine-ts/core';
+import { env, listen, onDestroy } from 'lwnjs/core';
 
 /**
  * Makes `id` the current env while focus is inside `element`, nested in

@@ -1,13 +1,13 @@
 # Core reference
 
-Import these APIs from engine-ts/core.
+Import these APIs from lwnjs/core.
 
 ~~~ts
 import {
   attach, detach, destroy, onAttach, onDestroy, getParent, isAttached,
   component, getOwner, createState, createEmitter, createStore, attachStore,
   useStore, env, listen, setRenderer, getRenderer, domRenderer,
-} from 'engine-ts/core';
+} from 'lwnjs/core';
 ~~~
 
 ## Ownership links

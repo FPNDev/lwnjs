@@ -1,4 +1,4 @@
-import { destroy } from 'engine-ts/core';
+import { destroy } from 'lwnjs/core';
 
 export type KeyedView<Item> = {
   node: Node;

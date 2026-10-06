@@ -1,15 +1,15 @@
 {
-  "name": "engine-ts-ssr-shop",
+  "name": "lwnjs-ssr-shop",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "engine-ts dev",
-    "build": "tsc && engine-ts build",
-    "start": "engine-ts start"
+    "dev": "lwn dev",
+    "build": "tsc && lwn build",
+    "start": "lwn start"
   },
   "dependencies": {
-    "engine-ts": "file:../../../engine-ts",
+    "lwnjs": "file:../..",
     "linkedom": "^0.18.13"
   },
   "devDependencies": {

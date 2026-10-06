@@ -3,14 +3,14 @@
 ## Install
 
 ```sh
-npm install engine-ts
+npm install lwnjs
 ```
 
 Optional peer dependencies, only when you need them:
-- `linkedom`: the DOM used for server rendering (`engine-ts/server`).
-- `vite`: used by the `engine-ts` CLI (`dev`, `build`, `start`).
+- `linkedom`: the DOM used for server rendering (`lwnjs/server`).
+- `vite`: used by the `lwn` CLI (`dev`, `build`, `start`).
 
-engine-ts ships ESM with type declarations. Any bundler that understands `package.json` `exports` works; the examples use Vite.
+LWN ships ESM with type declarations. Any bundler that understands `package.json` `exports` works; the examples use Vite.
 
 ### TypeScript
 
@@ -28,7 +28,7 @@ Recommended compiler options:
 }
 ```
 
-`DOM.Iterable` lets you `for..of` over `NodeList`s. With `"moduleResolution": "bundler"` (or `node16`/`nodenext`), subpath imports like `engine-ts/core` resolve to their types.
+`DOM.Iterable` lets you `for..of` over `NodeList`s. With `"moduleResolution": "bundler"` (or `node16`/`nodenext`), subpath imports like `lwnjs/core` resolve to their types.
 
 ## A client-only app
 
@@ -36,8 +36,8 @@ Three steps: tell the engine how to place views, build a component, mount it.
 
 ```ts
 // main.ts
-import { attach, component, domRenderer, listen, setRenderer } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component, domRenderer, listen, setRenderer } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 
 // 1. Once, before anything is shown: views are DOM nodes.
 setRenderer(domRenderer);
@@ -72,7 +72,7 @@ What happened:
 ### Adding routes
 
 ```ts
-import { createOutlet, setupRouter, type Route } from 'engine-ts/router';
+import { createOutlet, setupRouter, type Route } from 'lwnjs/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const ItemRoute: Route = { path: /\/items\/(?<id>\d+)/u };
@@ -99,9 +99,9 @@ The same components render on the server and hydrate in the browser. You need tw
 
 ```ts
 // src/app.ts (shared)
-import { domRenderer, setRenderer } from 'engine-ts/core';
-import { setupRouter } from 'engine-ts/router';
-import { loadServerData } from 'engine-ts/ssr';
+import { domRenderer, setRenderer } from 'lwnjs/core';
+import { setupRouter } from 'lwnjs/router';
+import { loadServerData } from 'lwnjs/ssr';
 
 setRenderer(domRenderer);
 export const routes = [HomeRoute, ProductRoute];
@@ -109,20 +109,20 @@ export const router = setupRouter(routes, { load: loadServerData(routes) });
 export const App = component((container: Element) => { … });
 
 // src/entry-client.ts
-import { hydrate } from 'engine-ts/ssr';
+import { hydrate } from 'lwnjs/ssr';
 await hydrate(document.querySelector('#app')!, App, router);
 
 // src/entry-server.ts (Node only)
-import { defineServerApp } from 'engine-ts/server';
+import { defineServerApp } from 'lwnjs/server';
 export default defineServerApp({ router, routes, serverRoutes, app: App });
 ```
 
 ```json
 {
   "scripts": {
-    "dev": "engine-ts dev",
-    "build": "tsc && engine-ts build",
-    "start": "engine-ts start"
+    "dev": "lwn dev",
+    "build": "tsc && lwn build",
+    "start": "lwn start"
   }
 }
 ```

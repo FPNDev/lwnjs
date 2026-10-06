@@ -70,7 +70,7 @@ function claimsFor(container: Node, scopes: Payload['scopes']) {
 
 /**
  * Starts the app on the client. With a server payload in the page, views
- * created by `engine-ts/html` adopt the server-rendered nodes at their
+ * created by `lwnjs/html` adopt the server-rendered nodes at their
  * recorded `childNodes` paths instead of creating new ones; without one, the
  * app is simply mounted. Resolves once lazy pages have hydrated too; then
  * unclaimed server nodes are released and view creation stops checking for claims.

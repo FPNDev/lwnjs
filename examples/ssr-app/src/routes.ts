@@ -1,6 +1,6 @@
-import { listen } from 'engine-ts/core';
-import { setupRouter, type Route } from 'engine-ts/router';
-import { loadServerData } from 'engine-ts/ssr';
+import { listen } from 'lwnjs/core';
+import { setupRouter, type Route } from 'lwnjs/router';
+import { loadServerData } from 'lwnjs/ssr';
 
 export const HomeRoute: Route = { path: '/' };
 export const CollectionRoute: Route = { path: /\/collections\/(?<handle>[\w-]+)/u };

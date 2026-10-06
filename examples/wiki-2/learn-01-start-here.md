@@ -1,11 +1,11 @@
 # 01. Start here
 
-This page builds a small client-side app and introduces the pattern used throughout engine-ts. You will create a view, attach it to an owner, and update it in response to events.
+This page builds a small client-side app and introduces the pattern used throughout LWN. You will create a view, attach it to an owner, and update it in response to events.
 
 ## Install
 
 ~~~sh
-npm install engine-ts
+npm install lwnjs
 ~~~
 
 The package publishes ESM modules with TypeScript declarations. A bundler must support package exports. The examples use Vite, but the engine does not require a particular bundler for client-side use.
@@ -29,8 +29,8 @@ For a strict TypeScript app, these settings are a useful starting point:
 Create src/main.ts:
 
 ~~~ts
-import { attach, component, domRenderer, listen, setRenderer } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component, domRenderer, listen, setRenderer } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 
 setRenderer(domRenderer);
 

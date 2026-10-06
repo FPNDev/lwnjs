@@ -1,4 +1,4 @@
-import { serverToken } from 'engine-ts/ssr';
+import { serverToken } from 'lwnjs/ssr';
 import type { CollectionSummary, Order, ProductDetail, User } from './api';
 
 // Page data loaded by server routes (src/server-routes.ts), read with `useServer` during setup.

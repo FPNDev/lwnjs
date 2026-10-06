@@ -10,7 +10,7 @@ export type ServerApp = {
 };
 
 /**
- * Describes the app for the `engine-ts` CLI. Make it the default export of the
+ * Describes the app for the `lwn` CLI. Make it the default export of the
  * server entry (`src/entry-server.ts`). The server is created inside the
  * app's own bundle, so it shares the engine instance the app's components use.
  * @param config Router, routes, server routes and the app function.

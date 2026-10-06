@@ -5,7 +5,7 @@ The HTML package is an optional way to build DOM nodes. It does not decide what 
 ## Build a view with html
 
 ~~~ts
-import { html } from 'engine-ts/html';
+import { html } from 'lwnjs/html';
 
 const title = html`<h1>Welcome</h1>`;
 const node = html`<section>${title}</section>`;

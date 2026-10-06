@@ -1,6 +1,6 @@
 # 2. The logical tree
 
-Everything in engine-ts hangs off one structure: a tree of **logical nodes** that records ownership. If A owns B, destroying A destroys B. That one rule replaces most lifecycle bookkeeping.
+Everything in LWN hangs off one structure: a tree of **logical nodes** that records ownership. If A owns B, destroying A destroys B. That one rule replaces most lifecycle bookkeeping.
 
 ## Logical nodes
 

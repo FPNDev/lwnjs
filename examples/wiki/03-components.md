@@ -5,8 +5,8 @@ A component is a function that builds a piece of UI once and wires its behaviour
 ## The shape of a component
 
 ```ts
-import { attach, component, listen } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component, listen } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 
 export const SearchBox = component((parent: object, onSearch: (term: string) => void) => {
   // 1. Build the view.

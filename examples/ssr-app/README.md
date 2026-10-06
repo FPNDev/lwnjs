@@ -4,12 +4,12 @@ A small shop on [mock.shop](https://mock.shop) (Shopify's demo store API) and [d
 
 ```sh
 npm install
-npm run dev      # engine-ts dev: Vite + SSR, http://localhost:3000
-npm run build    # tsc && engine-ts build: client, server, prerender
-npm start        # engine-ts start: production server on dist/
+npm run dev      # lwn dev: Vite + SSR, http://localhost:3000
+npm run build    # tsc && lwn build: client, server, prerender
+npm start        # lwn start: production server on dist/
 ```
 
-There is no server code in the app: the `engine-ts` CLI runs Vite in dev, builds both bundles, prerenders, and serves the result. `src/entry-server.ts` only describes the app with `defineServerApp(...)`.
+There is no server code in the app: the `lwn` CLI runs Vite in dev, builds both bundles, prerenders, and serves the result. `src/entry-server.ts` only describes the app with `defineServerApp(...)`.
 
 ## Which page uses what, and why
 

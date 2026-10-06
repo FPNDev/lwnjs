@@ -1,5 +1,5 @@
-import { attach, attachStore, destroy, useStore } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, attachStore, destroy, useStore } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import { Conversation } from '../components/Conversation';
 import { ChatRoute, currentPeerId, router } from '../router';
 import { ChatStore } from '../store/chat';

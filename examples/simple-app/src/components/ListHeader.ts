@@ -1,5 +1,5 @@
-import { attach, component, listen } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component, listen } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import classes from './ListHeader.module.scss';
 
 export type ListHeader = {

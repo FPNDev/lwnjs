@@ -1,11 +1,11 @@
 # HTML and renderer reference
 
-This page covers the typed DOM helpers in `engine-ts/html` and the three-operation view contract in `engine-ts/core`.
+This page covers the typed DOM helpers in `lwnjs/html` and the three-operation view contract in `lwnjs/core`.
 
 ## HTML helpers
 
 ~~~ts
-import { element, html, mhtml, text } from 'engine-ts/html';
+import { element, html, mhtml, text } from 'lwnjs/html';
 
 const title = element('h1');
 const message = text('Ready');
@@ -102,7 +102,7 @@ type Renderer<V extends object> = {
 Install the renderer once, before an outlet shows a view:
 
 ~~~ts
-import { domRenderer, setRenderer } from 'engine-ts/core';
+import { domRenderer, setRenderer } from 'lwnjs/core';
 
 setRenderer(domRenderer);
 ~~~
@@ -119,7 +119,7 @@ A renderer can target any object-based view system. For example, with Three.js o
 
 ~~~ts
 import type { Object3D } from 'three';
-import { setRenderer } from 'engine-ts/core';
+import { setRenderer } from 'lwnjs/core';
 
 setRenderer<Object3D>({
   append(parent, view) {

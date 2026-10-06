@@ -1,5 +1,5 @@
-import { component, listen, useStore } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { component, listen, useStore } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import { isolateOnFocus } from '../lib/focus-env';
 import { chatUrl, router } from '../router';
 import { ChatStore } from '../store/chat';

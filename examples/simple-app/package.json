@@ -1,5 +1,5 @@
 {
-  "name": "engine-ts-todos",
+  "name": "lwnjs-todos",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "engine-ts": "file:../../../engine-ts"
+    "lwnjs": "file:../.."
   },
   "devDependencies": {
     "sass": "^1.105.1",

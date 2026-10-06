@@ -1,6 +1,6 @@
-# engine-ts wiki
+# LWN wiki
 
-engine-ts is a small UI engine built around a **logical tree**. You write components as plain functions that build their views imperatively and attach them to a parent. The tree, not a framework runtime, decides when things live and die: subscriptions, event listeners, route listeners, stores, timers and child components are all released when their owner is destroyed.
+LWN is a small UI engine built around a **logical tree**. You write components as plain functions that build their views imperatively and attach them to a parent. The tree, not a framework runtime, decides when things live and die: subscriptions, event listeners, route listeners, stores, timers and child components are all released when their owner is destroyed.
 
 There is no virtual DOM, no diffing, no compiler, no reactivity graph. A component runs once, sets things up, and from then on you change exactly the nodes that need changing.
 
@@ -53,12 +53,12 @@ App ─┬─ Sidebar ─┬─ ListRow (a)               <div.layout>
 
 | Import | Contains |
 |---|---|
-| `engine-ts/core` | the logical tree, lifecycle hooks, `component`, `createState`, `createEmitter`, stores, `env`, `listen`, renderers |
-| `engine-ts/router` | `setupRouter`, routes, history adapters, `createOutlet`, `aliasRoute` |
-| `engine-ts/html` | `html`, `mhtml`, `element`, `text` |
-| `engine-ts/ssr` | client side of server rendering: `serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer` |
-| `engine-ts/server` | Node only: `defineServerApp`, `createServer`, `fsCache`, `memoryCache`, `toNodeHandler` |
-| `engine-ts` (CLI) | `engine-ts dev`, `engine-ts build`, `engine-ts start` |
+| `lwnjs/core` | the logical tree, lifecycle hooks, `component`, `createState`, `createEmitter`, stores, `env`, `listen`, renderers |
+| `lwnjs/router` | `setupRouter`, routes, history adapters, `createOutlet`, `aliasRoute` |
+| `lwnjs/html` | `html`, `mhtml`, `element`, `text` |
+| `lwnjs/ssr` | client side of server rendering: `serverToken`, `useServer`, `hydrate`, `loadServerData`, `isServer` |
+| `lwnjs/server` | Node only: `defineServerApp`, `createServer`, `fsCache`, `memoryCache`, `toNodeHandler` |
+| `lwn` (CLI) | `lwn dev`, `lwn build`, `lwn start` |
 
 Bundlers include only what you import. A bundle that uses `createState` alone is about 1.5 kB minified.
 

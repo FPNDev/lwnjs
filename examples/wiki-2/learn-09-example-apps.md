@@ -4,7 +4,7 @@ The examples grow from one counter to a server-rendered shop. Read them in order
 
 ## hello-world: one component and local state
 
-Start here when you want to see a minimal engine-ts app.
+Start here when you want to see a minimal LWN app.
 
 - The app sets domRenderer before mounting.
 - Counter is a component function with an attached root node.

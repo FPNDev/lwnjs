@@ -1,5 +1,5 @@
-import { attach, component } from 'engine-ts/core';
-import { html, mhtml } from 'engine-ts/html';
+import { attach, component } from 'lwnjs/core';
+import { html, mhtml } from 'lwnjs/html';
 import type { Todo, TodoList } from '../store/todos';
 import { TodoItem, type TodoActions } from './TodoItem';
 import { matchesFilter, type Filter } from './TodoFilters';

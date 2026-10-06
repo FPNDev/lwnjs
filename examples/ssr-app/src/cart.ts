@@ -1,10 +1,10 @@
-import { createState, createStore } from 'engine-ts/core';
-import { isServer } from 'engine-ts/ssr';
+import { createState, createStore } from 'lwnjs/core';
+import { isServer } from 'lwnjs/ssr';
 import type { ProductSummary } from './api';
 
 export type CartLine = ProductSummary & { quantity: number };
 
-const KEY = 'engine-ts-shop-cart';
+const KEY = 'lwnjs-shop-cart';
 
 /**
  * Client-only state: the cart is per visitor and lives in localStorage. The

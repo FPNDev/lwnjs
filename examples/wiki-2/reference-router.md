@@ -1,6 +1,6 @@
 # Router reference
 
-Import router APIs from `engine-ts/router`.
+Import router APIs from `lwnjs/router`.
 
 ~~~ts
 import {
@@ -11,7 +11,7 @@ import {
   setupRouter,
   type Route,
   type RouteParams,
-} from 'engine-ts/router';
+} from 'lwnjs/router';
 ~~~
 
 ## Route objects

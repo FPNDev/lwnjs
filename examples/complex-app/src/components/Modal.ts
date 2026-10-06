@@ -1,5 +1,5 @@
-import { attach, destroy, env, listen, onDestroy } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, destroy, env, listen, onDestroy } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import classes from './Modal.module.scss';
 
 export type Modal = {

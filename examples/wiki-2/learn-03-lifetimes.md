@@ -1,6 +1,6 @@
 # 03. Lifetimes and ownership
 
-Components need a clear answer to one question: when this component goes away, what else should stop? engine-ts records ownership links so child components and resources can share their owner's lifetime.
+Components need a clear answer to one question: when this component goes away, what else should stop? LWN records ownership links so child components and resources can share their owner's lifetime.
 
 These links are not a virtual view tree. Ordinary updates do not walk them. They support attach, detach, cleanup, and scoped lookup while your event handlers update the exact nodes that changed.
 

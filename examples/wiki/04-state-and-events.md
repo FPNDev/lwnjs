@@ -1,6 +1,6 @@
 # 4. State and events
 
-engine-ts has two messaging primitives, `createState` and `createEmitter`, and one strong recommendation: **don't use them unless something needs to subscribe.**
+LWN has two messaging primitives, `createState` and `createEmitter`, and one strong recommendation: **don't use them unless something needs to subscribe.**
 
 ## Start with a variable
 
@@ -22,7 +22,7 @@ No allocations, no indirection, nothing to clean up. Most component-local state 
 Use it when **several independent components** must react to the same value, which usually means it lives in a store:
 
 ```ts
-import { createState } from 'engine-ts/core';
+import { createState } from 'lwnjs/core';
 
 const lists = createState<TodoList[]>([]);
 
@@ -61,7 +61,7 @@ One state holding a whole collection is usually right: observers re-render the p
 For events rather than values: a submit, an abort, a message arriving, a toast to show.
 
 ```ts
-import { createEmitter } from 'engine-ts/core';
+import { createEmitter } from 'lwnjs/core';
 
 const messageAdded = createEmitter<Message>();
 messageAdded.subscribe((message) => list.add(message));

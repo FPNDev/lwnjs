@@ -1,6 +1,6 @@
-import { attach, attachStore, component, env, listen } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
-import { createOutlet } from 'engine-ts/router';
+import { attach, attachStore, component, env, listen } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
+import { createOutlet } from 'lwnjs/router';
 import classes from './App.module.scss';
 import { ContactList } from './components/ContactList';
 import { Dock } from './components/Dock';

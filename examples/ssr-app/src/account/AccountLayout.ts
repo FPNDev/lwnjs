@@ -1,7 +1,7 @@
-import { attach, listen } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
-import { createOutlet } from 'engine-ts/router';
-import { useServer } from 'engine-ts/ssr';
+import { attach, listen } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
+import { createOutlet } from 'lwnjs/router';
+import { useServer } from 'lwnjs/ssr';
 import { UserData } from '../data';
 import { OrdersRoute, OverviewRoute, router, routerLink } from '../routes';
 import classes from '../styles/ui.module.scss';

@@ -1,6 +1,6 @@
-# engine-ts
+# LWN
 
-engine-ts is a performance-focused TypeScript UI engine. Components build their views once. When something changes, your code updates the specific DOM nodes affected by that change. The engine does not rebuild a virtual DOM, diff a view tree, or replay component functions to find the difference.
+LWN is a performance-focused TypeScript UI engine. Components build their views once. When something changes, your code updates the specific DOM nodes affected by that change. The engine does not rebuild a virtual DOM, diff a view tree, or replay component functions to find the difference.
 
 The hot path stays direct: there is no tree walk for ordinary updates. A lightweight logical ownership structure handles setup and cleanup. It keeps listeners, subscriptions, child components, and other resources tied to the right lifetime.
 
@@ -76,12 +76,12 @@ The performance model is selective work, not a claim that every operation is con
 
 | Import | Use |
 |---|---|
-| engine-ts/core | Ownership, state, stores, envs, listeners, and renderer setup |
-| engine-ts/router | Routes, history, and outlets |
-| engine-ts/html | HTML templates and typed node creation |
-| engine-ts/ssr | Client-safe hydration and page-data helpers |
-| engine-ts/server | Node server rendering and caches |
-| engine-ts | Command-line interface |
+| lwnjs/core | Ownership, state, stores, envs, listeners, and renderer setup |
+| lwnjs/router | Routes, history, and outlets |
+| lwnjs/html | HTML templates and typed node creation |
+| lwnjs/ssr | Client-safe hydration and page-data helpers |
+| lwnjs/server | Node server rendering and caches |
+| lwn | Command-line interface |
 
 ## Example apps
 

@@ -5,12 +5,12 @@ The CLI is the package's Node server workflow. It uses Vite to serve the app in 
 ## Commands
 
 ~~~sh
-engine-ts dev
-engine-ts build
-engine-ts start
+lwn dev
+lwn build
+lwn start
 ~~~
 
-With no command, `engine-ts` runs `dev`. Flags may also come first, which still selects development mode.
+With no command, `lwn` runs `dev`. Flags may also come first, which still selects development mode.
 
 | Command | What it does |
 |---|---|
@@ -35,9 +35,9 @@ The project needs an `index.html`, Vite configuration, and a server entry whose 
 Options accept separate values or an equals sign.
 
 ~~~sh
-engine-ts dev --root ./examples/shop --port 4173
-engine-ts build --root ./examples/shop --out-dir ./output
-engine-ts start --root ./examples/shop --port=8080
+lwn dev --root ./examples/shop --port 4173
+lwn build --root ./examples/shop --out-dir ./output
+lwn start --root ./examples/shop --port=8080
 ~~~
 
 The parser rejects unknown commands and options, missing values, non-numeric ports, and ports above 65,535. Omitting the command is equivalent to `dev`.
@@ -45,7 +45,7 @@ The parser rejects unknown commands and options, missing values, non-numeric por
 ## Development
 
 ~~~sh
-engine-ts dev
+lwn dev
 ~~~
 
 The development command starts Vite in middleware mode and serves the app over Node HTTP. Vite handles client modules and assets. The server entry is loaded from source for each rebuild. The server app renders the page using the current `index.html` template.
@@ -55,7 +55,7 @@ Set `--root` when invoking the CLI outside the project directory. `--entry` is r
 ## Production build
 
 ~~~sh
-engine-ts build
+lwn build
 ~~~
 
 The build produces separate client and server directories:
@@ -81,7 +81,7 @@ If an SSG or ISR route has no `paths` function, the build does not prerender its
 ## Production server
 
 ~~~sh
-engine-ts start
+lwn start
 ~~~
 
 The production command loads the server bundle and manifest, uses the client output as the ISR file cache, and serves static assets from the client directory. Files under `/assets/` receive an immutable one-year cache header, so use hashed asset names there.
@@ -98,5 +98,5 @@ This endpoint is available only when a secret is configured. Revalidation refres
 
 The CLI imports Vite at runtime. The server rendering path uses linkedom to provide a DOM on Node. These are optional peer dependencies in the package manifest, so install the ones needed by the parts of the application you use.
 
-For an Express-style server or custom host, use `createServer` and `toNodeHandler` from `engine-ts/server` directly. See [Server reference](reference-server.md).
+For an Express-style server or custom host, use `createServer` and `toNodeHandler` from `lwnjs/server` directly. See [Server reference](reference-server.md).
 

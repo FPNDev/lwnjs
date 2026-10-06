@@ -1,5 +1,5 @@
-import { listen } from 'engine-ts/core';
-import { setupRouter, type Route } from 'engine-ts/router';
+import { listen } from 'lwnjs/core';
+import { setupRouter, type Route } from 'lwnjs/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const ListRoute: Route = { path: /\/lists\/(?<id>[\w-]+)/u };

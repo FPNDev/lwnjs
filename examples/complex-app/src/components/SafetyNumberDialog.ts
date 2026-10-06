@@ -1,5 +1,5 @@
-import { component, listen } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { component, listen } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import type { Chat } from '../store/chat';
 import classes from './Conversation.module.scss';
 import { openModal } from './Modal';

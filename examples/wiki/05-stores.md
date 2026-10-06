@@ -5,7 +5,7 @@ A store is a value a node provides to its logical descendants, like dependency i
 ## Defining a store
 
 ```ts
-import { createState, createStore } from 'engine-ts/core';
+import { createState, createStore } from 'lwnjs/core';
 
 function createTodos() {
   const all: TodoList[] = load();

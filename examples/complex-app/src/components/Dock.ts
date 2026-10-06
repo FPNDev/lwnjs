@@ -4,8 +4,8 @@ import {
   component,
   destroy,
   onDestroy,
-} from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+} from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import { PlacementStore } from '../store/ui';
 import type { Conversation } from './Conversation';
 import classes from './Dock.module.scss';

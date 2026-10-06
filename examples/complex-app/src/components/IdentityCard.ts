@@ -1,5 +1,5 @@
-import { attach, component, listen, useStore } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component, listen, useStore } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import { isolateOnFocus } from '../lib/focus-env';
 import { ChatStore } from '../store/chat';
 import { UiStore } from '../store/ui';
@@ -19,10 +19,11 @@ export const IdentityCard = component((parent: object) => {
     maxlength="32"
   />`;
   const copy = html`<button>Copy</button>`;
+  const codeNode = html`<code></code>`;
   const node = html`
     <section class=${classes.identity}>
       <div class=${classes.me}>${dot}${name}</div>
-      <div class=${classes.id}><code></code>${copy}</div>
+      <div class=${classes.id}>${codeNode}${copy}</div>
     </section>
   `;
   attach(parent, node);
@@ -30,7 +31,7 @@ export const IdentityCard = component((parent: object) => {
   const ui = useStore(UiStore);
 
   name.value = chat.me.name;
-  node.querySelector('code')!.textContent = chat.me.peerId;
+  codeNode.textContent = chat.me.peerId;
 
   const showStatus = () => {
     dot.dataset.presence = statusPresence[chat.status.get()];

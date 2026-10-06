@@ -1,5 +1,5 @@
-import { attach, useStore } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, useStore } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 import { ChatStore } from '../store/chat';
 import classes from './Page.module.scss';
 

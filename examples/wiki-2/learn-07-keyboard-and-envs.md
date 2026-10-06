@@ -7,8 +7,8 @@ A keydown event on document reaches listeners throughout an app. Isolated envs l
 An env is a symbol. Isolate it when the component takes control of input, then release it when that interaction ends.
 
 ~~~ts
-import { attach, component, env, listen, onDestroy } from 'engine-ts/core';
-import { html } from 'engine-ts/html';
+import { attach, component, env, listen, onDestroy } from 'lwnjs/core';
+import { html } from 'lwnjs/html';
 
 const Composer = component((parent: object, sendMessage: () => void) => {
   const input = html<HTMLTextAreaElement>`<textarea></textarea>`;

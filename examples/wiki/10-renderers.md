@@ -1,6 +1,6 @@
 # 10. Renderers
 
-The core of engine-ts doesn't know about the DOM. It needs exactly three view operations, which you supply once with `setRenderer`. With them, outlets can mount views and `destroy` can unmount them.
+The core of LWN doesn't know about the DOM. It needs exactly three view operations, which you supply once with `setRenderer`. With them, outlets can mount views and `destroy` can unmount them.
 
 ```ts
 type Renderer<V extends object> = {
@@ -16,7 +16,7 @@ type Renderer<V extends object> = {
 ## The DOM renderer
 
 ```ts
-import { domRenderer, setRenderer } from 'engine-ts/core';
+import { domRenderer, setRenderer } from 'lwnjs/core';
 setRenderer(domRenderer);
 ```
 
