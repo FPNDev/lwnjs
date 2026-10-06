@@ -1,4 +1,4 @@
-import { attach, component, listen, useStore } from 'engine-ts/core';
+import { attach, component, env, listen, useStore } from 'engine-ts/core';
 import { html } from 'engine-ts/html';
 import {
   HomeRoute,
@@ -16,6 +16,7 @@ import {
 } from '../store/todos';
 import { createKeyedList } from './KeyedList';
 import classes from './Sidebar.module.scss';
+import { isolateOnFocus } from '../lib/focus-env';
 
 type ListRow = {
   node: HTMLLIElement;
@@ -39,7 +40,7 @@ const ListRow = component(
       <li class=${classes.row}>${link}${remove}</li>
     `;
     attach(parent, node);
-    
+
     routerLink(link);
 
     listen(remove, 'click', () => {
@@ -82,7 +83,7 @@ export const Sidebar = component((parent: object) => {
   attach(parent, node);
 
   const todos = useStore(TodosStore);
-  
+
   const rows = createKeyedList(
     node,
     list,
@@ -105,6 +106,27 @@ export const Sidebar = component((parent: object) => {
     active?.classList.add(classes.active);
   });
 
+  const inputFocus = Symbol('new todo list');
+  isolateOnFocus(input, inputFocus);
+
+  listen(document, 'keydown', (event) => {
+    if (
+      event.code === 'KeyK' &&
+      (env.current === undefined || env.is(inputFocus)) &&
+      !event.ctrlKey &&
+      !event.metaKey
+    ) {
+      event.preventDefault();
+      input.focus();
+    }
+  });
+
+  listen(input, 'keydown', (event) => {
+    if (event.code === 'Escape') {
+      input.blur();
+    }
+  });
+
   listen(form, 'submit', (event) => {
     event.preventDefault();
 
@@ -113,8 +135,10 @@ export const Sidebar = component((parent: object) => {
       return;
     }
 
-    input.value = '';
     void router.go(listUrl(todos.addList(name).id));
+
+    input.value = '';
+    input.blur();
   });
 
   return node;

@@ -48,7 +48,7 @@ export const App = component((parent: object) => {
     // App shortcuts run only when no env is isolated: focused inputs and open modals own the keyboard.
     if (
       (event.ctrlKey || event.metaKey) &&
-      event.key === 'k' &&
+      event.code === 'KeyK' &&
       env.current === undefined
     ) {
       event.preventDefault();

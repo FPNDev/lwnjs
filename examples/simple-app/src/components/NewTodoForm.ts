@@ -10,7 +10,7 @@ import classes from './NewTodoForm.module.scss';
 export const NewTodoForm = component(
   (parent: object, onAdd: (title: string) => void) => {
     const input = html<HTMLInputElement>`
-      <input placeholder="What needs doing?" aria-label="New todo" />
+      <input placeholder="What needs doing? [n]" aria-label="New todo" />
     `;
     const node = html`<form class=${classes.form}>
       ${input}<button>Add</button>
@@ -21,8 +21,10 @@ export const NewTodoForm = component(
       event.preventDefault();
       const title = input.value.trim();
       if (title) {
-        onAdd(title);
         input.value = '';
+        input.blur();
+        
+        onAdd(title);
       }
     });
 
@@ -30,7 +32,7 @@ export const NewTodoForm = component(
 
     listen(document, 'keydown', (event) => {
       if (
-        event.key === 'n' &&
+        event.code === 'KeyN' &&
         env.current === undefined &&
         !event.ctrlKey &&
         !event.metaKey
@@ -40,7 +42,7 @@ export const NewTodoForm = component(
       }
     });
     listen(input, 'keydown', (event) => {
-      if (event.key === 'Escape') {
+      if (event.code === 'Escape') {
         input.blur();
       }
     });
