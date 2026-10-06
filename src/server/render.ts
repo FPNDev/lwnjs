@@ -36,7 +36,7 @@ let queue: Promise<unknown> = Promise.resolve();
 
 /**
  * Runs renders one at a time: they share module state (the global
- * `document`, the app's router, page data), so they must not interleave.
+ * `document`, the app's router, page data), so they must not intervene with each other.
  */
 function locked<T>(run: () => Promise<T>): Promise<T> {
   const result = queue.then(run, run);

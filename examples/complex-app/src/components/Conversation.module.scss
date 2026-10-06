@@ -16,6 +16,7 @@
   gap: $space * 1.5;
   padding: $space * 1.5 $space * 2;
   border-bottom: 1px solid $color-border;
+  flex: 0;
 }
 
 .avatar {
@@ -78,6 +79,7 @@
   padding: $space * 2;
   list-style: none;
   overflow-y: auto;
+  min-height: 192px;
 }
 
 .message {
@@ -110,12 +112,15 @@
   gap: $space;
   padding: $space * 1.5 $space * 2;
   border-top: 1px solid $color-border;
+  max-height: 100%;
+  overflow: hidden;
 
   textarea {
     @include input;
     flex: 1;
     resize: none;
-    height: 44px;
+    min-height: 44px;
+    max-height: 100%;
   }
 
   button {

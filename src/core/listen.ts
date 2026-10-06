@@ -83,6 +83,7 @@ export function listen(...args: unknown[]) {
     EventListenerOrEventListenerObject,
     Options | undefined,
   ];
+  
   target.addEventListener(type, listener, options);
   const remove = () => {
     target.removeEventListener(type, listener, options);

@@ -35,8 +35,8 @@ export const domRenderer: Renderer<Node> = {
     anchor.parentNode?.insertBefore(view, anchor);
   },
   remove(view) {
-    // Not `view.remove()`: destroy passes every logical node here, and a non-view node may have its own `remove` method.
-    // oxlint-disable-next-line unicorn/prefer-dom-node-remove
-    view.parentNode?.removeChild(view);
+    if (view instanceof Node && 'remove' in view) {
+      (view as ChildNode).remove();
+    }
   },
 };

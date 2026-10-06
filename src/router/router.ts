@@ -5,14 +5,18 @@ import { browserHistory, memoryHistory, type History } from './history.ts';
 import { compileRoutes, matchRoute, type RouteMatch } from './match.ts';
 import type { Route, RouteParams } from './types.ts';
 
+type NavigationAction = () => void;
+type NavigationListener<T = NavigationAction> = {
+  owner: object;
+  action: T;
+};
+
 export type RouteAction = (
   previousRoute: Route | undefined,
   previousLocation: URL | undefined,
 ) => unknown;
 
-type RouteListener = {
-  owner: object;
-  action: RouteAction;
+type RouteListener = NavigationListener<RouteAction> & {
   /** Navigation id this listener last ran for, so it runs once per navigation. */
   ranFor: number;
 };
@@ -38,6 +42,9 @@ export function setupRouter(
     options.history ??
     (typeof window === 'undefined' ? memoryHistory() : browserHistory());
   const compiled = compileRoutes(routes);
+
+  const navigationListeners = new Set<NavigationListener>();
+  const navigationEndListeners = new Set<NavigationListener>();
   const listeners = new Map<Route, Set<RouteListener>>();
 
   let requested = 0;
@@ -49,10 +56,23 @@ export function setupRouter(
   let previousLocation: URL | undefined;
   let params: RouteParams = null;
 
-  const run = (listener: RouteListener, pending: unknown[]) => {
+  const runNavigation = (listener: NavigationListener) => {
+    runInFrame(listener.owner, () => {
+      listener.action();
+    });
+  };
+
+  const dispatchNavigation = (listeners: Set<NavigationListener>) => {
+    for (const listener of listeners) {
+      runNavigation(listener);
+    }
+  };
+
+  const runRoute = (listener: RouteListener, pending: unknown[]) => {
     if (listener.ranFor === completed) {
       return;
     }
+
     listener.ranFor = completed;
     // Actions run in their owner's frame: owner-less calls inside them belong to it.
     const result = runInFrame(listener.owner, () =>
@@ -64,16 +84,16 @@ export function setupRouter(
   };
 
   /** Runs the active chain's actions synchronously, in a render scope. */
-  const dispatch = () => {
+  const dispatchRoutes = () => {
     const pending: unknown[] = [];
     withScope('', () => {
       for (const route of activeChain) {
         for (const listener of listeners.get(route) ?? []) {
-          run(listener, pending);
+          runRoute(listener, pending);
         }
         if (route.aliasOf) {
           for (const listener of listeners.get(route.aliasOf) ?? []) {
-            run(listener, pending);
+            runRoute(listener, pending);
           }
         }
       }
@@ -93,37 +113,77 @@ export function setupRouter(
     }
 
     const id = ++requested;
-    const match = await matchRoute(compiled, url.pathname);
-    if (id !== requested) {
-      return;
+
+    if (requested - 1 === completed) {
+      dispatchNavigation(navigationListeners);
     }
-    if (match && options.load) {
-      await options.load(match, url);
+
+    try {
+      const match = await matchRoute(compiled, url.pathname);
       if (id !== requested) {
         return;
       }
-    }
-    if (!match) {
-      // Nothing changes, but listeners registered while matching still get the current route.
+
+      if (match && options.load) {
+        await options.load(match, url);
+
+        if (id !== requested) {
+          return;
+        }
+      }
+
+      if (!match) {
+        // Nothing changes, but listeners registered while matching still get the current route.
+        completed = id;
+        await dispatchRoutes();
+
+        return;
+      }
+
+      previousRoute = activeChain.at(-1);
+      previousLocation = activeLocation;
+      activeLocation = url;
+      activeChain = match.chain;
+      activeRoutes = new Set(match.chain);
+
+      for (const route of match.chain) {
+        if (route.aliasOf) {
+          activeRoutes.add(route.aliasOf);
+        }
+      }
+
+      params = match.params && Object.freeze(match.params);
       completed = id;
-      await dispatch();
 
-      return;
-    }
-
-    previousRoute = activeChain.at(-1);
-    previousLocation = activeLocation;
-    activeLocation = url;
-    activeChain = match.chain;
-    activeRoutes = new Set(match.chain);
-    for (const route of match.chain) {
-      if (route.aliasOf) {
-        activeRoutes.add(route.aliasOf);
+      await dispatchRoutes();
+    } finally {
+      if (id === requested) {
+        dispatchNavigation(navigationEndListeners);
       }
     }
-    params = match.params && Object.freeze(match.params);
-    completed = id;
-    await dispatch();
+  };
+
+  const onNavigation = (
+    owner: object,
+    eventSet: Set<NavigationListener>,
+    action: NavigationAction,
+  ) => {
+    const listener: NavigationListener = {
+      owner,
+      action,
+    };
+    const unregister = onDestroy(owner, () => {
+      eventSet.delete(listener);
+    });
+
+    if (requested !== completed && eventSet === navigationListeners) {
+      runNavigation(listener);
+    }
+
+    return () => {
+      eventSet.delete(listener);
+      unregister();
+    };
   };
 
   /**
@@ -157,7 +217,7 @@ export function setupRouter(
       requested === completed &&
       routeList.some((route) => activeRoutes.has(route))
     ) {
-      run(listener, []);
+      runRoute(listener, []);
     }
 
     return () => {
@@ -204,10 +264,32 @@ export function setupRouter(
         ? onRoutes(requireOwner('router.route'), [args[0]], args[1])
         : onRoutes(args[0], [args[1]], args[2]);
     },
+    /** Runs `action` when navigation starts. Without `owner`: the current owner. */
+    navigation(...args: [NavigationAction] | [object, NavigationAction]) {
+      return args.length === 1
+        ? onNavigation(
+            requireOwner('router.navigation'),
+            navigationListeners,
+            args[0],
+          )
+        : onNavigation(args[0], navigationListeners, args[1]);
+    },
+    /** Runs `action` when navigation ends. Without `owner`: the current owner. */
+    navigationEnd(...args: [NavigationAction] | [object, NavigationAction]) {
+      return args.length === 1
+        ? onNavigation(
+            requireOwner('router.navigationEnd'),
+            navigationEndListeners,
+            args[0],
+          )
+        : onNavigation(args[0], navigationEndListeners, args[1]);
+    },
     /** Stops listening to history and drops every listener. */
     dispose() {
       unlisten();
       listeners.clear();
+      navigationListeners.clear();
+      navigationEndListeners.clear();
     },
   };
 }

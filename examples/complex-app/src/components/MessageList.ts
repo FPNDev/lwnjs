@@ -49,9 +49,9 @@ export const MessageList = component((parent: object): MessageList => {
         >${meta(message)}</small
       >`;
       const bubble: Bubble = {
-        node: html<HTMLLIElement>`<li class=${classes.message}>
-          ${message.text}${metaNode}
-        </li>`,
+        node: html<HTMLLIElement>`
+          <li class=${classes.message}>${message.text}${metaNode}</li>
+        `,
         at: message.at,
         meta: metaNode,
       };

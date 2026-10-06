@@ -11,7 +11,7 @@ export const NewChatDialog = component((owner: object) => {
   const modal = openModal(owner, 'New chat');
   const peerId = html<HTMLInputElement>`<input
     required
-    pattern="[\\w\\-]+"
+    pattern="^ets-[\\w\\-]+$"
     placeholder="ets-…"
   />`;
   const name = html<HTMLInputElement>`<input

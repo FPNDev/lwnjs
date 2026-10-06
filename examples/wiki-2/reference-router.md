@@ -88,6 +88,8 @@ Without an explicit history adapter, `setupRouter` selects browser history when 
 | Method or property          | Behavior                                                                                                                |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `ready`                     | Promise for the initial navigation                                                                                      |
+| `navigation(listener)`      | Subscribes to start notifications before matching
+| `navigationEnd(listener)`   | Subscribes to completion notifications for the latest navigation.                                                         |
 | `go(url)`                   | Pushes a URL and resolves after matching, the optional load hook, route actions, and promises returned by those actions |
 | `getPath()`                 | Current pathname                                                                                                        |
 | `getParams()`               | Parameters from the current match, or `null`                                                                            |
@@ -97,6 +99,14 @@ Without an explicit history adapter, `setupRouter` selects browser history when 
 | `dispose()`                 | Stops listening to history and removes route listeners                                                                  |
 
 The optional `load(match, url)` hook runs after a route matches and before route actions. It may be asynchronous. Newer navigations supersede older pending navigations, so an older match or loader does not replace the latest location.
+
+`navigation(listener)` fires before matching when no match/load is pending. A newer navigation that supersedes a pending match or load does not fire another start. 
+`navigationEnd()` fires for the latest request after its route actions and any promises they return settle. These notifications do not lock navigation: after a match is committed, the router can start another navigation while async route actions from the previous one are still settling. 
+
+```ts
+router.navigation(() => loadingIndicator.show());
+router.navigationEnd(() => loadingIndicator.hide());
+```
 
 `go()` compares pathname and search to avoid repeating the same navigation. It pushes the URL through the chosen history adapter. For browser back and forward, the adapter notifies the router and starts navigation.
 

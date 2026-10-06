@@ -50,14 +50,15 @@ export function createListeners<T>() {
     if (link.removed) {
       return;
     }
+
     link.removed = true;
 
-    // `link.next` is kept so a call currently standing on `link` can move on.
     if (link.prev) {
       link.prev.next = link.next;
     } else {
       head = link.next;
     }
+    
     if (link.next) {
       link.next.prev = link.prev;
     } else {

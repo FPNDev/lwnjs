@@ -28,9 +28,11 @@ export const Composer = component(
       if (text) {
         onSend(text);
         input.value = '';
+        input.style.height = ``;
       }
       input.focus();
     };
+
     listen(send, 'click', submit);
     listen(input, 'keydown', (event) => {
       // The composer owns Enter only while it is the innermost env.
@@ -38,6 +40,10 @@ export const Composer = component(
         event.preventDefault();
         submit();
       }
+    });
+    listen(input, 'input', () => {
+      input.style.height = ``;
+      input.style.height = `${input.scrollHeight}px`;
     });
 
     return {
