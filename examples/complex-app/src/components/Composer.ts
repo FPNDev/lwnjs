@@ -17,6 +17,7 @@ export const Composer = component(
       aria-label="Message"
     ></textarea>`;
     const send = html`<button>Send</button>`;
+    
     const id = Symbol('composer');
     isolateOnFocus(input, id);
 

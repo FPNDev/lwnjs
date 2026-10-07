@@ -28,14 +28,12 @@ const ListRow = component((list: TodoList, todos: Todos): ListRow => {
   const name = html`<span class=${classes.name}></span>`;
   const count = html`<span class=${classes.count}></span>`;
 
-  const link = html<HTMLAnchorElement>`
+  const link = routerLink(html<HTMLAnchorElement>`
     <a class=${classes.link} href=${listUrl(list.id)}>${name}${count}</a>
-  `;
+  `);
   const remove = html`
     <button class=${classes.remove} title="Delete list">x</button>
   `;
-
-  routerLink(link);
 
   listen(remove, 'click', () => {
     todos.removeList(list.id);

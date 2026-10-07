@@ -10,14 +10,18 @@ import { Overview } from '../pages/account/Overview';
 /** Keeps the account shell mounted while its outlet switches between pages. */
 const AccountLayout = component(() => {
   const user = useServer(UserData);
-  const overview = html<HTMLAnchorElement>`<a href="/account">Overview</a>`;
-  const orders = html<HTMLAnchorElement>`<a href="/account/orders">Orders</a>`;
+
+  const overview = routerLink(
+    html<HTMLAnchorElement>`<a href="/account">Overview</a>`,
+  );
+  const orders = routerLink(
+    html<HTMLAnchorElement>`<a href="/account/orders">Orders</a>`,
+  );
+
   const switchUser = html`<button class=${`${classes.button} ${classes.ghost}`}>
     Switch user
   </button>`;
   const slot = html<Comment>`<!---->`;
-  routerLink(overview);
-  routerLink(orders);
 
   listen(switchUser, 'click', () => {
     const next =

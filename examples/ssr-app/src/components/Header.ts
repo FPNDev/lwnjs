@@ -16,17 +16,13 @@ export const Header = component(() => {
   const cartButton = html`<button class=${classes.button}>
     Cart (${count})
   </button>`;
-  const logo = html<HTMLAnchorElement>`
+  const logo = routerLink(html<HTMLAnchorElement>`
     <a class=${classes.logo} href="/">engine shop</a>
-  `;
-  const navLinks = NavItems.map(
-    ([link, title]) => html<HTMLAnchorElement>`<a href=${link}>${title}</a>`,
+  `);
+  const navLinks = NavItems.map(([link, title]) =>
+    routerLink(html<HTMLAnchorElement>`<a href=${link}>${title}</a>`),
   );
   const cart = useStore(CartStore);
-  routerLink(logo);
-  for (const link of navLinks) {
-    routerLink(link);
-  }
 
   // The server renders 0; the browser shows the stored cart. Text only, so hydration is unaffected.
   const showCount = () => {
@@ -36,6 +32,7 @@ export const Header = component(() => {
     showCount();
   }
   cart.state.subscribe(showCount);
+  
   listen(cartButton, 'click', () => {
     CartDrawer();
   });

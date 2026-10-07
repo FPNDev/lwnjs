@@ -28,7 +28,7 @@ const ContactRow = component((contact: Contact): ContactRow => {
   const time = html`<span class=${classes.time}></span>`;
   const preview = html`<span class=${classes.preview}></span>`;
   const unread = html`<span class=${classes.unread}></span>`;
-  const link = html<HTMLAnchorElement>`
+  const link = routerLink(html<HTMLAnchorElement>`
     <a class=${classes.contact} href=${chatUrl(contact.peerId)}>
       ${avatar}
       <span class=${classes.text}>
@@ -36,8 +36,7 @@ const ContactRow = component((contact: Contact): ContactRow => {
         <span class=${classes.line}>${preview}${unread}</span>
       </span>
     </a>
-  `;
-  routerLink(link);
+  `);
 
   return {
     node: html<HTMLLIElement>`<li>${link}</li>`,
