@@ -44,9 +44,7 @@ export const App = component(() => {
   );
   router.route(ProductRoute, () => page.show(() => import('./pages/Product')));
   router.route(SearchRoute, () => page.show(() => import('./pages/Search')));
-  router.route(AccountRoute, () =>
-    page.show(() => import('./layout/AccountLayout')),
-  );
+  router.route(AccountRoute, () => page.show(() => import('./layout/Account')));
   router.route(NotFoundRoute, () => page.show(NotFound));
 
   return {

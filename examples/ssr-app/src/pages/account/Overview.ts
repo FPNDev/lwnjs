@@ -1,8 +1,8 @@
 import { component } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { useServer } from 'lwn-js/ssr';
-import { UserData } from '../data';
-import classes from '../styles/ui.module.scss';
+import { UserData } from '../../data';
+import classes from '../../styles/ui.module.scss';
 
 /** Index route of the account layout. Reads the layout's data: loaders of the whole chain feed `useServer`. */
 export const Overview = component(() => {

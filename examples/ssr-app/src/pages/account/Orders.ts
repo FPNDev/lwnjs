@@ -1,8 +1,8 @@
 import { component } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { useServer } from 'lwn-js/ssr';
-import { OrdersData } from '../data';
-import classes from '../styles/ui.module.scss';
+import { OrdersData } from '../../data';
+import classes from '../../styles/ui.module.scss';
 
 /** Lazy inner page of the account layout, with its own server data. */
 const Orders = component(() => {

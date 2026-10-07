@@ -5,7 +5,7 @@ import { useServer } from 'lwn-js/ssr';
 import { UserData } from '../data';
 import { OrdersRoute, OverviewRoute, router, routerLink } from '../routes';
 import classes from '../styles/ui.module.scss';
-import { Overview } from '../pages/Overview';
+import { Overview } from '../pages/account/Overview';
 
 /** Keeps the account shell mounted while its outlet switches between pages. */
 const AccountLayout = component(() => {
@@ -26,17 +26,6 @@ const AccountLayout = component(() => {
     location.reload();
   });
 
-  const node = html`
-    <div class=${classes.account}>
-      <nav class=${classes.accountNav}>
-        <img src=${user.image} alt="" width="64" height="64" />
-        <strong>${user.name}</strong>
-        ${overview}${orders}${switchUser}
-      </nav>
-      <section>${slot}</section>
-    </div>
-  `;
-
   const page = createOutlet(slot);
 
   router.route(OverviewRoute, () => {
@@ -50,10 +39,21 @@ const AccountLayout = component(() => {
     orders.classList.add(classes.active);
     overview.classList.remove(classes.active);
 
-    return page.show(() => import('../pages/Orders'));
+    return page.show(() => import('../pages/account/Orders'));
   });
 
-  return { node };
+  return {
+    node: html`
+      <div class=${classes.account}>
+        <nav class=${classes.accountNav}>
+          <img src=${user.image} alt="" width="64" height="64" />
+          <strong>${user.name}</strong>
+          ${overview}${orders}${switchUser}
+        </nav>
+        <section>${slot}</section>
+      </div>
+    `,
+  };
 });
 
 export default AccountLayout;
