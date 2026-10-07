@@ -1,26 +1,34 @@
-import { attach, attachStore, component, destroy, onDestroy } from 'lwn-js/core';
+import {
+  attach,
+  attachStore,
+  component,
+  destroy,
+  getFrame,
+  onDestroy,
+} from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { PlacementStore } from '../store/ui';
 import type { Conversation } from './Conversation';
 import classes from './Dock.module.scss';
 
 export type Dock = {
-  /** Moves a live conversation into the dock: same node, same state, same subscriptions. */
+  node: HTMLElement;
+  /** Moves a live conversation into the dock without recreating its frame. */
   adopt(conversation: Conversation): void;
-  /** Hands the docked conversation back if it is `peerId`'s. */
+  /** Returns the docked conversation for `peerId`, if present. */
   take(peerId: string): Conversation | undefined;
 };
 
-/** A floating window that keeps one conversation alive across navigation. */
-export const Dock = component((parent: object): Dock => {
+/** Keeps one conversation alive across navigation in a floating window. */
+export const Dock = component((): Dock => {
+  const frame = getFrame()!;
   const node = html`<aside class=${classes.dock} hidden></aside>`;
-  attach(parent, node);
   document.body.append(node);
 
   const placement = attachStore(PlacementStore);
   placement.kind = 'dock';
   placement.close = (conversation) => {
-    destroy(conversation.node);
+    destroy(conversation);
   };
 
   let current: Conversation | undefined;
@@ -31,16 +39,16 @@ export const Dock = component((parent: object): Dock => {
   };
 
   return {
+    node,
     adopt(conversation) {
       unwatch?.();
-      destroy(current?.node);
+      destroy(current);
       current = conversation;
-      // `attach` moves it: detached from the page (its subscriptions stay, they belong to the
-      // conversation itself), attached here (its onAttach re-reads the placement).
-      attach(node, conversation.node);
+      // Re-read the placement after the conversation changes frames.
+      attach(frame, conversation);
       node.append(conversation.node);
       node.hidden = false;
-      unwatch = onDestroy(conversation.node, empty);
+      unwatch = onDestroy(conversation, empty);
     },
 
     take(peerId) {

@@ -1,25 +1,34 @@
-import { attach, component, destroy, listen, onDestroy } from 'lwn-js/core';
+import {
+  attach,
+  component,
+  destroy,
+  getFrame,
+  listen,
+  onDestroy,
+} from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import classes from './Toasts.module.scss';
 
 export type Toasts = {
+  node: HTMLElement;
   /**
-   * Shows a message for a few seconds. With an `owner`, the toast is its
-   * logical child: if the owner goes away first, so does the toast.
+   * Shows a message for a few seconds and attaches it to `frame`, if provided.
+   * Destroying that frame also destroys the toast.
    */
-  show(text: string, owner?: object): void;
+  show(text: string, frame?: object): void;
 };
 
-export const Toasts = component((parent: object): Toasts => {
-  const host = html`<div class=${classes.toasts} aria-live="polite"></div>`;
-  attach(parent, host);
-  document.body.append(host);
+export const Toasts = component((): Toasts => {
+  const frame = getFrame()!;
+  const node = html`<div class=${classes.toasts} aria-live="polite"></div>`;
+  document.body.append(node);
 
   return {
-    show(text, owner = host) {
+    node,
+    show(text, parent = frame) {
       const toast = html`<div class=${classes.toast}>${text}</div>`;
-      attach(owner, toast);
-      host.append(toast);
+      attach(parent, toast);
+      node.append(toast);
 
       const timer = setTimeout(() => {
         destroy(toast);

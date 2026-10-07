@@ -1,4 +1,11 @@
-import { attach, component, destroy, listen, useStore } from 'lwn-js/core';
+import {
+  attach,
+  component,
+  destroy,
+  getFrame,
+  listen,
+  useStore,
+} from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { initial } from '../lib/format';
 import { chatUrl, router } from '../router';
@@ -10,18 +17,18 @@ import { SafetyNumberDialog } from './SafetyNumberDialog';
 
 const presenceLabel = {
   online: 'online',
-  connecting: 'connecting…',
+  connecting: 'connecting...',
   offline: 'offline',
 };
 
 export type ConversationHeader = {
   node: HTMLElement;
-  /** Shows the buttons for where the conversation is now. */
+  /** Updates actions for the conversation's current placement. */
   place(placement: Placement, conversation: Conversation): void;
 };
 
 export const ConversationHeader = component(
-  (parent: object, peerId: string): ConversationHeader => {
+  (peerId: string): ConversationHeader => {
     const avatar = html`<div class=${classes.avatar}></div>`;
     const name = html`<div class=${classes.name}></div>`;
     const dot = html`<span class=${classes.dot}></span>`;
@@ -29,21 +36,10 @@ export const ConversationHeader = component(
     const verified = html`<span
       class=${classes.verified}
       title="Safety number verified"
-      >✔ verified</span
+      >verified</span
     >`;
     const verify = html`<button title="Compare safety numbers">Verify</button>`;
     const actions = html`<div class=${classes.actions}>${verify}</div>`;
-    const node = html`
-      <header class=${classes.header}>
-        ${avatar}
-        <div class=${classes.who}>
-          ${name}
-          <div class=${classes.status}>${dot}${status}${verified}</div>
-        </div>
-        ${actions}
-      </header>
-    `;
-    attach(parent, node);
     const chat = useStore(ChatStore);
 
     const showContact = () => {
@@ -63,18 +59,29 @@ export const ConversationHeader = component(
     chat.presence.subscribe(showPresence);
 
     listen(verify, 'click', () => {
-      SafetyNumberDialog(node, chat, peerId);
+      SafetyNumberDialog(chat, peerId);
     });
+    const frame = getFrame()!;
 
-    // Placement buttons are rebuilt on every move; they are owned by a group node that is replaced.
+    // Replace the action group and its listeners after each move.
     let placementButtons: HTMLElement | undefined;
 
     return {
-      node,
+      node: html`
+        <header class=${classes.header}>
+          ${avatar}
+          <div class=${classes.who}>
+            ${name}
+            <div class=${classes.status}>${dot}${status}${verified}</div>
+          </div>
+          ${actions}
+        </header>
+      `,
+
       place(placement, conversation) {
         destroy(placementButtons);
         const group = html`<span></span>`;
-        attach(node, group);
+        attach(frame, group);
         if (placement.kind === 'page') {
           const popOut = html`<button
             title="Keep this chat open while you browse"
@@ -89,7 +96,7 @@ export const ConversationHeader = component(
           const open = html`<button title="Open in the main view">
             Open
           </button>`;
-          const close = html`<button title="Close">✕</button>`;
+          const close = html`<button title="Close">x</button>`;
           listen(group, open, 'click', () => void router.go(chatUrl(peerId)));
           listen(group, close, 'click', () => placement.close?.(conversation));
           group.append(open, close);

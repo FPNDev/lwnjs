@@ -3,17 +3,17 @@ import { setupRouter, type Route } from 'lwn-js/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const ChatRoute: Route = { path: /\/chat\/(?<peer>[\w-]+)/u };
-/** Matches anything else; must stay last. */
+/** Fallback route, kept last in the route list. */
 export const FallbackRoute: Route = { path: /.*/u };
 
 export const router = setupRouter([HomeRoute, ChatRoute, FallbackRoute]);
 
 export const chatUrl = (peerId: string) => `/chat/${peerId}`;
 
-/** The peer id of the current URL, if any. */
+/** Returns the peer ID from the current URL, if present. */
 export const currentPeerId = () => router.getParams()?.groups?.peer;
 
-/** Makes an anchor navigate through the router instead of reloading the page. */
+/** Routes anchor clicks through the client router. */
 export function routerLink(anchor: HTMLAnchorElement) {
   listen(anchor, 'click', (event) => {
     if (event.button === 0 && !event.metaKey && !event.ctrlKey) {

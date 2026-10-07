@@ -1,8 +1,6 @@
 @use 'sass:color';
 @use '../styles/tokens' as *;
 
-// Identity card
-
 .identity {
   display: grid;
   gap: $space;
@@ -54,8 +52,6 @@
     padding: 4px 10px;
   }
 }
-
-// Contacts
 
 .contacts {
   display: flex;

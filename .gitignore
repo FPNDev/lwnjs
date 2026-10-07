@@ -1,5 +1,7 @@
 node_modules
 dist
 PLAN.md
+AFTERWARDS-TESTING.md
+TODO-SSR.md
 package-lock.json
 *.code-workspace

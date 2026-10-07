@@ -1,10 +1,10 @@
-import { attach, component } from 'lwn-js/core';
+import { component } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { formatTime } from '../lib/format';
 import type { Message } from '../services/db';
 import classes from './Conversation.module.scss';
 
-const statusMark = { pending: ' · ⏳', sent: ' · ✓', delivered: ' · ✓✓' };
+const statusMark = { pending: ' ⏳', sent: ' ✓', delivered: ' ✓✓' };
 
 type Bubble = {
   node: HTMLLIElement;
@@ -14,26 +14,27 @@ type Bubble = {
 
 export type MessageList = {
   node: HTMLElement;
-  /** Adds a message in time order; a message already shown is ignored. */
+  /** Adds a message in time order unless it is already present. */
   add(message: Message): void;
   update(message: Message): void;
   scrollToEnd(): void;
 };
 
-export const MessageList = component((parent: object): MessageList => {
-  const node = html<HTMLUListElement>`<ul class=${classes.messages}></ul>`;
-  attach(parent, node);
-
+export const MessageList = component((): MessageList => {
   const bubbles = new Map<string, Bubble>();
   const order: Bubble[] = [];
+
   const isNearEnd = () =>
     node.scrollHeight - node.scrollTop - node.clientHeight < 48;
   const scrollToEnd = () => {
     node.scrollTop = node.scrollHeight;
   };
+
   const meta = (message: Message) =>
     formatTime(message.at) +
     (message.outgoing ? statusMark[message.status] : '');
+
+  const node = html<HTMLUListElement>`<ul class=${classes.messages}></ul>`;
 
   return {
     node,
@@ -58,7 +59,7 @@ export const MessageList = component((parent: object): MessageList => {
       bubble.node.classList.toggle(classes.outgoing, message.outgoing);
       bubbles.set(message.id, bubble);
 
-      // Usually the newest: O(1). History that arrives late walks back to its place.
+      // Insert newer messages at the end and place late history by timestamp.
       let index = order.length;
       while (index > 0 && order[index - 1].at > message.at) {
         index--;

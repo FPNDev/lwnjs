@@ -10,7 +10,6 @@ import {
   domRenderer,
   env,
   getParent,
-  isAttached,
   listen,
   onAttach,
   onDestroy,
@@ -86,14 +85,14 @@ describe('emitter / state', () => {
     expect(deferred[0]).toThrow('boom');
   });
 
-  it('owner-scoped subscriptions end when the owner is destroyed', () => {
-    const owner = {};
+  it('frame-bound subscriptions end when the frame is destroyed', () => {
+    const frame = {};
     const events = createEmitter<number>();
     const seen: number[] = [];
-    events.subscribe(owner, (value) => seen.push(value));
+    events.subscribe(frame, (value) => seen.push(value));
 
     events.emit(1);
-    destroy(owner);
+    destroy(frame);
     events.emit(2);
     expect(seen).toEqual([1]);
   });
@@ -122,13 +121,11 @@ describe('logical tree', () => {
     attach(b, child);
     expect(getParent(child)).toBe(b);
     detach(child);
-    expect(isAttached(child)).toBe(false);
   });
 
   it('a node with children but no parent is not attached (B14)', () => {
     const root = {};
     attach(root, {});
-    expect(isAttached(root)).toBe(false);
 
     const hook = vi.fn();
     onAttach(root, hook);
@@ -151,12 +148,12 @@ describe('logical tree', () => {
     expect(cleanup).toHaveBeenCalledTimes(3);
   });
 
-  it('attach scope ends owner-scoped subscriptions on detach', () => {
+  it('attach frame ends frame-bound subscriptions on detach', () => {
     const child = {};
     const loading = createState(0);
     const seen: number[] = [];
-    onAttach(child, (scope) => {
-      loading.subscribe(scope, (value) => seen.push(value));
+    onAttach(child, () => {
+      loading.subscribe((value) => seen.push(value));
     });
 
     attach({}, child);
@@ -224,14 +221,14 @@ describe('logical tree', () => {
     expect(hook).not.toHaveBeenCalled();
   });
 
-  it('listen removes the DOM listener when the owner is destroyed', () => {
-    const owner = {};
+  it('listen removes the DOM listener when the frame is destroyed', () => {
+    const frame = {};
     const button = document.createElement('button');
     const clicked = vi.fn();
-    listen(owner, button, 'click', clicked);
+    listen(frame, button, 'click', clicked);
 
     button.click();
-    destroy(owner);
+    destroy(frame);
     button.click();
     expect(clicked).toHaveBeenCalledTimes(1);
   });

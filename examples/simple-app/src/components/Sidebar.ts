@@ -1,4 +1,4 @@
-import { attach, component, env, listen, useStore } from 'lwn-js/core';
+import { component, env, listen, useStore } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import {
   HomeRoute,
@@ -23,72 +23,57 @@ type ListRow = {
   update(list: TodoList): void;
 };
 
-/** One sidebar entry. It updates itself in place; the sidebar only creates and destroys rows. */
-const ListRow = component(
-  (parent: object, list: TodoList, todos: Todos): ListRow => {
-    const name = html`<span class=${classes.name}></span>`;
-    const count = html`<span class=${classes.count}></span>`;
+/** Displays and updates one list entry. */
+const ListRow = component((list: TodoList, todos: Todos): ListRow => {
+  const name = html`<span class=${classes.name}></span>`;
+  const count = html`<span class=${classes.count}></span>`;
 
-    const link = html<HTMLAnchorElement>`
-      <a class=${classes.link} href=${listUrl(list.id)}>${name}${count}</a>
-    `;
-    const remove = html`
-      <button class=${classes.remove} title="Delete list">✕</button>
-    `;
+  const link = html<HTMLAnchorElement>`
+    <a class=${classes.link} href=${listUrl(list.id)}>${name}${count}</a>
+  `;
+  const remove = html`
+    <button class=${classes.remove} title="Delete list">x</button>
+  `;
 
-    const node = html<HTMLLIElement>`
-      <li class=${classes.row}>${link}${remove}</li>
-    `;
-    attach(parent, node);
+  routerLink(link);
 
-    routerLink(link);
+  listen(remove, 'click', () => {
+    todos.removeList(list.id);
+    if (currentListId() === list.id) {
+      void router.go('/');
+    }
+  });
 
-    listen(remove, 'click', () => {
-      todos.removeList(list.id);
-      if (currentListId() === list.id) {
-        void router.go('/');
-      }
-    });
+  return {
+    node: html<HTMLLIElement>` <li class=${classes.row}>${link}${remove}</li> `,
+    update(next) {
+      name.textContent = next.name;
+      count.textContent =
+        next.todos.length > 0 ? `${countOpen(next)}/${next.todos.length}` : '';
+    },
+  };
+});
 
-    return {
-      node,
-      update(next) {
-        name.textContent = next.name;
-        count.textContent =
-          next.todos.length > 0
-            ? `${countOpen(next)}/${next.todos.length}`
-            : '';
-      },
-    };
-  },
-);
-
-export const Sidebar = component((parent: object) => {
+export const Sidebar = component(() => {
   const list = html`<ul class=${classes.lists}></ul>`;
   const empty = html`<p class=${classes.empty}>No lists yet.</p>`;
   const input = html<HTMLInputElement>`
-    <input placeholder="New list…" maxlength="40" aria-label="New list name" />
+    <input
+      placeholder="New list..."
+      maxlength="40"
+      aria-label="New list name"
+    />
   `;
 
   const form = html`
     <form class=${classes.form}>${input}<button>Add</button></form>
   `;
-
-  const node = html`
-    <aside class=${classes.sidebar}>
-      <h2 class=${classes.title}>Lists</h2>
-      ${list}${empty}${form}
-    </aside>
-  `;
-  attach(parent, node);
-
   const todos = useStore(TodosStore);
 
   const rows = createKeyedList(
-    node,
     list,
     (item: TodoList) => item.id,
-    (owner, item) => ListRow(owner, item, todos),
+    (item) => ListRow(item, todos),
   );
   const render = (lists: TodoList[]) => {
     rows.render(lists);
@@ -141,5 +126,12 @@ export const Sidebar = component((parent: object) => {
     input.blur();
   });
 
-  return node;
+  return {
+    node: html`
+      <aside class=${classes.sidebar}>
+        <h2 class=${classes.title}>Lists</h2>
+        ${list}${empty}${form}
+      </aside>
+    `,
+  };
 });

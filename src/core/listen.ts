@@ -1,4 +1,4 @@
-import { requireOwner } from './owner.ts';
+import { bindFrame, frameOf, requireFrame } from './frame.ts';
 import { onDestroy } from './tree.ts';
 
 type ListenerOrObject<E extends Event> =
@@ -6,11 +6,7 @@ type ListenerOrObject<E extends Event> =
 
 type Options = boolean | AddEventListenerOptions;
 
-/**
- * Adds an event listener that is removed when `owner` (default: the current
- * owner) is destroyed.
- * @returns A function that removes the listener early.
- */
+/** Adds a frame-bound listener and returns a function to remove it early. */
 export function listen<K extends keyof HTMLElementEventMap>(
   target: HTMLElement,
   type: K,
@@ -40,7 +36,7 @@ export function listen<E extends Event>(
 ): () => void;
 
 export function listen<K extends keyof HTMLElementEventMap>(
-  owner: object,
+  frame: object,
   target: HTMLElement,
   type: K,
   listener: (this: HTMLElement, event: HTMLElementEventMap[K]) => void,
@@ -48,7 +44,7 @@ export function listen<K extends keyof HTMLElementEventMap>(
 ): () => void;
 
 export function listen<K extends keyof WindowEventMap>(
-  owner: object,
+  frame: object,
   target: Window,
   type: K,
   listener: (this: Window, event: WindowEventMap[K]) => void,
@@ -56,7 +52,7 @@ export function listen<K extends keyof WindowEventMap>(
 ): () => void;
 
 export function listen<K extends keyof DocumentEventMap>(
-  owner: object,
+  frame: object,
   target: Document,
   type: K,
   listener: (this: Document, event: DocumentEventMap[K]) => void,
@@ -64,7 +60,7 @@ export function listen<K extends keyof DocumentEventMap>(
 ): () => void;
 
 export function listen<E extends Event>(
-  owner: object,
+  frame: object,
   target: EventTarget,
   type: string,
   listener: ListenerOrObject<E>,
@@ -72,9 +68,9 @@ export function listen<E extends Event>(
 ): () => void;
 
 export function listen(...args: unknown[]) {
-  // `listen(target, type, …)` has the type string second; `listen(owner, target, type, …)` third.
+  // The explicit-frame overload adds one argument before the event type.
   const implicit = typeof args[1] === 'string';
-  const owner = implicit ? requireOwner('listen') : (args[0] as object);
+  const frame = implicit ? requireFrame('listen') : frameOf(args[0] as object)!;
   const [target, type, listener, options] = (
     implicit ? args : args.slice(1)
   ) as [
@@ -83,12 +79,18 @@ export function listen(...args: unknown[]) {
     EventListenerOrEventListenerObject,
     Options | undefined,
   ];
-  
-  target.addEventListener(type, listener, options);
+
+  const boundListener =
+    typeof listener === 'function'
+      ? bindFrame(frame, listener)
+      : {
+          handleEvent: bindFrame(frame, listener.handleEvent.bind(listener)),
+        };
+  target.addEventListener(type, boundListener, options);
   const remove = () => {
-    target.removeEventListener(type, listener, options);
+    target.removeEventListener(type, boundListener, options);
   };
-  const unregister = onDestroy(owner, remove);
+  const unregister = onDestroy(frame, remove);
 
   return () => {
     unregister();

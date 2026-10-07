@@ -24,15 +24,11 @@ function read(): TodoList[] {
   }
 }
 
-/**
- * All todo lists, persisted to localStorage.
- * The sidebar and the list page both observe them, which is what `createState`
- * is for. Actions change the objects in place and call `notify()`.
- */
+/** Creates shared todo state and its persistence subscription. */
 function createTodos() {
   let all = read();
   const lists = createState(all);
-  // The store lives as long as the app, so this subscription needs no owner.
+  // Keep persistence subscribed for the lifetime of the shared store.
   lists.subscribe((value) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   });
@@ -47,7 +43,7 @@ function createTodos() {
   return {
     lists,
     find,
-    /** Re-reads storage, e.g. after another tab changed it. */
+    /** Reloads lists from localStorage. */
     reload() {
       all = read();
       lists.set(all);
@@ -86,7 +82,7 @@ function createTodos() {
       changed();
     },
     clearDone(listId: string) {
-      // Compact in place: keep the open todos at the front, then cut the tail.
+      // Compact the list before truncating completed items.
       const { todos } = find(listId)!;
       let kept = 0;
       for (const todo of todos) {
@@ -102,7 +98,6 @@ function createTodos() {
 
 export type Todos = ReturnType<typeof createTodos>;
 
-/** Number of todos not done yet. */
 export function countOpen(list: TodoList) {
   let open = 0;
   for (const todo of list.todos) {
@@ -114,5 +109,5 @@ export function countOpen(list: TodoList) {
   return open;
 }
 
-/** Provided by the app root; any component below finds it with `useStore`. */
+/** Shared todo data provided by the app. */
 export const TodosStore = createStore(createTodos);

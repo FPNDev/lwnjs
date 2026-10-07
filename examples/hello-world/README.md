@@ -1,18 +1,24 @@
 # hello-world
 
-The smallest LWN app: a counter.
+A small counter app that demonstrates a component, local state, DOM events, keyboard input, and mounting a rendered view.
+
+## Run
+
+From the repository root:
 
 ```sh
+npm install
+npm run build
+cd examples/hello-world
 npm install
 npm run dev
 ```
 
-What it shows, all in [src/main.ts](src/main.ts):
+Open the local URL printed by Vite.
 
-- `setRenderer(domRenderer)`: the engine places views through a renderer; the DOM is one of them.
-- A component is a function `(parent) => view`. It creates its view, calls `attach(parent, node)`, and wires everything with `node` as the owner.
-- **Less is more.** The count lives in a plain `let` with a `setCount` function, because only this component reads it. Reach for `createState` when several independent parts need to observe the same value (see `simple-app`).
-- `listen(node, target, type, fn)` is `addEventListener` that is removed when `node` is destroyed. That includes the `window` key listener, which in plain DOM code is the classic leak.
-- `html` templates: strings become text (never HTML), nodes are inserted as is.
+## Source
 
-Requires the engine to be built once: `cd ../.. && npm run build`.
+- **src/main.ts** selects the DOM renderer, defines the counter, handles button and keyboard events, and mounts the component in the page.
+- **index.html** provides the page and the app mount element.
+
+The counter state stays local to its component. Its listeners are tied to the component frame and are removed when the component is destroyed.

@@ -1,45 +1,40 @@
-import { attach, destroy, listen } from 'lwn-js/core';
+import { component, destroy, getFrame, listen, withFrame } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
-import { searchProducts } from '../api';
+import { searchProducts, type ProductSummary } from '../api';
 import { ProductCard } from '../components/ProductCard';
 import classes from '../styles/ui.module.scss';
 
-/**
- * SSG shell, client data: the page is prerendered once (input + empty grid)
- * and results come straight from the API in the browser. Search results are
- * per visitor and change with every keystroke: nothing to prerender or cache.
- */
-export default function Search(parent: object) {
+/** Prerenders the search shell and fetches visitor-specific results in the browser. */
+const ProductGrid = component((products: ProductSummary[]) => ({
+  node: html`<div class=${classes.grid}>
+    ${products.map((product) => ProductCard(product))}
+  </div>`,
+}));
+
+const Search = component(() => {
   const input = html<HTMLInputElement>`<input
     class=${classes.search}
     type="search"
-    placeholder="Search products…"
+    placeholder="Search products..."
   />`;
   const status = html`<p class=${classes.muted}>Type to search.</p>`;
-  const node = html`<div>
-    <h1 class=${classes.title}>Search</h1>
-    ${input}${status}
-  </div>`;
-  attach(parent, node);
+  const gridHost = html`<div></div>`;
+  const frame = getFrame()!;
 
-  let grid: HTMLElement | undefined;
+  let grid: ReturnType<typeof ProductGrid> | undefined;
   let latest = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const search = async (term: string) => {
     const request = ++latest;
-    status.textContent = 'Searching…';
+    status.textContent = 'Searching...';
     const results = await searchProducts(term);
     if (request !== latest) {
       return;
     }
     destroy(grid);
-    const next = html`<div class=${classes.grid}></div>`;
-    attach(node, next);
-    for (const product of results) {
-      next.append(ProductCard(next, product));
-    }
-    node.append(next);
+    const next = withFrame(frame, () => ProductGrid(results));
+    gridHost.replaceChildren(next.node);
     grid = next;
     status.textContent = results.length > 0 ? '' : 'No results.';
   };
@@ -54,5 +49,12 @@ export default function Search(parent: object) {
     }, 250);
   });
 
-  return node;
-}
+  return {
+    node: html`<div>
+      <h1 class=${classes.title}>Search</h1>
+      ${input}${status}${gridHost}
+    </div>`,
+  };
+});
+
+export default Search;

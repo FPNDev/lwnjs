@@ -5,9 +5,8 @@ import { startChat } from './store/chat';
 
 setRenderer(domRenderer);
 
-// Identity, contacts and the signaling connection are ready before the first view is built,
-// so every component can read them synchronously.
+// Load the identity and start signaling before building the app.
 await startChat();
 
 const container = document.querySelector('#app')!;
-container.append(App(container));
+container.append(App().node);

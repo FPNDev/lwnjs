@@ -14,61 +14,52 @@ import { renderPage } from './render.ts';
 export type LoadContext = {
   url: URL;
   params: RouteParams;
-  /** The incoming request; absent during `build`. */
+  /** The incoming request, or undefined during a build. */
   request?: Request;
 };
 
-/** Stores a value for `useServer(token)`. Values must be JSON-serializable. */
+/** Stores JSON-serializable page data for useServer(). */
 export type SetServerData = <T>(token: ServerToken<T>, value: T) => void;
 
-/** Server-only settings for a route. Keep these out of the client bundle. */
+/** Server rendering and data settings for a route. */
 export type ServerRoute = {
   route: Route;
-  /**
-   * `ssr` renders on every request (default). `ssg` renders once (at build or
-   * first request) and never expires. `isr` is `ssg` that re-renders in the
-   * background once older than `revalidate` seconds.
-   */
+  /** Selects request rendering, static generation, or timed revalidation. */
   mode?: 'ssr' | 'ssg' | 'isr';
-  /** Seconds before an `isr` page is stale. Without it, `isr` behaves like `ssg`. */
+  /** Seconds before an ISR page becomes stale. */
   revalidate?: number;
-  /** Response status, e.g. 404 for a not-found route. */
+  /** HTTP status for the rendered page. */
   status?: number;
-  /** Paths to prerender in `build` (`ssg`/`isr`). */
+  /** Paths to prerender for static and incremental modes. */
   paths?: () => Promise<readonly string[]> | readonly string[];
-  /** Loads page data before render. Loaders of all routes in the matched chain run in parallel. */
+  /** Loads page data before rendering; matched route loaders run in parallel. */
   load?: (context: LoadContext, set: SetServerData) => Promise<void> | void;
-  /**
-   * Source modules of the route's lazy pages, as keys of the Vite client
-   * manifest (e.g. `src/pages/Product.ts`). Rendered pages get
-   * `<link rel="modulepreload">` for them and their imports, so hydration
-   * does not wait for the import. Needs `manifest`.
-   */
+  /** Vite manifest keys for lazy pages to preload before hydration. */
   preload?: readonly string[];
 };
 
-/** The parts of Vite's client `manifest.json` used for preloading. */
+/** Vite client manifest entries used for preloading. */
 export type ViteManifest = Record<string, { file: string; imports?: string[] }>;
 
 export type ServerOptions = {
-  /** The built `index.html`. Must contain the container element. */
+  /** Built HTML template containing the app container. */
   template: string;
-  /** The app's router; server renders navigate it with memory history. */
+  /** Router used to match and render requests. */
   router: Router;
-  /** The app's route tree (the one passed to `setupRouter`). */
+  /** Route tree passed to setupRouter(). */
   routes: readonly Route[];
   serverRoutes?: readonly ServerRoute[];
-  /** Renders the app into the container, synchronously; lazy pages go through outlets. */
+  /** Builds the app synchronously inside the render container. */
   app: (container: Element) => void;
-  /** Id of the container element. Default `app`. */
+  /** Container element id. Defaults to app. */
   containerId?: string;
-  /** Cache for `ssg`/`isr` pages. Default `memoryCache()`. */
+  /** Cache for static and incremental pages. Defaults to memoryCache(). */
   cache?: PageCache;
-  /** Milliseconds a render may take to settle. Default 10000. */
+  /** Render timeout in milliseconds. Defaults to 10000. */
   timeout?: number;
-  /** Vite client manifest (`build.manifest: true`), for route `preload`. */
+  /** Vite client manifest used by route preloads. */
   manifest?: ViteManifest;
-  /** Public base path of the client assets. Default `/`. */
+  /** Public base path for client assets. Defaults to /. */
   base?: string;
 };
 
@@ -79,18 +70,14 @@ type PageResult = {
 
 const DATA_FILE = '__data.json';
 
-/** Cache key for a pathname: no trailing slash, except for the root. */
+/** Normalizes a pathname for use as a cache key. */
 function pageKey(pathname: string) {
   return pathname.length > 1 && pathname.endsWith('/')
     ? pathname.slice(0, -1)
     : pathname;
 }
 
-/**
- * Creates the SSR / SSG / ISR server for an app.
- * @param options Server options.
- * @returns `handle` for requests, `build` for prerendering, `revalidate` for on-demand refresh.
- */
+/** Creates request, build, and revalidation handlers for an app. */
 export function createServer(options: ServerOptions) {
   const serverRoutes = options.serverRoutes ?? [];
   const cache = options.cache ?? memoryCache();
@@ -144,7 +131,7 @@ export function createServer(options: ServerOptions) {
     return data;
   };
 
-  /** Chunk URLs of the matched routes' `preload` modules and everything they import. */
+  /** Collects URLs for lazy modules used by the matched routes. */
   const preloadsFor = (chain: readonly Route[]) => {
     const { manifest } = options;
     if (!manifest) {
@@ -193,7 +180,7 @@ export function createServer(options: ServerOptions) {
     };
   };
 
-  /** Renders and caches a page; concurrent calls for one path share a render. */
+  /** Shares one regeneration job per pathname. */
   const regenerate = (key: string, url: URL, match: RouteMatch) => {
     let running = regenerating.get(key);
     if (!running) {
@@ -245,7 +232,7 @@ export function createServer(options: ServerOptions) {
     return { entry: cached, cacheStatus: isStale ? 'STALE' : 'HIT' };
   };
 
-  /** Page data only: SSR pages skip the render, cached pages serve the data they were rendered with. */
+  /** Returns page data without HTML for client navigation. */
   const pageData = async (
     url: URL,
     request: Request,
@@ -271,10 +258,7 @@ export function createServer(options: ServerOptions) {
   };
 
   return {
-    /**
-     * Handles a page (`/path`) or page data (`/path/__data.json`) request.
-     * @returns The response, or `undefined` for non-GET/HEAD requests and unmatched paths.
-     */
+    /** Handles GET and HEAD page or page-data requests. */
     async handle(request: Request): Promise<Response | undefined> {
       if (request.method !== 'GET' && request.method !== 'HEAD') {
         return undefined;
@@ -315,12 +299,7 @@ export function createServer(options: ServerOptions) {
       );
     },
 
-    /**
-     * Prerenders every `paths()` entry of `ssg`/`isr` routes into `outDir` in
-     * static-hosting layout. Read the template before building into the same
-     * folder: the root page overwrites `index.html`.
-     * @returns The rendered paths.
-     */
+    /** Prerenders configured static and incremental paths into `outDir`. */
     async build({ outDir }: { outDir: string }) {
       const target = fsCache(outDir);
       const rendered: string[] = [];
@@ -342,10 +321,7 @@ export function createServer(options: ServerOptions) {
       return rendered;
     },
 
-    /**
-     * Re-renders a cached page now; the old version is served until it is ready.
-     * @param path Page pathname.
-     */
+    /** Refreshes a cached page immediately. */
     async revalidate(path: string) {
       const url = new URL(path, 'http://localhost');
       const match = await options.router.match(url.pathname);

@@ -12,24 +12,24 @@ import { toNodeHandler } from './node.ts';
 import type { ViteManifest } from './server.ts';
 
 export type RunOptions = {
-  /** Project folder with `index.html` and the Vite config. Default: the working directory. */
+  /** Project directory. Defaults to the working directory. */
   root?: string;
-  /** Server entry, relative to `root`; its default export is `defineServerApp(...)`. Default `src/entry-server.ts`. */
+  /** Server entry path relative to the project directory. */
   entry?: string;
-  /** Build output, relative to `root`: `client/` and `server/` go inside. Default `dist`. */
+  /** Build output directory relative to the project directory. */
   outDir?: string;
-  /** Default `PORT` or 3000. */
+  /** Port to listen on. Defaults to PORT or 3000. */
   port?: number;
-  /** Interface or hostname to listen on. When absent, Node and Vite use their defaults. */
+  /** Host interface to listen on. */
   host?: string;
-  /** Enables the revalidate endpoint. Default `REVALIDATE_SECRET`. */
+  /** Secret required by the revalidation endpoint. Defaults to REVALIDATE_SECRET. */
   revalidateSecret?: string;
 };
 
 type Middleware = (incoming: IncomingMessage, outgoing: ServerResponse) => void;
 
 function resolve(options: RunOptions) {
-  const root = options.root ?? import.meta.dirname;
+  const root = options.root ?? process.cwd();
   const entry = options.entry ?? 'src/entry-server.ts';
   const outDir = join(root, options.outDir ?? 'dist');
 
@@ -38,7 +38,7 @@ function resolve(options: RunOptions) {
     entry,
     client: join(outDir, 'client'),
     server: join(outDir, 'server'),
-    /** Vite names the SSR bundle after the entry file. */
+    /** Vite names the server bundle after the entry file. */
     serverEntry: join(
       outDir,
       'server',
@@ -68,7 +68,7 @@ const readManifest = async (client: string) =>
     await readFile(join(client, '.vite/manifest.json'), 'utf8'),
   ) as ViteManifest;
 
-/** Development: Vite middleware for the client, SSR from source, reloaded on change. */
+/** Runs Vite middleware with server rendering from source. */
 export async function dev(options: RunOptions = {}) {
   const paths = resolve(options);
   const vite = await import('vite');
@@ -115,7 +115,7 @@ export async function dev(options: RunOptions = {}) {
   });
 }
 
-/** Production build: client bundle with manifest, server bundle, then prerendering of `ssg`/`isr` paths. */
+/** Builds client and server bundles, then prerenders configured paths. */
 export async function build(options: RunOptions = {}) {
   const paths = resolve(options);
 
@@ -129,7 +129,7 @@ export async function build(options: RunOptions = {}) {
     build: { ssr: paths.entry, outDir: paths.server, emptyOutDir: true },
   });
 
-  // Keep the untouched template: prerendering the root page replaces index.html.
+  // Keep the template because prerendering the root path replaces index.html.
   const template = await readFile(join(paths.client, 'index.html'), 'utf8');
   await writeFile(join(paths.server, 'template.html'), template);
 
@@ -143,10 +143,7 @@ export async function build(options: RunOptions = {}) {
   );
 }
 
-/**
- * Production server on the build output: static assets, pages and page data
- * (prerendered files are the ISR cache), optional revalidate endpoint.
- */
+/** Serves the production build and handles page data and revalidation. */
 export async function start(options: RunOptions = {}) {
   const paths = resolve(options);
   const app = await importApp(paths.serverEntry);

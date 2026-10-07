@@ -1,9 +1,9 @@
-import { attach } from 'lwn-js/core';
+import { component } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import classes from './Page.module.scss';
 
-export function Welcome(parent: object) {
-  const node = html`
+export const Welcome = component(() => ({
+  node: html`
     <section class=${classes.page}>
       <h1 class=${classes.title}>Todos</h1>
       <p class=${classes.hint}>Create a list in the sidebar to get started.</p>
@@ -13,8 +13,5 @@ export function Welcome(parent: object) {
         renames a todo, and <kbd>Esc</kbd> cancels.
       </p>
     </section>
-  `;
-  attach(parent, node);
-
-  return node;
-}
+  `,
+}));

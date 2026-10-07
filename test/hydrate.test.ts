@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { component, withFrame } from '../src/core/index.ts';
 import { createOutlet } from '../src/router/index.ts';
 import { hydrate, useServer } from '../src/ssr/index.ts';
 import { PostData, get, settle, setupApp } from './fixtures/blog.ts';
@@ -36,7 +37,6 @@ describe('hydration', () => {
       'HEADER',
       'ARTICLE',
     ]);
-    console.log([...serverArticle!.childNodes]);
     // The empty text node left as a comment by the server is a text node again.
     expect(serverArticle!.childNodes[1].nodeType).toBe(3);
   });
@@ -65,13 +65,15 @@ describe('hydration', () => {
     await hydrate(container, App, router);
 
     expect(() => useServer(PostData)).toThrow(/during setup/u);
-    const outlet = createOutlet(document.createElement('div'));
+    const outlet = withFrame(container, () => createOutlet());
     await expect(
-      outlet.show(() => {
-        useServer(PostData);
+      outlet.show(
+        component(() => {
+          useServer(PostData);
 
-        return document.createElement('i');
-      }),
+          return { node: document.createElement('i') };
+        }),
+      ),
     ).rejects.toThrow(/no server data/u);
   });
 

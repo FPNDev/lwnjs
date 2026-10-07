@@ -1,8 +1,4 @@
-/**
- * Isolated envs: one env is current at a time, optionally nested inside
- * another (an input inside a modal). Components keep their own `Symbol()` and
- * ask whether it is active (`is`) or innermost (`isCurrent`).
- */
+/** Tracks nested keyboard environments. */
 const path: symbol[] = [];
 const depths = new Map<symbol, number>();
 
@@ -13,14 +9,12 @@ function truncate(length: number) {
 }
 
 export const env = {
-  /**
-   * Makes `id` the current env. If `within` is active, `id` nests inside it
-   * and `within` stays active; otherwise every other env is released.
-   * O(released envs).
-   * @param id Env to isolate.
-   * @param within Env that contains `id`.
-   */
+  /** Activates `id`, optionally inside another environment. */
   isolate(id: symbol, within?: symbol) {
+    if (id === within) {
+      return;
+    }
+
     const existingDepth = depths.get(id);
     if (existingDepth !== undefined) {
       truncate(existingDepth);
@@ -33,10 +27,7 @@ export const env = {
     path.push(id);
   },
 
-  /**
-   * Releases `id` and every env nested inside it; its container becomes current.
-   * @param id Env to release.
-   */
+  /** Releases `id` and its nested environments. */
   release(id: symbol) {
     const depth = depths.get(id);
     if (depth !== undefined) {
@@ -44,17 +35,16 @@ export const env = {
     }
   },
 
-  /** @returns Whether `id` is current or contains the current env. O(1). */
+  /** Checks whether `id` is active or contains the active environment. */
   is(id: symbol) {
     return depths.has(id);
   },
 
-  /** @returns Whether `id` is the innermost (current) env. O(1). */
+  /** Checks whether `id` is the active innermost environment. */
   isCurrent(id: symbol) {
     return path.at(-1) === id;
   },
 
-  /** The innermost env, if any. */
   get current() {
     return path.at(-1);
   },

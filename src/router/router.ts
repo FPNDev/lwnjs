@@ -1,5 +1,5 @@
-import { requireOwner, runInFrame } from '../core/owner.ts';
-import { withScope } from '../core/scope.ts';
+import { frameOf, requireFrame, runInFrame } from '../core/frame.ts';
+import { withHydration } from '../core/hydration.ts';
 import { onDestroy } from '../core/tree.ts';
 import { browserHistory, memoryHistory, type History } from './history.ts';
 import { compileRoutes, matchRoute, type RouteMatch } from './match.ts';
@@ -7,7 +7,7 @@ import type { Route, RouteParams } from './types.ts';
 
 type NavigationAction = () => void;
 type NavigationListener<T = NavigationAction> = {
-  owner: object;
+  frame: object;
   action: T;
 };
 
@@ -57,7 +57,7 @@ export function setupRouter(
   let params: RouteParams = null;
 
   const runNavigation = (listener: NavigationListener) => {
-    runInFrame(listener.owner, () => {
+    runInFrame(listener.frame, () => {
       listener.action();
     });
   };
@@ -74,8 +74,8 @@ export function setupRouter(
     }
 
     listener.ranFor = completed;
-    // Actions run in their owner's frame: owner-less calls inside them belong to it.
-    const result = runInFrame(listener.owner, () =>
+    // Route actions run in their registered frame.
+    const result = runInFrame(listener.frame, () =>
       listener.action(previousRoute, previousLocation),
     );
     if (result instanceof Promise) {
@@ -83,10 +83,10 @@ export function setupRouter(
     }
   };
 
-  /** Runs the active chain's actions synchronously, in a render scope. */
+  /** Runs the active chain's actions synchronously, in a hydration context. */
   const dispatchRoutes = () => {
     const pending: unknown[] = [];
-    withScope('', () => {
+    withHydration('', () => {
       for (const route of activeChain) {
         for (const listener of listeners.get(route) ?? []) {
           runRoute(listener, pending);
@@ -164,15 +164,16 @@ export function setupRouter(
   };
 
   const onNavigation = (
-    owner: object,
+    frame: object,
     eventSet: Set<NavigationListener>,
     action: NavigationAction,
   ) => {
+    const resolvedFrame = frameOf(frame) ?? frame;
     const listener: NavigationListener = {
-      owner,
+      frame: resolvedFrame,
       action,
     };
-    const unregister = onDestroy(owner, () => {
+    const unregister = onDestroy(resolvedFrame, () => {
       eventSet.delete(listener);
     });
 
@@ -189,14 +190,19 @@ export function setupRouter(
   /**
    * Runs `action` whenever one of `routes` is in the active chain: the final
    * match or one of its parents. Runs right away if one already is. Ends when
-   * `owner` is destroyed.
+   * `frame` is destroyed.
    */
   const onRoutes = (
-    owner: object,
+    frame: object,
     routeList: readonly Route[],
     action: RouteAction,
   ) => {
-    const listener: RouteListener = { owner, action, ranFor: -1 };
+    const resolvedFrame = frameOf(frame) ?? frame;
+    const listener: RouteListener = {
+      frame: resolvedFrame,
+      action,
+      ranFor: -1,
+    };
     for (const route of routeList) {
       let set = listeners.get(route);
       if (!set) {
@@ -211,7 +217,7 @@ export function setupRouter(
         listeners.get(route)?.delete(listener);
       }
     };
-    const unregister = onDestroy(owner, remove);
+    const unregister = onDestroy(resolvedFrame, remove);
 
     if (
       requested === completed &&
@@ -248,37 +254,37 @@ export function setupRouter(
     getParams() {
       return params;
     },
-    /** Runs `action` while any of `routes` is active. Without `owner`: the current owner. */
+    /** Runs `action` while any of `routes` is active. Without `frame`: the current frame. */
     routes(
       ...args:
         | [readonly Route[], RouteAction]
         | [object, readonly Route[], RouteAction]
     ) {
       return args.length === 2
-        ? onRoutes(requireOwner('router.routes'), ...args)
+        ? onRoutes(requireFrame('router.routes'), ...args)
         : onRoutes(...args);
     },
-    /** Runs `action` while `route` is active. Without `owner`: the current owner. */
+    /** Runs `action` while `route` is active. Without `frame`: the current frame. */
     route(...args: [Route, RouteAction] | [object, Route, RouteAction]) {
       return args.length === 2
-        ? onRoutes(requireOwner('router.route'), [args[0]], args[1])
+        ? onRoutes(requireFrame('router.route'), [args[0]], args[1])
         : onRoutes(args[0], [args[1]], args[2]);
     },
-    /** Runs `action` when navigation starts. Without `owner`: the current owner. */
+    /** Runs `action` when navigation starts. Without `frame`: the current frame. */
     navigation(...args: [NavigationAction] | [object, NavigationAction]) {
       return args.length === 1
         ? onNavigation(
-            requireOwner('router.navigation'),
+            requireFrame('router.navigation'),
             navigationListeners,
             args[0],
           )
         : onNavigation(args[0], navigationListeners, args[1]);
     },
-    /** Runs `action` when navigation ends. Without `owner`: the current owner. */
+    /** Runs `action` when navigation ends. Without `frame`: the current frame. */
     navigationEnd(...args: [NavigationAction] | [object, NavigationAction]) {
       return args.length === 1
         ? onNavigation(
-            requireOwner('router.navigationEnd'),
+            requireFrame('router.navigationEnd'),
             navigationEndListeners,
             args[0],
           )

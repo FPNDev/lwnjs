@@ -1,4 +1,4 @@
-import { attach, component, listen, useStore } from 'lwn-js/core';
+import { component, listen, useStore } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { isServer } from 'lwn-js/ssr';
 import { CartStore } from '../cart';
@@ -11,7 +11,7 @@ const NavItems = [
   ['/account', 'Account'],
 ] as const;
 
-export const Header = component((parent: object) => {
+export const Header = component(() => {
   const count = html`<span>0</span>`;
   const cartButton = html`<button class=${classes.button}>
     Cart (${count})
@@ -22,17 +22,7 @@ export const Header = component((parent: object) => {
   const navLinks = NavItems.map(
     ([link, title]) => html<HTMLAnchorElement>`<a href=${link}>${title}</a>`,
   );
-
-  const node = html`
-    <header class=${classes.header}>
-      ${logo}
-      <nav class=${classes.nav}>${navLinks}</nav>
-      ${cartButton}
-    </header>
-  `;
-  attach(parent, node);
   const cart = useStore(CartStore);
-
   routerLink(logo);
   for (const link of navLinks) {
     routerLink(link);
@@ -47,8 +37,16 @@ export const Header = component((parent: object) => {
   }
   cart.state.subscribe(showCount);
   listen(cartButton, 'click', () => {
-    CartDrawer(node);
+    CartDrawer();
   });
 
-  return node;
+  return {
+    node: html`
+      <header class=${classes.header}>
+        ${logo}
+        <nav class=${classes.nav}>${navLinks}</nav>
+        ${cartButton}
+      </header>
+    `,
+  };
 });

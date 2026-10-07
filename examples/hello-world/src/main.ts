@@ -1,17 +1,10 @@
-import {
-  attach,
-  component,
-  domRenderer,
-  listen,
-  setRenderer,
-} from 'lwn-js/core';
+import { component, domRenderer, listen, setRenderer } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 
-// Tell the engine how to place views. Once, before anything is shown.
+// Configure view placement before mounting.
 setRenderer(domRenderer);
 
-/** A counter. One component owns the value, so a plain variable and a setter are all it needs. */
-const Counter = component((parent: object) => {
+const Counter = component(() => {
   const value = html`<output>0</output>`;
 
   const decrement = html<HTMLButtonElement>`
@@ -21,16 +14,6 @@ const Counter = component((parent: object) => {
     <button aria-label="Increment">+</button>
   `;
 
-  const node = html`
-    <section class="counter">
-      <h1>Hello, LWN</h1>
-      <div class="row">${decrement}${value}${increment}</div>
-      <small>Press ↑ / ↓ too</small>
-    </section>
-  `;
-  // Join the logical tree first: everything below is owned by `node`.
-  attach(parent, node);
-
   let count = 0;
   const setCount = (next: number) => {
     count = Math.max(0, next);
@@ -38,7 +21,6 @@ const Counter = component((parent: object) => {
     decrement.disabled = count === 0;
   };
 
-  // Removed automatically when the counter is destroyed, including the `window` listener.
   listen(decrement, 'click', () => {
     setCount(count - 1);
   });
@@ -53,8 +35,16 @@ const Counter = component((parent: object) => {
     }
   });
 
-  return node;
+  return {
+    node: html`
+      <section class="counter">
+        <h1>Hello, LWN</h1>
+        <div class="row">${decrement}${value}${increment}</div>
+        <small>Press ↑ or ↓ to change the count</small>
+      </section>
+    `,
+  };
 });
 
 const app = document.querySelector('#app')!;
-app.append(Counter(app));
+app.append(Counter().node);

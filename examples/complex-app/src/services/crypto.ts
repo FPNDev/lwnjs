@@ -1,17 +1,10 @@
 import { fromBase64, toBase64 } from './encoding';
 
-/**
- * End-to-end encryption on top of WebRTC's own DTLS: even a malicious
- * signaling server, which brokers the connection, cannot read or forge
- * messages without the peers noticing a changed key.
- *
- * Each device has a long-lived ECDH P-256 identity. Two peers derive the same
- * AES-GCM key from their identities; every message gets a fresh random IV.
- */
+/** Derives AES-GCM session keys from the peers' long-lived ECDH identities. */
 const ECDH: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-256' };
 
 export function createKeys() {
-  // The private key is not extractable: it never leaves WebCrypto, not even into IndexedDB as bytes.
+  // Keep the private key inside Web Crypto instead of exporting its bytes.
   return crypto.subtle.generateKey(ECDH, false, ['deriveKey']);
 }
 
@@ -56,7 +49,7 @@ export async function encrypt(key: CryptoKey, text: string): Promise<Sealed> {
   return { iv: toBase64(iv), data: toBase64(data) };
 }
 
-/** Throws if the data was tampered with: AES-GCM authenticates it. */
+/** AES-GCM rejects modified ciphertext. */
 export async function decrypt(key: CryptoKey, sealed: Sealed) {
   const data = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: fromBase64(sealed.iv) },
@@ -67,10 +60,7 @@ export async function decrypt(key: CryptoKey, sealed: Sealed) {
   return new TextDecoder().decode(data);
 }
 
-/**
- * A number both people see identically, to compare out of band (in person, on
- * a call). If it matches, nobody sits in the middle.
- */
+/** Creates a fingerprint that peers can compare out of band. */
 export async function safetyNumber(publicKeyA: string, publicKeyB: string) {
   const [first, second] =
     publicKeyA < publicKeyB

@@ -3,21 +3,17 @@ import { setupRouter, type Route } from 'lwn-js/router';
 
 export const HomeRoute: Route = { path: '/' };
 export const ListRoute: Route = { path: /\/lists\/(?<id>[\w-]+)/u };
-/** Matches anything else; must stay last. */
+/** Fallback route, kept last in the route list. */
 export const FallbackRoute: Route = { path: /.*/u };
 
 export const router = setupRouter([HomeRoute, ListRoute, FallbackRoute]);
 
 export const listUrl = (id: string) => `/lists/${id}`;
 
-/** The list id of the current URL, if any. */
+/** Returns the list id from the current URL, if present. */
 export const currentListId = () => router.getParams()?.groups?.id;
 
-/**
- * Makes an anchor navigate through the router instead of reloading the page.
- * Call it during setup; the listener belongs to the current owner.
- * @param anchor Anchor to wire.
- */
+/** Routes anchor clicks through the client router. */
 export function routerLink(anchor: HTMLAnchorElement) {
   listen(anchor, 'click', (event) => {
     if (event.button === 0 && !event.metaKey && !event.ctrlKey) {

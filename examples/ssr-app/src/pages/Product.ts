@@ -1,4 +1,4 @@
-import { attach, listen, useStore } from 'lwn-js/core';
+import { component, listen, useStore } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { useServer } from 'lwn-js/ssr';
 import type { ProductDetail } from '../api';
@@ -7,23 +7,13 @@ import { ProductData } from '../data';
 import { ProductRoute, router } from '../routes';
 import classes from '../styles/ui.module.scss';
 
-/**
- * ISR (revalidate 60s), lazy, preloaded by the server. Going from one
- * product to another keeps this page: the same factory is showing, so the
- * outlet leaves it alone and the page updates its nodes in place from the
- * new page data. Nothing is re-created.
- */
-export default function Product(parent: object) {
+/** Reuses the ISR page across products and updates its content from route data. */
+const Product = component(() => {
   const image = html<HTMLImageElement>`<img alt="" width="600" height="600" />`;
   const title = html`<h1 class=${classes.title}></h1>`;
   const price = html`<div class=${classes.price}></div>`;
   const description = html`<p class=${classes.muted}></p>`;
   const add = html`<button class=${classes.button}>Add to cart</button>`;
-  const node = html`<article class=${classes.product}>
-    ${image}
-    <div>${title}${price}${add}${description}</div>
-  </article>`;
-  attach(parent, node);
   const cart = useStore(CartStore);
 
   let shown: ProductDetail | null = null;
@@ -43,5 +33,14 @@ export default function Product(parent: object) {
     }
   });
 
-  return node;
-}
+  return {
+    node: html`
+      <article class=${classes.product}>
+        ${image}
+        <div>${title}${price}${add}${description}</div>
+      </article>
+    `,
+  };
+});
+
+export default Product;

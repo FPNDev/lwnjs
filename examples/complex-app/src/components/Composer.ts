@@ -1,4 +1,4 @@
-import { attach, component, env, listen } from 'lwn-js/core';
+import { component, env, listen } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { isolateOnFocus } from '../lib/focus-env';
 import classes from './Conversation.module.scss';
@@ -8,18 +8,15 @@ export type Composer = {
   focus(): void;
 };
 
-/** Message input. <kbd>Enter</kbd> sends, <kbd>Shift</kbd>+<kbd>Enter</kbd> adds a line. */
+/** Sends on Enter and inserts a line break on Shift+Enter. */
 export const Composer = component(
-  (parent: object, onSend: (text: string) => void): Composer => {
+  (onSend: (text: string) => void): Composer => {
     const input = html<HTMLTextAreaElement>`<textarea
       placeholder="Message"
       rows="1"
       aria-label="Message"
     ></textarea>`;
     const send = html`<button>Send</button>`;
-    const node = html`<div class=${classes.composer}>${input}${send}</div>`;
-    attach(parent, node);
-
     const id = Symbol('composer');
     isolateOnFocus(input, id);
 
@@ -35,7 +32,7 @@ export const Composer = component(
 
     listen(send, 'click', submit);
     listen(input, 'keydown', (event) => {
-      // The composer owns Enter only while it is the innermost env.
+      // Handle Enter only while this composer is the active environment.
       if (event.key === 'Enter' && !event.shiftKey && env.isCurrent(id)) {
         event.preventDefault();
         submit();
@@ -47,7 +44,7 @@ export const Composer = component(
     });
 
     return {
-      node,
+      node: html`<div class=${classes.composer}>${input}${send}</div>`,
       focus() {
         input.focus();
       },

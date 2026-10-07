@@ -1,4 +1,4 @@
-import { attach, component, listen } from 'lwn-js/core';
+import { component, listen } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import type { Todo } from '../store/todos';
 import classes from './TodoFilters.module.scss';
@@ -17,30 +17,26 @@ export const matchesFilter: Record<Filter, (todo: Todo) => boolean> = {
   done: (todo) => todo.done,
 };
 
-/** All / Active / Done. Keeps the selected button; reports changes. */
-export const TodoFilters = component(
-  (parent: object, onChange: (filter: Filter) => void) => {
-    const node = html`<nav class=${classes.filters}></nav>`;
-    attach(parent, node);
+/** Keeps the selected filter button and reports filter changes. */
+export const TodoFilters = component((onChange: (filter: Filter) => void) => {
+  const buttons: HTMLButtonElement[] = [];
+  let selected: HTMLButtonElement | undefined;
+  for (const [filter, label] of Object.entries(labels)) {
+    const button = html<HTMLButtonElement>`<button>${label}</button>`;
+    buttons.push(button);
 
-    let selected: HTMLButtonElement | undefined;
-    for (const [filter, label] of Object.entries(labels)) {
-      const button = html<HTMLButtonElement>`<button>${label}</button>`;
-      node.append(button);
+    listen(button, 'click', () => {
+      selected?.classList.remove(classes.selected);
+      selected = button;
+      button.classList.add(classes.selected);
+      onChange(filter as Filter);
+    });
 
-      listen(button, 'click', () => {
-        selected?.classList.remove(classes.selected);
-        selected = button;
-        button.classList.add(classes.selected);
-        onChange(filter as Filter);
-      });
-
-      if (filter === 'all') {
-        selected = button;
-        button.classList.add(classes.selected);
-      }
+    if (filter === 'all') {
+      selected = button;
+      button.classList.add(classes.selected);
     }
+  }
 
-    return node;
-  },
-);
+  return { node: html`<nav class=${classes.filters}>${buttons}</nav>` };
+});

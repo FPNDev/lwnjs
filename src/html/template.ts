@@ -1,5 +1,8 @@
-/** A value interpolated into a template. */
+import type { ComponentController } from '../core';
+
+/** A value accepted by an HTML template. */
 export type Interpolation =
+  | ComponentController
   | Node
   | string
   | number
@@ -7,6 +10,7 @@ export type Interpolation =
   | boolean
   | null
   | undefined
+  | void
   | readonly Interpolation[];
 
 type NodeSlot = {
@@ -19,7 +23,7 @@ type AttributeSlot = {
   kind: 'attribute';
   path: number[];
   name: string;
-  /** Static text and value indexes, in order. */
+  /** Static segments and interpolation indexes. */
   parts: (string | number)[];
 };
 
@@ -41,7 +45,7 @@ function isNode(value: Interpolation): value is Node {
   return typeof value === 'object' && value !== null && 'nodeType' in value;
 }
 
-/** Text of a value in an attribute: nullish is empty, arrays are joined with spaces, nodes give their text. */
+/** Converts an attribute interpolation to text. */
 function toText(value: Interpolation): string {
   if (value === null || value === undefined) {
     return '';
@@ -49,14 +53,25 @@ function toText(value: Interpolation): string {
   if (isNode(value)) {
     return value.textContent ?? '';
   }
+  if (Array.isArray(value)) {
+    return value.map((item) => toText(item as Interpolation)).join(' ');
+  }
   if (typeof value === 'object') {
-    return value.map((item) => toText(item)).join(' ');
+    if (Object.hasOwn(value, 'node')) {
+      return toText((value as ComponentController).node as Interpolation);
+    }
+
+    if (Object.hasOwn(value, 'nodes')) {
+      return toText((value as ComponentController).nodes as Interpolation);
+    }
+
+    return '';
   }
 
   return String(value);
 }
 
-/** Joins the strings with markers: comments in child positions, `__engineN__` inside tags. */
+/** Adds markers so child and attribute interpolations can be located after parsing. */
 function markup(strings: TemplateStringsArray) {
   let html = '';
   for (const [index, string] of strings.entries()) {
@@ -70,7 +85,7 @@ function markup(strings: TemplateStringsArray) {
   return html.trim();
 }
 
-/** Splits a marked attribute value: static text at even positions, value indexes at odd ones. */
+/** Separates static attribute text from interpolation indexes. */
 function attributeSlot(attribute: Attr, path: number[]): AttributeSlot {
   const parts: (string | number)[] = attribute.value.split(attributeMarker);
   for (let partIndex = 1; partIndex < parts.length; partIndex += 2) {
@@ -80,7 +95,7 @@ function attributeSlot(attribute: Attr, path: number[]): AttributeSlot {
   return { kind: 'attribute', path: path.slice(), name: attribute.name, parts };
 }
 
-/** Walks the parsed template with one shared `path`; a slot keeps a copy of it. */
+/** Walks the parsed template and records each interpolation's path. */
 function findSlots(parent: Node, path: number[], slots: Template['slots']) {
   for (const [position, child] of parent.childNodes.entries()) {
     path.push(position);
@@ -130,12 +145,29 @@ function toNodes(value: Interpolation, nodes: Node[]) {
   if (value === null || value === undefined) {
     return nodes;
   }
+
   if (isNode(value)) {
     nodes.push(value);
-  } else if (typeof value === 'object') {
+  } else if (Array.isArray(value)) {
     for (const item of value) {
-      toNodes(item, nodes);
+      toNodes(item as Interpolation, nodes);
     }
+  } else if (typeof value === 'object') {
+    if (Object.hasOwn(value, 'node')) {
+      return toNodes(
+        (value as ComponentController).node as Interpolation,
+        nodes,
+      );
+    }
+
+    if (Object.hasOwn(value, 'nodes')) {
+      return toNodes(
+        (value as ComponentController).nodes as Interpolation,
+        nodes,
+      );
+    }
+
+    return nodes;
   } else {
     nodes.push(document.createTextNode(String(value)));
   }
@@ -152,14 +184,7 @@ function resolve(root: Node, path: number[]) {
   return node;
 }
 
-/**
- * Builds nodes from a template. The markup is parsed once per call site;
- * each call clones it and fills the values: nodes are inserted as is, other
- * values become text nodes or attribute text, so they are never parsed as HTML.
- * @param strings Template strings.
- * @param values Interpolated values.
- * @returns The root nodes.
- */
+/** Builds views from a template, inserting view values and escaping text values. */
 export function instantiate(
   strings: TemplateStringsArray,
   values: readonly Interpolation[],
@@ -167,7 +192,7 @@ export function instantiate(
   const { content, slots } = getTemplate(strings);
   const fragment = document.importNode(content, true);
 
-  // Resolve every target before mutating, since replacing nodes shifts positions.
+  // Resolve paths first because earlier replacements can shift later targets.
   const targets = slots.map((slot) => resolve(fragment, slot.path));
   for (const [slotIndex, slot] of slots.entries()) {
     const target = targets[slotIndex];

@@ -7,7 +7,7 @@ type CompiledRoute = {
 };
 
 export type RouteMatch = {
-  /** Matched routes from the top level down to the final match. */
+  /** Matched routes from root to leaf. */
   chain: Route[];
   params: RouteParams;
 };
@@ -20,7 +20,7 @@ function joinPath(
   path: string | RegExp,
 ): string | RegExp {
   if (typeof prefix === 'string' && typeof path === 'string') {
-    // An index route ('') matches its parent's exact path.
+    // An empty child path is an index route for its parent.
     if (!prefix || !path) {
       return prefix || path;
     }
@@ -50,13 +50,7 @@ function joinPath(
   return new RegExp(`(?:${prefixSource})(?:${pathSource})`, flags);
 }
 
-/**
- * Compiles a route tree once. Route objects are not mutated, so one route
- * object can appear under several parents.
- * @param routes Routes to compile.
- * @param prefix Joined parent path.
- * @returns The compiled tree.
- */
+/** Compiles route paths without mutating the route objects. */
 export function compileRoutes(
   routes: readonly Route[],
   prefix: string | RegExp = '',
@@ -82,13 +76,7 @@ async function passes(check: unknown) {
   return Boolean(check instanceof Promise ? await check : check);
 }
 
-/**
- * Finds the first route that fully matches `pathname` and passes its guards.
- * Partial matches descend into children after `guardChildren` passes.
- * @param routes Compiled routes.
- * @param pathname Path to match.
- * @returns The match, or `undefined`.
- */
+/** Finds the first full route match whose guards pass. */
 export async function matchRoute(
   routes: CompiledRoute[],
   pathname: string,
@@ -111,7 +99,7 @@ export async function matchRoute(
     }
 
     if (full) {
-      // An index child (path '') takes the exact match, so a layout can render it in its own outlet.
+      // Prefer an index child so layouts can render their default page.
       if (
         children.length > 0 &&
         (!route.guardChildren || (await passes(route.guardChildren(params))))

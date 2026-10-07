@@ -1,16 +1,16 @@
 export type Identity = {
   peerId: string;
   name: string;
-  /** ECDH key pair. The private key is not extractable; IndexedDB stores it as a CryptoKey. */
+  /** ECDH key pair stored as CryptoKey values. */
   keys: CryptoKeyPair;
-  /** Raw public key, base64. */
+  /** Raw public key encoded as Base64. */
   publicKey: string;
 };
 
 export type Contact = {
   peerId: string;
   name: string;
-  /** Learned from the first handshake; a different key later is refused. */
+  /** First key received from the peer; later changes are rejected. */
   publicKey?: string;
   verified: boolean;
   lastAt: number;
@@ -40,7 +40,7 @@ function request<T>(req: IDBRequest<T>) {
   });
 }
 
-/** A small promise wrapper over the three object stores the app needs. */
+/** Promise-based access to the app's IndexedDB object stores. */
 export async function openDb() {
   const opening = indexedDB.open('lwn-js-chat', 1);
   opening.onupgradeneeded = () => {
@@ -71,7 +71,7 @@ export async function openDb() {
       request<Message | undefined>(
         store('messages').get(id) as IDBRequest<Message | undefined>,
       ),
-    /** A peer's messages, oldest first. */
+    /** Messages ordered from oldest to newest. */
     messages: (peerId: string) =>
       request<Message[]>(
         store('messages')

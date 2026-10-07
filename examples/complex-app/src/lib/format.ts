@@ -7,7 +7,7 @@ const day = new Intl.DateTimeFormat(undefined, {
   day: 'numeric',
 });
 
-/** "14:05" today, "Mar 3" before. */
+/** Formats a time as a clock value today or a date for earlier messages. */
 export function formatTime(at: number) {
   const date = new Date(at);
 

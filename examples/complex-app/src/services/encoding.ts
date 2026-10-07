@@ -1,4 +1,4 @@
-/** Bytes → base64. */
+/** Encodes bytes as Base64 text. */
 export function toBase64(bytes: ArrayBuffer | Uint8Array) {
   const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   let binary = '';
@@ -9,7 +9,7 @@ export function toBase64(bytes: ArrayBuffer | Uint8Array) {
   return btoa(binary);
 }
 
-/** Base64 → bytes. */
+/** Decodes Base64 text to bytes. */
 export function fromBase64(text: string) {
   const binary = atob(text);
   const bytes = new Uint8Array(binary.length);

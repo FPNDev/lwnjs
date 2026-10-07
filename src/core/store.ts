@@ -1,39 +1,34 @@
-import { requireOwner } from './owner.ts';
+import { frameOf, requireFrame } from './frame.ts';
 import { getParent } from './tree.ts';
 
-/** Identifies a value that a node provides to its logical descendants. */
+/** Identifies a value provided to logical descendants. */
 export type Store<T> = {
   readonly init: () => T;
 };
 
 const provided = new WeakMap<object, Map<Store<unknown>, unknown>>();
 
-/**
- * Describes a store.
- * @param init Creates a fresh value for each node that attaches the store.
- * @returns The store identifier.
- */
+/** Creates a store identifier and its value initializer. */
 export function createStore<T>(init: () => T): Store<T> {
   return { init };
 }
 
-/**
- * Creates the store's value on `node` (default: the current owner), visible
- * to it and its logical descendants.
- * @returns The new value.
- */
+/** Creates and provides a store value on a node. */
 export function attachStore<T>(store: Store<T>): T;
 export function attachStore<T>(node: object, store: Store<T>): T;
 export function attachStore<T>(
   nodeOrStore: object | Store<T>,
   maybeStore?: Store<T>,
 ): T {
-  const node = maybeStore ? nodeOrStore : requireOwner('attachStore');
+  const frame = maybeStore
+    ? frameOf(nodeOrStore)!
+    : requireFrame('attachStore');
+
   const store = maybeStore ?? (nodeOrStore as Store<T>);
-  let values = provided.get(node);
+  let values = provided.get(frame);
   if (!values) {
     values = new Map();
-    provided.set(node, values);
+    provided.set(frame, values);
   }
 
   const value = store.init();
@@ -42,14 +37,7 @@ export function attachStore<T>(
   return value;
 }
 
-/**
- * Finds the nearest value of `store` on `node` or its logical ancestors. O(depth).
- * Resolve after the node is attached: right after `attach`, or inside `onAttach`
- * for components that move between parents.
- * Without `node`: from the current owner.
- * @returns The nearest value.
- * @throws When no ancestor provides the store.
- */
+/** Finds the nearest provider; resolve after attachment if the node can move. */
 export function useStore<T>(store: Store<T>): T;
 export function useStore<T>(node: object, store: Store<T>): T;
 export function useStore<T>(
@@ -58,8 +46,8 @@ export function useStore<T>(
 ): T {
   const store = maybeStore ?? (nodeOrStore as Store<T>);
   let current: object | undefined = maybeStore
-    ? nodeOrStore
-    : requireOwner('useStore');
+    ? frameOf(nodeOrStore)
+    : requireFrame('useStore');
   while (current) {
     const values = provided.get(current);
     if (values?.has(store)) {

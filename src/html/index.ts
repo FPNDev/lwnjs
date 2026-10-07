@@ -3,17 +3,7 @@ import { instantiate, type Interpolation } from './template.ts';
 
 export type { Interpolation } from './template.ts';
 
-/**
- * Creates exactly one root node from an HTML template.
- * Interpolated nodes (and arrays of them) are inserted as is; other values
- * become text, so they can never inject markup.
- * The root is typed `HTMLElement` by default; pass the type for anything
- * else: `html<HTMLInputElement>\`<input />\``, `html<Comment>\`<!---->\``.
- * @param strings Template strings.
- * @param values Template interpolations.
- * @returns The template's root node.
- * @throws When the template has zero or several roots.
- */
+/** Creates one root view; interpolated values become text or inserted views. */
 export function html<T extends Node = HTMLElement>(
   strings: TemplateStringsArray,
   ...values: Interpolation[]
@@ -28,12 +18,7 @@ export function html<T extends Node = HTMLElement>(
   return nodes[0] as T;
 }
 
-/**
- * Creates all root nodes from an HTML template. Same rules as `html`.
- * @param strings Template strings.
- * @param values Template interpolations.
- * @returns The template's root nodes.
- */
+/** Creates all root views from an HTML template. */
 export function mhtml(
   strings: TemplateStringsArray,
   ...values: Interpolation[]
@@ -41,22 +26,14 @@ export function mhtml(
   return create(() => instantiate(strings, values));
 }
 
-/**
- * Creates an element with a typed tag name.
- * @param tagName Tag name.
- * @returns The element.
- */
+/** Creates a typed element by tag name. */
 export function element<T extends keyof HTMLElementTagNameMap>(tagName: T) {
   return create(() => [
     document.createElement(tagName),
   ])[0] as HTMLElementTagNameMap[T];
 }
 
-/**
- * Creates a text node.
- * @param value Initial text.
- * @returns The text node.
- */
+/** Creates a text view. */
 export function text(value = '') {
   return create(() => [document.createTextNode(value)])[0] as Text;
 }

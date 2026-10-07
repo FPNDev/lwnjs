@@ -10,16 +10,11 @@ type Entry<View> = {
   pass: number;
 };
 
-/**
- * Example-only helper that keeps views for items with stable keys.
- * The engine provides ownership and destruction; this example chooses the
- * optional policy of reusing views by key.
- */
+/** Reuses item views while their keys remain present. */
 export function createKeyedList<Item, Key, View extends KeyedView<Item>>(
-  owner: object,
   container: ParentNode,
   keyOf: (item: Item) => Key,
-  create: (owner: object, item: Item) => View,
+  create: (item: Item) => View,
 ) {
   const entries = new Map<Key, Entry<View>>();
   let pass = 0;
@@ -38,7 +33,7 @@ export function createKeyedList<Item, Key, View extends KeyedView<Item>>(
         if (entry) {
           entry.pass = currentPass;
         } else {
-          const view = create(owner, item);
+          const view = create(item);
           entry = { view, pass: currentPass };
           entries.set(key, entry);
           container.append(view.node);
@@ -50,7 +45,7 @@ export function createKeyedList<Item, Key, View extends KeyedView<Item>>(
 
       for (const [key, entry] of entries) {
         if (entry.pass !== currentPass) {
-          destroy(entry.view.node);
+          destroy(entry.view);
           entries.delete(key);
         }
       }
@@ -62,7 +57,7 @@ export function createKeyedList<Item, Key, View extends KeyedView<Item>>(
 
     clear() {
       for (const entry of entries.values()) {
-        destroy(entry.view.node);
+        destroy(entry.view);
       }
       entries.clear();
     },

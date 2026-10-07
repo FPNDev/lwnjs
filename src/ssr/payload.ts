@@ -1,28 +1,19 @@
 import type { Route } from '../router/types.ts';
 
-/** What the server embeds in the page for hydration. */
+/** Data embedded by the server for the initial client render. */
 export type Payload = {
-  /** Pathname the page was rendered for. */
+  /** Path rendered by the server. */
   path: string;
   data: Record<string, unknown>;
-  /**
-   * For each render scope, the position of every created view by creation
-   * index: a `childNodes` path from the container (`"0.2.1"`), several joined
-   * by `|`, `~` before a placeholder of an empty text node, `null` when the
-   * view was not in the page.
-   */
-  scopes: Record<string, (string | null)[]>;
-  /** Depth-first ids of routes that have server data. */
+  /** Paths used to claim rendered views during hydration. */
+  frames: Record<string, (string | null)[]>;
+  /** Route ids with server data, in depth-first order. */
   dataRoutes: number[];
 };
 
 export const PAYLOAD_ID = '__engine';
 
-/**
- * Reads the payload embedded in the current document and removes its script
- * element, so the JSON text does not stay in the page.
- * @returns The payload, if any.
- */
+/** Reads and removes the hydration payload script, if present. */
 export function takePayload(): Payload | undefined {
   if (typeof document === 'undefined') {
     return undefined;
@@ -34,12 +25,7 @@ export function takePayload(): Payload | undefined {
   return text ? (JSON.parse(text) as Payload) : undefined;
 }
 
-/**
- * Lists routes depth-first, so an index is a stable route id on both server and client.
- * @param routes Route tree.
- * @param list Accumulator.
- * @returns Routes in depth-first order.
- */
+/** Flattens routes in a stable depth-first order. */
 export function routeIds(routes: readonly Route[], list: Route[] = []) {
   for (const route of routes) {
     list.push(route);
@@ -51,10 +37,7 @@ export function routeIds(routes: readonly Route[], list: Route[] = []) {
   return list;
 }
 
-/**
- * @param pathname Page pathname.
- * @returns The URL of the page's data, e.g. `/chat/42/__data.json`.
- */
+/** Returns the data endpoint for a page path. */
 export function dataUrl(pathname: string) {
   return `${pathname.endsWith('/') ? pathname : `${pathname}/`}__data.json`;
 }

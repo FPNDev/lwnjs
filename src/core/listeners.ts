@@ -1,18 +1,14 @@
 import { runIsolated } from './report.ts';
-import { getOwner } from './owner.ts';
+import { bindFrame, frameOf, getFrame } from './frame.ts';
 import { onDestroy } from './tree.ts';
 
 export type Listener<T> = (value: T) => void;
 export type Unsubscribe = () => void;
 
-/**
- * Subscribes `listener`. With an `owner`, the subscription ends when it is
- * destroyed. Without one: owned by the current owner during setup, unowned
- * elsewhere.
- */
+/** Subscribes a listener and binds it to the active frame when present. */
 export type Subscribe<T> = {
   (listener: Listener<T>): Unsubscribe;
-  (owner: object, listener: Listener<T>): Unsubscribe;
+  (frame: object, listener: Listener<T>): Unsubscribe;
 };
 
 type Link<T> = {
@@ -23,12 +19,7 @@ type Link<T> = {
   removed?: boolean;
 };
 
-/**
- * Creates a doubly linked listener list: O(1) subscribe and unsubscribe,
- * allocation-free calls. A call reaches exactly the listeners that were
- * subscribed when it started and are still subscribed when their turn comes.
- * @returns `call` to notify listeners and `subscribe` to add one.
- */
+/** Creates a listener list that supports subscription changes during dispatch. */
 export function createListeners<T>() {
   let head: Link<T> | undefined;
   let tail: Link<T> | undefined;
@@ -58,7 +49,7 @@ export function createListeners<T>() {
     } else {
       head = link.next;
     }
-    
+
     if (link.next) {
       link.next.prev = link.prev;
     } else {
@@ -81,23 +72,27 @@ export function createListeners<T>() {
   };
 
   const subscribe = ((
-    ownerOrListener: object | Listener<T>,
+    frameOrListener: object | Listener<T>,
     maybeListener?: Listener<T>,
   ) => {
-    const owner =
-      typeof ownerOrListener === 'function' ? getOwner() : ownerOrListener;
-    const link = add(
-      typeof ownerOrListener === 'function'
-        ? (ownerOrListener as Listener<T>)
-        : maybeListener!,
-    );
-    if (!owner) {
+    const frame =
+      typeof frameOrListener === 'function'
+        ? getFrame()
+        : frameOf(frameOrListener);
+    const listener =
+      typeof frameOrListener === 'function'
+        ? (frameOrListener as Listener<T>)
+        : maybeListener!;
+
+    const link = add(bindFrame(frame, listener));
+
+    if (!frame) {
       return () => {
         remove(link);
       };
     }
 
-    const unregister = onDestroy(owner, () => {
+    const unregister = onDestroy(frame, () => {
       remove(link);
     });
 

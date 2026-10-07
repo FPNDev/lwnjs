@@ -1,14 +1,14 @@
 export type RouteParams = RegExpMatchArray | null;
 
-/** A path entry with optional guards and nested routes. */
+/** A route path with optional guards and child routes. */
 export type Route = {
-  /** String paths join their parents with `/`; RegExp paths are concatenated as is. A child with `''` is an index route: it matches the parent's exact path. */
+  /** String paths join parent paths; regular expressions concatenate, and an empty child path matches its parent exactly. */
   path: string | RegExp;
-  /** Must pass (truthy) for this route to be the final match. */
+  /** Must return a truthy value for this route to match. */
   guard?(params: RouteParams): unknown;
-  /** Must pass (truthy) before this route's children are searched. */
+  /** Must return a truthy value before matching child routes. */
   guardChildren?(params: RouteParams): unknown;
   children?: readonly Route[];
-  /** Set by `aliasRoute`: listeners of the original route also fire for the alias. */
+  /** Set by aliasRoute so original route listeners also run for this route. */
   aliasOf?: Route;
 };

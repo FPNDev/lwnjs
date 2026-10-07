@@ -40,4 +40,6 @@ export function routerLink(anchor: HTMLAnchorElement) {
       void router.go(anchor.getAttribute('href')!);
     }
   });
+
+  return anchor;
 }

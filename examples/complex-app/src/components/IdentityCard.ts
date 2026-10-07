@@ -1,4 +1,4 @@
-import { attach, component, listen, useStore } from 'lwn-js/core';
+import { component, listen, useStore } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { isolateOnFocus } from '../lib/focus-env';
 import { ChatStore } from '../store/chat';
@@ -11,8 +11,8 @@ const statusPresence = {
   offline: 'offline',
 };
 
-/** Your name (editable), your ID to share, and whether the signaling server is reachable. */
-export const IdentityCard = component((parent: object) => {
+/** Displays the local identity and signaling status. */
+export const IdentityCard = component(() => {
   const dot = html`<span class=${classes.dot} title="Signaling server"></span>`;
   const name = html<HTMLInputElement>`<input
     aria-label="Your name"
@@ -20,13 +20,6 @@ export const IdentityCard = component((parent: object) => {
   />`;
   const copy = html`<button>Copy</button>`;
   const codeNode = html`<code></code>`;
-  const node = html`
-    <section class=${classes.identity}>
-      <div class=${classes.me}>${dot}${name}</div>
-      <div class=${classes.id}>${codeNode}${copy}</div>
-    </section>
-  `;
-  attach(parent, node);
   const chat = useStore(ChatStore);
   const ui = useStore(UiStore);
 
@@ -49,5 +42,12 @@ export const IdentityCard = component((parent: object) => {
     });
   });
 
-  return node;
+  return {
+    node: html`
+      <section class=${classes.identity}>
+        <div class=${classes.me}>${dot}${name}</div>
+        <div class=${classes.id}>${codeNode}${copy}</div>
+      </section>
+    `,
+  };
 });

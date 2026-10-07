@@ -8,13 +8,7 @@ function cloneRoute(route: Route): Route {
   };
 }
 
-/**
- * Serves a route tree under another path. Guards are kept, and listeners of
- * every original route (children included) fire for the aliased paths.
- * @param route Route tree to alias.
- * @param path Alternate path for the root route.
- * @returns The aliased route tree.
- */
+/** Clones a route tree under another path and preserves its route listeners. */
 export function aliasRoute(route: Route, path: string | RegExp): Route {
   return { ...cloneRoute(route), path };
 }

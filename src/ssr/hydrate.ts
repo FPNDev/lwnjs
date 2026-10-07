@@ -1,5 +1,9 @@
-import { runInFrame } from '../core/owner.ts';
-import { type RenderScope, whenSettled, withScope } from '../core/scope.ts';
+import { runInFrame } from '../core/frame.ts';
+import {
+  type HydrationContext,
+  whenSettledHydration,
+  withHydration,
+} from '../core/hydration.ts';
 import { setCreationHook } from '../html/create.ts';
 import type { Router } from '../router/router.ts';
 import { setServerData } from './data.ts';
@@ -16,7 +20,7 @@ function resolvePath(container: Node, path: string): Node | undefined {
     return node;
   }
 
-  // Empty text nodes do not survive HTML, so the server left a comment in their place.
+  // The server uses comments where HTML serialization drops empty text nodes.
   const textNode = document.createTextNode('');
   (node as ChildNode).replaceWith(textNode);
 
@@ -39,28 +43,28 @@ function resolveEntry(container: Node, entry: string | null) {
   return nodes;
 }
 
-function claimsFor(container: Node, scopes: Payload['scopes']) {
-  // Resolve every path before app code runs: positions shift as soon as it moves nodes.
+function claimsFor(container: Node, frames: Payload['frames']) {
+  // Resolve paths before app code can move views.
   const pending = new Map<string, (Node[] | undefined)[]>();
-  for (const [key, entries] of Object.entries(scopes)) {
+  for (const [key, entries] of Object.entries(frames)) {
     pending.set(
       key,
       entries.map((entry) => resolveEntry(container, entry)),
     );
   }
-  const taken = new WeakMap<RenderScope, (Node[] | undefined)[]>();
+  const taken = new WeakMap<HydrationContext, (Node[] | undefined)[]>();
 
   return {
-    claim(scope: RenderScope, index: number) {
-      let claims = taken.get(scope);
+    claim(context: HydrationContext, index: number) {
+      let claims = taken.get(context);
       if (!claims) {
-        claims = pending.get(scope.key);
+        claims = pending.get(context.key);
         if (!claims) {
           return;
         }
-        // Each scope hydrates once; later renders with the same key create fresh views.
-        pending.delete(scope.key);
-        taken.set(scope, claims);
+        // Each context claims its views once; later renders create new ones.
+        pending.delete(context.key);
+        taken.set(context, claims);
       }
 
       return claims[index];
@@ -68,16 +72,7 @@ function claimsFor(container: Node, scopes: Payload['scopes']) {
   };
 }
 
-/**
- * Starts the app on the client. With a server payload in the page, views
- * created by `lwn-js/html` adopt the server-rendered nodes at their
- * recorded `childNodes` paths instead of creating new ones; without one, the
- * app is simply mounted. Resolves once lazy pages have hydrated too; then
- * unclaimed server nodes are released and view creation stops checking for claims.
- * @param container Element the server rendered the app into.
- * @param app Same app function the server rendered.
- * @param router The app's router.
- */
+/** Hydrates server views and resolves after lazy views have settled. */
 export async function hydrate(
   container: Element,
   app: (container: Element) => void,
@@ -95,14 +90,14 @@ export async function hydrate(
 
   setServerData(payload.data);
   enableServerData(payload.dataRoutes);
-  setCreationHook(claimsFor(container, payload.scopes));
-  withScope('r', () => {
+  setCreationHook(claimsFor(container, payload.frames));
+  withHydration('r', () => {
     runInFrame(undefined, () => {
       app(container);
     });
   });
-  await whenSettled();
+  await whenSettledHydration();
   setCreationHook(undefined);
-  // Page data is for setup only; the page has settled.
+  // Page data is available during setup and can now be released.
   setServerData({});
 }

@@ -1,9 +1,9 @@
 import {
-  attach,
   attachStore,
   component,
   domRenderer,
   setRenderer,
+  withFrame,
 } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { createOutlet } from 'lwn-js/router';
@@ -27,39 +27,34 @@ export { router, routes };
 
 setRenderer(domRenderer);
 
-/**
- * Rendered on the server and hydrated in the browser: the same function on
- * both sides, building views synchronously. Lazy pages go through the outlet.
- */
-export const App = component((container: Element) => {
-  const frame = html`<div class=${classes.frame}></div>`;
-  attach(container, frame);
-  attachStore(frame, CartStore);
+/** Builds the same eager shell for server rendering and hydration. */
+export const App = component(() => {
+  attachStore(CartStore);
 
   const slot = html<Comment>`<!---->`;
-  frame.append(
-    Header(frame),
-    html`<main class=${classes.main}>${slot}</main>`,
-    html`<footer class=${classes.footer}>
-      Data from mock.shop and dummyjson · built with LWN
-    </footer>`,
-  );
-  container.append(frame);
-
-  const page = createOutlet(frame, slot);
-  router.route(frame, HomeRoute, () => page.show(Home));
-  router.route(frame, CollectionRoute, () =>
+  const header = Header();
+  const main = html`<main class=${classes.main}>${slot}</main>`;
+  const footer = html`<footer class=${classes.footer}>
+    Data from mock.shop and dummyjson - built with LWN
+  </footer>`;
+  const page = createOutlet(slot);
+  router.route(HomeRoute, () => page.show(Home));
+  router.route(CollectionRoute, () =>
     page.show(() => import('./pages/Collection')),
   );
-  router.route(frame, ProductRoute, () =>
-    page.show(() => import('./pages/Product')),
+  router.route(ProductRoute, () => page.show(() => import('./pages/Product')));
+  router.route(SearchRoute, () => page.show(() => import('./pages/Search')));
+  router.route(AccountRoute, () =>
+    page.show(() => import('./layout/AccountLayout')),
   );
-  router.route(frame, SearchRoute, () =>
-    page.show(() => import('./pages/Search')),
-  );
-  // One action for the whole /account/* subtree: the layout handles its own children.
-  router.route(frame, AccountRoute, () =>
-    page.show(() => import('./account/AccountLayout')),
-  );
-  router.route(frame, NotFoundRoute, () => page.show(NotFound));
+  router.route(NotFoundRoute, () => page.show(NotFound));
+
+  return {
+    node: html`<div class=${classes.frame}>${header}${main}${footer}</div>`,
+  };
 });
+
+export function runApp(container: Element) {
+  // Keep the root frame under the request container so server cleanup destroys it.
+  container.append(withFrame(container, () => App()).node);
+}

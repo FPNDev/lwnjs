@@ -9,13 +9,9 @@ type Handler = {
 };
 
 export type NodeHandlerOptions = {
-  /**
-   * Serves files from this folder for paths with an extension (except
-   * `__data.json`, which the server answers). Files under `/assets/` are
-   * treated as hashed and cached forever.
-   */
+  /** Directory for static files; asset paths receive immutable caching. */
   staticDir?: string;
-  /** Enables `POST /api/revalidate?path=/x&secret=…` (on-demand ISR). Off without a secret. */
+  /** Enables the revalidation endpoint when a secret is provided. */
   revalidateSecret?: string;
 };
 
@@ -64,14 +60,7 @@ async function respond(response: Response, outgoing: ServerResponse) {
   );
 }
 
-/**
- * Adapts a server to Node's `http` / Connect / Express style middleware:
- * static files (optional), on-demand revalidation (optional), then pages and
- * page data. Unhandled requests go to `next`, or get a 404 without it.
- * @param server Server from `createServer`.
- * @param options Static folder and revalidation.
- * @returns The middleware.
- */
+/** Adapts a server to Node HTTP middleware with optional static files and revalidation. */
 export function toNodeHandler(
   server: Handler,
   options: NodeHandlerOptions = {},

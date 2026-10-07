@@ -6,11 +6,7 @@ export type CartLine = ProductSummary & { quantity: number };
 
 const KEY = 'lwn-js-shop-cart';
 
-/**
- * Client-only state: the cart is per visitor and lives in localStorage. The
- * server renders it empty; the browser fills it in after hydration. The
- * header badge and the drawer both observe it, hence `createState`.
- */
+/** Renders an empty cart on the server and restores the visitor's cart after hydration. */
 function createCart() {
   const lines: CartLine[] = isServer
     ? []

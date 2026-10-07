@@ -1,4 +1,4 @@
-import { attach } from 'lwn-js/core';
+import { component } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { useServer } from 'lwn-js/ssr';
 import { ProductCard } from '../components/ProductCard';
@@ -7,9 +7,8 @@ import { routerLink } from '../routes';
 import classes from '../styles/ui.module.scss';
 
 /** SSG: built once at build time. Eager, so it is in the entry chunk. */
-export function Home(parent: object) {
-  const node = html`<div><h1 class=${classes.title}>Featured</h1></div>`;
-  attach(parent, node);
+export const Home = component(() => {
+  const sections: Node[] = [];
 
   // Read the page data once, during setup; children get plain values.
   for (const featured of useServer(FeaturedData)) {
@@ -20,11 +19,11 @@ export function Home(parent: object) {
 
     const grid = html`
       <div class=${classes.grid}>
-        ${featured.products.map((product) => ProductCard(node, product))}
+        ${featured.products.map((product) => ProductCard(product))}
       </div>
     `;
 
-    node.append(html`
+    sections.push(html`
       <section class=${classes.section}>
         <div class=${classes.sectionHeader}>
           <h2>${featured.title}</h2>
@@ -35,5 +34,12 @@ export function Home(parent: object) {
     `);
   }
 
-  return node;
-}
+  return {
+    node: html`
+      <div>
+        <h1 class=${classes.title}>Featured</h1>
+        ${sections}
+      </div>
+    `,
+  };
+});

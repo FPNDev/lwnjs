@@ -1,8 +1,4 @@
-/**
- * Runs a callback, rethrowing any error asynchronously so one failing
- * callback never stops the ones after it.
- * @param callback Callback to run.
- */
+/** Reports callback errors asynchronously so dispatch can continue. */
 export function runIsolated(callback: () => void) {
   try {
     callback();

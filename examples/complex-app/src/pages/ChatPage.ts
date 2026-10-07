@@ -1,4 +1,11 @@
-import { attach, attachStore, destroy, useStore } from 'lwn-js/core';
+import {
+  attach,
+  attachStore,
+  component,
+  destroy,
+  getFrame,
+  useStore,
+} from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { Conversation } from '../components/Conversation';
 import { ChatRoute, currentPeerId, router } from '../router';
@@ -6,13 +13,8 @@ import { ChatStore } from '../store/chat';
 import { PlacementStore, UiStore } from '../store/ui';
 import classes from './Page.module.scss';
 
-/**
- * Shows the conversation of the current route. Loaded lazily; the outlet
- * keeps this page while you switch chats, so it follows the route itself.
- */
-export default function ChatPage(parent: object) {
-  const node = html`<section class=${classes.page}></section>`;
-  attach(parent, node);
+/** Shows the routed conversation; the outlet keeps this page alive across peer changes. */
+const ChatPage = component(() => {
   const chat = useStore(ChatStore);
   const ui = useStore(UiStore);
 
@@ -20,26 +22,37 @@ export default function ChatPage(parent: object) {
 
   const placement = attachStore(PlacementStore);
   placement.popOut = (conversation) => {
-    // Hand the live conversation to the dock; it outlives this page.
     ui.dock.adopt(conversation);
     current = undefined;
     void router.go('/');
   };
+
+  const node = html`<section class=${classes.page}></section>`;
 
   router.route(ChatRoute, () => {
     const peerId = currentPeerId()!;
     if (current?.peerId === peerId) {
       return;
     }
+
+    if (current && !ui.dock.take(current?.peerId)) {
+      destroy(current);
+    }
+
     if (!chat.has(peerId)) {
       chat.addContact(peerId, peerId);
     }
-    destroy(current?.node);
-    // A popped-out conversation comes back as it is: history, scroll, draft.
-    current = ui.dock.take(peerId) ?? Conversation(node, peerId);
-    attach(node, current.node);
+
+    // Restore the same conversation instance when it was docked.
+    const docked = ui.dock.take(peerId);
+    current = docked ?? Conversation(peerId);
+    if (docked) {
+      attach(getFrame()!, docked);
+    }
     node.append(current.node);
   });
 
-  return node;
-}
+  return { node };
+});
+
+export default ChatPage;

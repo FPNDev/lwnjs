@@ -5,4 +5,4 @@ import { App } from './App';
 setRenderer(domRenderer);
 
 const container = document.querySelector('#app')!;
-container.append(App(container));
+container.append(App().node);

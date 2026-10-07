@@ -1,4 +1,4 @@
-import { attach, component, onAttach, useStore } from 'lwn-js/core';
+import { component, onAttach, useStore } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { ChatStore } from '../store/chat';
 import { PlacementStore } from '../store/ui';
@@ -12,52 +12,43 @@ export type Conversation = {
   peerId: string;
 };
 
-/**
- * A chat with one peer. It can move between the chat page and the dock
- * without being re-created: history, scroll position and the half-typed
- * message survive. Everything it subscribes to is owned by its own node, so
- * moving it changes nothing; only what depends on *where* it is (its buttons)
- * is re-read in `onAttach`.
- */
-export const Conversation = component(
-  (parent: object, peerId: string): Conversation => {
-    const node = html`<section class=${classes.conversation}></section>`;
-    attach(parent, node);
-    const chat = useStore(ChatStore);
-    const conversation: Conversation = { node, peerId };
+/** A chat view that keeps its state when moved between the page and dock. */
+export const Conversation = component((peerId: string) => {
+  const chat = useStore(ChatStore);
+  const header = ConversationHeader(peerId);
+  const messages = MessageList();
+  const composer = Composer((text) => void chat.send(peerId, text));
 
-    const header = ConversationHeader(node, peerId);
-    const messages = MessageList(node);
-    const composer = Composer(node, (text) => void chat.send(peerId, text));
-    node.append(header.node, messages.node, composer.node);
+  void chat.messages(peerId).then((history) => {
+    for (const message of history) {
+      messages.add(message);
+    }
+    messages.scrollToEnd();
+  });
+  chat.messageAdded.subscribe((message) => {
+    if (message.peerId === peerId) {
+      messages.add(message);
+      chat.markRead(peerId);
+    }
+  });
+  chat.messageUpdated.subscribe((message) => {
+    if (message.peerId === peerId) {
+      messages.update(message);
+    }
+  });
+  chat.markRead(peerId);
+  chat.connect(peerId);
 
-    void chat.messages(peerId).then((history) => {
-      for (const message of history) {
-        messages.add(message);
-      }
-      messages.scrollToEnd();
-    });
-    chat.messageAdded.subscribe((message) => {
-      if (message.peerId === peerId) {
-        messages.add(message);
-        chat.markRead(peerId);
-      }
-    });
-    chat.messageUpdated.subscribe((message) => {
-      if (message.peerId === peerId) {
-        messages.update(message);
-      }
-    });
-    chat.markRead(peerId);
-    chat.connect(peerId);
+  const node = html`<section class=${classes.conversation}>
+    ${header}${messages}${composer}
+  </section>`;
+  const conversation = { node, peerId };
 
-    // Runs now and after every move.
-    onAttach(() => {
-      // `node`, not the hook's scope: the placement is provided by whoever holds the conversation.
-      header.place(useStore(node, PlacementStore), conversation);
-      composer.focus();
-    });
+  // Re-read placement after each attachment.
+  onAttach(() => {
+    header.place(useStore(PlacementStore), conversation);
+    composer.focus();
+  });
 
-    return conversation;
-  },
-);
+  return conversation;
+});

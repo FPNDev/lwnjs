@@ -1,4 +1,4 @@
-import { attach, useStore } from 'lwn-js/core';
+import { component, useStore } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { ListHeader } from '../components/ListHeader';
 import { NewTodoForm } from '../components/NewTodoForm';
@@ -9,32 +9,25 @@ import { ListRoute, currentListId, router } from '../router';
 import { TodosStore } from '../store/todos';
 import classes from './Page.module.scss';
 
-/**
- * A list's todos, loaded lazily by the outlet in App. The page only wires
- * the store and the route to its components. The outlet keeps this page
- * while you switch lists, so it follows the route itself.
- */
-export default function ListPage(parent: object) {
-  const node = html`<section class=${classes.page}></section>`;
-  attach(parent, node);
+const ListPage = component(() => {
   const todos = useStore(TodosStore);
 
   let listId = '';
   let shownId = '';
   let filter: Filter = 'all';
 
-  const header = ListHeader(node, () => {
+  const header = ListHeader(() => {
     todos.removeList(listId);
     void router.go('/');
   });
-  const form = NewTodoForm(node, (title) => {
+  const form = NewTodoForm((title) => {
     todos.addTodo(listId, title);
   });
-  const filters = TodoFilters(node, (next) => {
+  const filters = TodoFilters((next) => {
     filter = next;
     render();
   });
-  const items = TodoItems(node, {
+  const items = TodoItems({
     toggle: (id) => {
       todos.toggleTodo(listId, id);
     },
@@ -45,16 +38,13 @@ export default function ListPage(parent: object) {
       todos.removeTodo(listId, id);
     },
   });
-  const footer = TodoFooter(node, () => {
+  const footer = TodoFooter(() => {
     todos.clearDone(listId);
   });
-
-  node.append(header.node, form, filters, ...items.nodes, footer.node);
 
   function render() {
     const list = todos.find(listId);
     if (!list) {
-      // Deleted, here or in another tab.
       void router.go('/');
 
       return;
@@ -75,5 +65,13 @@ export default function ListPage(parent: object) {
   });
   todos.lists.subscribe(render);
 
-  return node;
-}
+  return {
+    node: html`
+      <section class=${classes.page}>
+        ${header}${form}${filters}${items}${footer}
+      </section>
+    `,
+  };
+});
+
+export default ListPage;

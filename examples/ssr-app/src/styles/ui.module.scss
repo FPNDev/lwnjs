@@ -1,6 +1,4 @@
-// One stylesheet module, imported by the eager app shell as well as the lazy pages.
-// With SSR the page markup arrives before its lazy chunk; keeping page styles in the
-// entry CSS means nothing renders unstyled while that chunk loads.
+// Keep lazy page styles in the entry CSS so SSR markup is styled before page chunks load.
 
 $space: 8px;
 $radius: 12px;
@@ -162,8 +160,6 @@ $color-accent: #0a7c5c;
   font: inherit;
 }
 
-// Account layout
-
 .account {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -194,8 +190,6 @@ $color-accent: #0a7c5c;
   border: 1px solid $color-border;
   border-radius: $radius;
 }
-
-// Cart drawer (a portal in <body>)
 
 .backdrop {
   position: fixed;

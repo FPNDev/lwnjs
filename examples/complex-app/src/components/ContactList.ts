@@ -1,4 +1,4 @@
-import { attach, component, useStore } from 'lwn-js/core';
+import { component, useStore } from 'lwn-js/core';
 import { html, text } from 'lwn-js/html';
 import { formatTime, initial } from '../lib/format';
 import {
@@ -20,7 +20,7 @@ type ContactRow = {
   setPresence(presence: Presence): void;
 };
 
-const ContactRow = component((parent: object, contact: Contact): ContactRow => {
+const ContactRow = component((contact: Contact): ContactRow => {
   const letter = text();
   const dot = html`<span class=${classes.dot}></span>`;
   const avatar = html`<span class=${classes.avatar}>${letter}${dot}</span>`;
@@ -37,12 +37,10 @@ const ContactRow = component((parent: object, contact: Contact): ContactRow => {
       </span>
     </a>
   `;
-  const node = html<HTMLLIElement>`<li>${link}</li>`;
-  attach(parent, node);
   routerLink(link);
 
   return {
-    node,
+    node: html<HTMLLIElement>`<li>${link}</li>`,
     link,
     update(next) {
       letter.data = initial(next.name);
@@ -58,14 +56,12 @@ const ContactRow = component((parent: object, contact: Contact): ContactRow => {
   };
 });
 
-/** Contacts, newest conversation first, with presence and unread counts. */
-export const ContactList = component((parent: object) => {
+/** Lists contacts with presence and unread counts. */
+export const ContactList = component(() => {
   const list = html`<ul class=${classes.contacts}></ul>`;
   const empty = html`<p class=${classes.empty}>
     No chats yet. Share your ID or start a new chat.
   </p>`;
-  const node = html`<nav>${list}${empty}</nav>`;
-  attach(parent, node);
   const chat = useStore(ChatStore);
 
   const rows = new Map<string, ContactRow>();
@@ -73,12 +69,12 @@ export const ContactList = component((parent: object) => {
     for (const [index, contact] of contacts.entries()) {
       let row = rows.get(contact.peerId);
       if (!row) {
-        row = ContactRow(node, contact);
+        row = ContactRow(contact);
         rows.set(contact.peerId, row);
         row.setPresence(chat.presenceOf(contact.peerId));
       }
       row.update(contact);
-      // Move only rows that are out of place.
+      // Preserve rows already in their correct position.
       if (list.children[index] !== row.node) {
         list.insertBefore(row.node, list.children[index] ?? null);
       }
@@ -104,5 +100,5 @@ export const ContactList = component((parent: object) => {
   });
   router.routes([HomeRoute, ChatRoute], highlight);
 
-  return node;
+  return { node: html`<nav>${list}${empty}</nav>` };
 });

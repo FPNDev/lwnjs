@@ -9,8 +9,7 @@
     "start": "lwn start"
   },
   "dependencies": {
-    "lwn-js": "file:../..",
-    "linkedom": "^0.18.13"
+    "lwn-js": "file:../.."
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

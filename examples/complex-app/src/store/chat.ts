@@ -30,16 +30,13 @@ type Frame =
   | { type: 'message'; id: string; at: number; iv: string; data: string }
   | { type: 'ack'; id: string };
 
-/**
- * One peer connection, as a logical node. It is not a view: logical nodes can
- * be any object. Destroying it closes the WebRTC channel.
- */
+/** A logical child that closes its WebRTC channel when destroyed. */
 type Link = {
   peerId: string;
   conn: DataConnection;
-  /** Set once both sides exchanged identities. */
+  /** Session key after both peers exchange identities. */
   key?: CryptoKey;
-  /** Frames are handled one after another: a message must not overtake the handshake. */
+  /** Serializes protocol messages so data cannot overtake the handshake. */
   queue: Promise<void>;
 };
 
@@ -71,11 +68,10 @@ async function loadIdentity(db: Db): Promise<Identity> {
 }
 
 function createChat(db: Db, me: Identity, all: Contact[]) {
-  /** Owns every link: destroying it would close all connections at once. */
+  /** Destroying this logical node closes every peer connection. */
   const root = {};
   const links = new Map<string, Link>();
 
-  // Shared, observed by several components: these are what createState / createEmitter are for.
   const status = createState<'starting' | 'online' | 'offline'>('starting');
   const contacts = createState(all);
   const presence = createState(new Map<string, Presence>());
@@ -146,7 +142,7 @@ function createChat(db: Db, me: Identity, all: Contact[]) {
 
     link.key = await deriveSessionKey(me.keys.privateKey, frame.key);
     setPresence(link.peerId, 'online');
-    // Deliver what was written while they were offline.
+    // Send messages queued while the peer was offline.
     for (const message of await db.messages(link.peerId)) {
       if (message.outgoing && message.status === 'pending') {
         await transmit(link, message);
@@ -196,7 +192,7 @@ function createChat(db: Db, me: Identity, all: Contact[]) {
 
     onDestroy(link, () => {
       conn.close();
-      // A newer link may already have replaced this one.
+      // Ignore events from a link that has already been replaced.
       if (links.get(link.peerId) === link) {
         links.delete(link.peerId);
         setPresence(link.peerId, 'offline');
@@ -246,7 +242,7 @@ function createChat(db: Db, me: Identity, all: Contact[]) {
   });
   peer.on('error', (error) => {
     if (error.type === 'peer-unavailable') {
-      // "Could not connect to peer <id>": they are offline; messages stay pending.
+      // An unavailable peer can receive its pending messages later.
       destroy(links.get(error.message.split(' ').at(-1)!));
     } else if (error.type === 'unavailable-id') {
       notices.emit('This identity is already open in another tab.');
@@ -343,11 +339,11 @@ export type Chat = ReturnType<typeof createChat>;
 
 let started: Chat | undefined;
 
-/** Opens the database, loads or creates the identity and connects to the signaling server. */
+/** Opens storage, loads the identity, and starts the signaling connection. */
 export async function startChat() {
   const db = await openDb();
   started = createChat(db, await loadIdentity(db), await db.contacts());
 }
 
-/** Provided by App; every component reaches the chat through it. */
+/** Shared chat service provided by the app. */
 export const ChatStore = createStore(() => started!);

@@ -1,15 +1,15 @@
-import { attach, useStore } from 'lwn-js/core';
+import { component, useStore } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { ChatStore } from '../store/chat';
 import classes from './Page.module.scss';
 
-export function Welcome(parent: object) {
-  const id = html`<code></code>`;
-  const node = html`
+export const Welcome = component(() => ({
+  node: html`
     <section class=${classes.welcome}>
       <h1>Peer-to-peer, end-to-end encrypted</h1>
       <p>
-        Your ID is ${id}. Give it to someone and they can start a chat with you.
+        Your ID is ${useStore(ChatStore).me.peerId}. Give it to someone and they
+        can start a chat with you.
       </p>
       <ol>
         <li>
@@ -30,9 +30,5 @@ export function Welcome(parent: object) {
         delivered when they come back.
       </p>
     </section>
-  `;
-  attach(parent, node);
-  id.textContent = useStore(ChatStore).me.peerId;
-
-  return node;
-}
+  `,
+}));

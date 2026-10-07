@@ -1,5 +1,11 @@
 import { vi } from 'vitest';
-import { attach, domRenderer, setRenderer } from '../../src/core/index.ts';
+import {
+  attach,
+  component,
+  domRenderer,
+  setRenderer,
+  withFrame,
+} from '../../src/core/index.ts';
 import { html, text } from '../../src/html/index.ts';
 import {
   createOutlet,
@@ -40,40 +46,39 @@ export function setupApp(
     load: loadServerData(routes),
   });
 
-  function PostPage(parent: object) {
+  const PostPage = component(() => {
     const post = useServer(PostData);
     const title = html`<h1>${post.title}</h1>`;
     const status = text('');
     // prettier-ignore
     const node = html`<article>${title}${status}<p>${post.body}</p></article>`;
-    attach(parent, node);
     // The outlet keeps this page across post navigations; the page follows the route itself.
-    router.route(node, PostRoute, () => {
+    router.route(PostRoute, () => {
       title.textContent = useServer(PostData).title;
     });
 
-    return node;
-  }
+    return { node };
+  });
 
-  function HomePage(parent: object) {
-    const node = html`<main>home</main>`;
-    attach(parent, node);
-
-    return node;
-  }
+  const HomePage = component(() => ({
+    node: html`<main>home</main>`,
+  }));
+  const MissingPage = component(() => ({
+    node: html`<p>Not found</p>`,
+  }));
 
   function App(container: Element) {
-    const header = html`<header>${'Blog'}</header>`;
-    container.append(header);
-    attach(container, header);
-    const page = createOutlet(container);
-    router.route(container, Home, () => page.show(HomePage));
-    router.route(container, PostRoute, () =>
-      page.show(() => Promise.resolve({ default: PostPage })),
-    );
-    router.route(container, Missing, () =>
-      page.show(() => html`<p>Not found</p>`),
-    );
+    withFrame(container, () => {
+      const header = html`<header>${'Blog'}</header>`;
+      container.append(header);
+      attach(container, header);
+      const page = createOutlet();
+      router.route(Home, () => page.show(HomePage));
+      router.route(PostRoute, () =>
+        page.show(() => Promise.resolve({ default: PostPage })),
+      );
+      router.route(Missing, () => page.show(MissingPage));
+    });
   }
 
   const loads = vi.fn();

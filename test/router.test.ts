@@ -1,11 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { destroy, domRenderer, setRenderer } from '../src/core/index.ts';
+import {
+  component,
+  createEmitter,
+  destroy,
+  domRenderer,
+  listen,
+  onDestroy,
+  setRenderer,
+  withFrame,
+} from '../src/core/index.ts';
 import {
   aliasRoute,
   createOutlet,
   memoryHistory,
   setupRouter,
   type Route,
+  type ViewFactory,
 } from '../src/router/index.ts';
 
 beforeEach(() => {
@@ -25,11 +35,11 @@ describe('router', () => {
       history: memoryHistory('/settings/profile'),
     });
 
-    const owner = {};
+    const frame = {};
     const layout = vi.fn();
     const page = vi.fn();
-    router.route(owner, settings, layout);
-    router.route(owner, profile, page);
+    router.route(frame, settings, layout);
+    router.route(frame, profile, page);
     await flush();
 
     expect(layout).toHaveBeenCalledTimes(1);
@@ -151,15 +161,15 @@ describe('router', () => {
     expect(router.getParams()?.groups?.id).toBe('42');
   });
 
-  it('stops listeners when their owner is destroyed', async () => {
+  it('stops listeners when their frame is destroyed', async () => {
     const page: Route = { path: '/page' };
     const router = setupRouter([{ path: '/' }, page], {
       history: memoryHistory('/'),
     });
-    const owner = {};
+    const frame = {};
     const action = vi.fn();
-    router.route(owner, page, action);
-    destroy(owner);
+    router.route(frame, page, action);
+    destroy(frame);
 
     await router.go('/page');
     expect(action).not.toHaveBeenCalled();
@@ -167,28 +177,29 @@ describe('router', () => {
 });
 
 describe('outlet', () => {
-  const view = (text: string) => () => {
-    const node = document.createElement('p');
-    node.textContent = text;
+  const view = (text: string) =>
+    component(() => {
+      const node = document.createElement('p');
+      node.textContent = text;
 
-    return node;
-  };
+      return { node };
+    });
 
-  it('keeps two outlets under one owner independent (B18)', async () => {
-    const owner = document.createElement('div');
+  it('keeps two outlets under one frame independent (B18)', async () => {
+    const container = document.createElement('div');
     const first = document.createComment('');
     const second = document.createComment('');
-    owner.append(first, second);
+    container.append(first, second);
 
-    await createOutlet(owner, first).show(view('a'));
-    await createOutlet(owner, second).show(view('b'));
-    expect(owner.textContent).toBe('ab');
+    await withFrame(container, () => createOutlet(first)).show(view('a'));
+    await withFrame(container, () => createOutlet(second)).show(view('b'));
+    expect(container.textContent).toBe('ab');
   });
 
   it('ignores a slow lazy view superseded by a newer one (B19)', async () => {
-    const owner = document.createElement('div');
-    const outlet = createOutlet(owner);
-    let resolveSlow: (factory: () => Node) => void = () => {};
+    const container = document.createElement('div');
+    const outlet = withFrame(container, () => createOutlet());
+    let resolveSlow: (factory: ViewFactory) => void = () => {};
     const slow = outlet.show(
       () =>
         new Promise((resolve) => {
@@ -199,12 +210,12 @@ describe('outlet', () => {
     await outlet.show(view('fast'));
     resolveSlow(view('slow'));
     expect(await slow).toBeUndefined();
-    expect(owner.textContent).toBe('fast');
+    expect(container.textContent).toBe('fast');
   });
 
   it('accepts module loaders and keeps the view for the same factory', async () => {
-    const owner = document.createElement('div');
-    const outlet = createOutlet(owner);
+    const container = document.createElement('div');
+    const outlet = withFrame(container, () => createOutlet());
     const factory = view('page');
     const loader = () => Promise.resolve({ default: factory });
 
@@ -212,15 +223,15 @@ describe('outlet', () => {
     expect(await outlet.show(() => Promise.resolve({ default: factory }))).toBe(
       shown,
     );
-    expect(owner.childNodes).toHaveLength(1);
+    expect(container.childNodes).toHaveLength(1);
   });
 
   it('replaces in place and keeps the placeholder mounted (B20)', async () => {
-    const owner = document.createElement('div');
+    const container = document.createElement('div');
     const fragment = document.createDocumentFragment();
     const placeholder = document.createComment('');
     fragment.append(placeholder);
-    const outlet = createOutlet(owner, placeholder);
+    const outlet = withFrame(container, () => createOutlet(placeholder));
 
     await outlet.show(view('a'));
     await outlet.show(view('b'));
@@ -231,13 +242,47 @@ describe('outlet', () => {
     expect(fragment.firstChild).toBe(placeholder);
   });
 
-  it('passes the owner to the factory and attaches the view', async () => {
-    const owner = document.createElement('div');
-    const factory = vi.fn(() => document.createElement('p'));
-    const shown = await createOutlet(owner).show(factory);
+  it('passes the frame to the factory and attaches the view', async () => {
+    const container = document.createElement('div');
+    const button = document.createElement('button');
+    const ping = createEmitter();
+    const observed = vi.fn();
+    const clicked = vi.fn();
+    const destroyed = vi.fn();
+    const factory = vi.fn(
+      component(() => {
+        ping.subscribe(observed);
+        listen(button, 'click', clicked);
+        onDestroy(destroyed);
 
-    expect(factory).toHaveBeenCalledWith(owner);
-    destroy(owner);
-    expect((shown as Node).isConnected).toBe(false);
+        return { node: button };
+      }),
+    );
+    const outlet = withFrame(container, () => createOutlet());
+    const shown = await outlet.show(factory);
+
+    expect(factory).toHaveBeenCalledWith();
+    expect(shown).toStrictEqual({ node: button });
+    ping.emit();
+    button.click();
+    destroy(container);
+    ping.emit();
+    button.click();
+
+    expect(button.parentNode).toBeNull();
+    expect(observed).toHaveBeenCalledTimes(1);
+    expect(clicked).toHaveBeenCalledTimes(1);
+    expect(destroyed).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns one node for a component page', async () => {
+    const container = document.createElement('div');
+    const outlet = withFrame(container, () => createOutlet());
+    const singleNode = document.createElement('p');
+    const SinglePage = component(() => ({ node: singleNode }));
+
+    expect(await outlet.show(SinglePage)).toStrictEqual({ node: singleNode });
+    outlet.clear();
+    expect(container.childNodes).toHaveLength(0);
   });
 });

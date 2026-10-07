@@ -1,35 +1,36 @@
-import { attach, destroy } from 'lwn-js/core';
+import { component, destroy } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { useServer } from 'lwn-js/ssr';
+import type { ProductSummary } from '../api';
 import { ProductCard } from '../components/ProductCard';
 import { CollectionData } from '../data';
 import { CollectionRoute, router } from '../routes';
 import classes from '../styles/ui.module.scss';
 
-/**
- * ISR, lazy. Switching collections keeps this page (the outlet sees the same
- * factory); the page follows the route and swaps only its grid.
- */
-export default function Collection(parent: object) {
-  const title = html`<h1 class=${classes.title}></h1>`;
-  const node = html`<div>${title}</div>`;
-  attach(parent, node);
+/** Reuses the ISR page across collections and updates its product grid per route. */
+const ProductGrid = component((products: ProductSummary[]) => ({
+  node: html`<div class=${classes.grid}>
+    ${products.map((product) => ProductCard(product))}
+  </div>`,
+}));
 
-  let grid: HTMLElement | undefined;
-  // Route actions run during setup on the first render and after each navigation's
-  // data has loaded, so `useServer` is valid in them.
+const Collection = component(() => {
+  const title = html`<h1 class=${classes.title}></h1>`;
+  const gridHost = html`<div></div>`;
+
+  let grid: ReturnType<typeof ProductGrid> | undefined;
+  // Route actions run after loaders, so `useServer` can read this route's data.
   router.route(CollectionRoute, () => {
     const collection = useServer(CollectionData);
     title.textContent = collection?.title ?? 'Collection not found';
+    const next = ProductGrid(collection?.products ?? []);
+
     destroy(grid);
-    const next = html`<div class=${classes.grid}></div>`;
-    attach(node, next);
-    for (const product of collection?.products ?? []) {
-      next.append(ProductCard(next, product));
-    }
-    node.append(next);
+    gridHost.replaceChildren(next.node);
     grid = next;
   });
 
-  return node;
-}
+  return { node: html`<div>${title}${gridHost}</div>` };
+});
+
+export default Collection;

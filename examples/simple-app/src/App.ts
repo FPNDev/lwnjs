@@ -1,4 +1,4 @@
-import { attach, attachStore, component, listen } from 'lwn-js/core';
+import { attachStore, component, listen } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { createOutlet } from 'lwn-js/router';
 import classes from './App.module.scss';
@@ -7,29 +7,24 @@ import { Welcome } from './pages/Welcome';
 import { FallbackRoute, HomeRoute, ListRoute, router } from './router';
 import { STORAGE_KEY, TodosStore } from './store/todos';
 
-export const App = component((parent: object) => {
-  const node = html`<div class=${classes.layout}></div>`;
-  attach(parent, node);
-  // Every component below finds the lists with `useStore(TodosStore)`.
+export const App = component(() => {
   const todos = attachStore(TodosStore);
 
   const slot = html`<!---->`;
+  const sidebar = Sidebar();
   const main = html`<main class=${classes.main}>${slot}</main>`;
-  node.append(Sidebar(node), main);
 
-  // Pages are logical children of `node` but mounted inside `main`:
-  // the logical tree and the DOM tree do not have to match.
-  const page = createOutlet(node, slot);
+  // The outlet view is a logical child rendered inside main.
+  const page = createOutlet(slot);
   router.route(HomeRoute, () => page.show(Welcome));
   router.route(ListRoute, () => page.show(() => import('./pages/ListPage')));
   router.route(FallbackRoute, () => router.go('/'));
 
-  // Another tab changed the lists: pick them up.
   listen(window, 'storage', (event) => {
     if (event.key === STORAGE_KEY) {
       todos.reload();
     }
   });
 
-  return node;
+  return { node: html`<div class=${classes.layout}>${sidebar}${main}</div>` };
 });

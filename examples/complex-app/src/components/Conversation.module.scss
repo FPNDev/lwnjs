@@ -8,8 +8,6 @@
   background: $color-surface;
 }
 
-// Header
-
 .header {
   display: flex;
   align-items: center;
@@ -68,8 +66,6 @@
   }
 }
 
-// Messages
-
 .messages {
   flex: 1;
   display: flex;
@@ -105,8 +101,6 @@
   text-align: right;
 }
 
-// Composer
-
 .composer {
   display: flex;
   gap: $space;
@@ -127,8 +121,6 @@
     @include button;
   }
 }
-
-// Safety number dialog
 
 .safety {
   margin: 0;

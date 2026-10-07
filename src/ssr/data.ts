@@ -1,37 +1,22 @@
-import { currentScope } from '../core/scope.ts';
+import { hydrationContext } from '../core/hydration.ts';
 
-/** Names a piece of page data loaded on the server. `T` is the value's type. */
+/** Identifies typed data loaded for a server-rendered page. */
 export type ServerToken<T> = {
   readonly key: string;
-  /** Type carrier only; never set. */
+  /** Carries the value type. */
   readonly type?: T;
 };
 
 let data: Record<string, unknown> = {};
 
-/**
- * Creates a server data token.
- * @param key Unique key; it is the property name in the serialized page data.
- * @returns The token.
- */
+/** Creates a token for a uniquely named page-data value. */
 export function serverToken<T>(key: string): ServerToken<T> {
   return { key };
 }
 
-/**
- * Reads page data loaded on the server: during the server render, from the
- * hydration payload on the client, and from the page's `__data.json` after
- * client navigation. O(1).
- *
- * Only during setup: synchronously in a page factory, a component it creates,
- * or a route action. The data is released once the page has settled, so read
- * it once and pass values down to anything created later.
- * @param token Data token.
- * @returns The value.
- * @throws Outside setup, or when the current page has no value for the token.
- */
+/** Reads the current page's server data during synchronous setup. */
 export function useServer<T>(token: ServerToken<T>): T {
-  if (!currentScope()) {
+  if (!hydrationContext()) {
     throw new Error(
       `useServer("${token.key}"): call it during setup (a page factory, a component it creates, or a route action), not after an await or in an event handler. Read it once and pass the value down.`,
     );
@@ -45,10 +30,7 @@ export function useServer<T>(token: ServerToken<T>): T {
   return data[token.key] as T;
 }
 
-/**
- * Replaces the current page data.
- * @param next Page data.
- */
+/** Sets the data available to the current page. */
 export function setServerData(next: Record<string, unknown>) {
   data = next;
 }

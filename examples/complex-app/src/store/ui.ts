@@ -8,14 +8,10 @@ export type Ui = {
   dock: Dock;
 };
 
-/** App-wide UI services. App fills it right after attaching. */
+/** App-wide toast and dock views. */
 export const UiStore = createStore(() => ({}) as Ui);
 
-/**
- * Where a conversation currently lives. The chat page and the dock each
- * provide one; a conversation reads it in `onAttach`, so moving it between
- * them changes its buttons without re-creating it.
- */
+/** Provides the current conversation placement to its descendants. */
 export type Placement = {
   kind: 'page' | 'dock';
   popOut?(conversation: Conversation): void;

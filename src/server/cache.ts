@@ -1,28 +1,24 @@
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 
-/** A rendered page. */
+/** Cached HTML and page data. */
 export type CacheEntry = {
   html: string;
-  /** Page data as JSON, served as `__data.json`. */
+  /** Serialized page data. */
   data: string;
   status: number;
-  /** `Date.now()` when rendered. */
+  /** Render timestamp in milliseconds. */
   createdAt: number;
 };
 
-/** Stores rendered pages by pathname for SSG and ISR. */
+/** Stores rendered pages by pathname. */
 export type PageCache = {
   get(path: string): Promise<CacheEntry | undefined>;
   set(path: string, entry: CacheEntry): Promise<void>;
   delete(path: string): Promise<void>;
 };
 
-/**
- * In-memory cache that evicts the least recently used page beyond `maxEntries`. All operations O(1).
- * @param maxEntries Maximum number of pages kept.
- * @returns The cache.
- */
+/** Creates an LRU cache with a maximum entry count. */
 export function memoryCache(maxEntries = 1000): PageCache {
   const entries = new Map<string, CacheEntry>();
 
@@ -30,7 +26,7 @@ export function memoryCache(maxEntries = 1000): PageCache {
     get(path) {
       const entry = entries.get(path);
       if (entry) {
-        // Re-insert so Map order tracks recency.
+        // Map order tracks least to most recently used entries.
         entries.delete(path);
         entries.set(path, entry);
       }
@@ -54,14 +50,7 @@ export function memoryCache(maxEntries = 1000): PageCache {
   };
 }
 
-/**
- * File cache in static-hosting layout: `<dir>/<path>/index.html` and
- * `<dir>/<path>/__data.json`. SSG output uses it, so any static server can
- * serve a build, and ISR can pick it up at runtime. Entries read back with
- * status 200 and the file time as `createdAt`.
- * @param dir Output directory.
- * @returns The cache.
- */
+/** Creates a file cache compatible with static hosting and ISR. */
 export function fsCache(dir: string): PageCache {
   const root = resolve(dir);
   const folder = (path: string) => {
@@ -85,7 +74,7 @@ export function fsCache(dir: string): PageCache {
 
         return { html, data, status: 200, createdAt: info.mtimeMs };
       } catch {
-        // Not cached yet.
+        // Missing files indicate a cache miss.
       }
     },
     async set(path, entry) {

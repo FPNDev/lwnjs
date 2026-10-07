@@ -1,9 +1,4 @@
-/**
- * Mock APIs: mock.shop (Shopify's demo GraphQL store) and dummyjson (users,
- * orders). Every function maps the response to a small, page-shaped object:
- * whatever a server loader returns is serialized into the page, so ship only
- * what the page shows.
- */
+/** Maps API responses to the fields used by pages before server data is serialized. */
 
 export type ProductSummary = {
   handle: string;
@@ -151,7 +146,7 @@ export async function product(handle: string): Promise<ProductDetail | null> {
   );
 }
 
-/** Called from the browser: search results are per visitor, nothing to prerender or cache. */
+/** Fetches visitor-specific search results in the browser. */
 export async function searchProducts(term: string) {
   const data = await shop<{ products: Edges<ShopProduct> }>(
     `query ($term: String!) { products(first: 12, query: $term) { edges { node { ${PRODUCT_FIELDS} } } } }`,

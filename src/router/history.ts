@@ -1,15 +1,12 @@
-/** Where the router reads and writes the current URL. */
+/** Reads and updates the router URL. */
 export type History = {
   location(): URL;
   push(url: string): void;
-  /** Subscribes to changes made outside the router (back/forward). Returns an unsubscribe function. */
+  /** Subscribes to external URL changes and returns an unsubscribe function. */
   listen(onChange: () => void): () => void;
 };
 
-/**
- * History backed by `window.location` and `window.history`.
- * @returns The history adapter.
- */
+/** Creates a history adapter for the browser URL. */
 export function browserHistory(): History {
   return {
     location: () => new URL(window.location.href),
@@ -26,11 +23,7 @@ export function browserHistory(): History {
   };
 }
 
-/**
- * In-memory history for tests and server rendering.
- * @param initialUrl Starting URL, absolute or relative to `http://localhost`.
- * @returns The history adapter.
- */
+/** Creates an in-memory history adapter. */
 export function memoryHistory(initialUrl: string | URL = '/'): History {
   let current = new URL(initialUrl, 'http://localhost');
 

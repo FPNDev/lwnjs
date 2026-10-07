@@ -1,24 +1,31 @@
 import { getRenderer } from '../core/renderer.ts';
-import { runInFrame } from '../core/owner.ts';
-import { nextScopeKey, trackPending, withScope } from '../core/scope.ts';
-import { attach, destroy, onDestroy } from '../core/tree.ts';
+import { requireFrame, withFrame } from '../core/frame.ts';
+import {
+  nextHydrationKey,
+  trackPending,
+  withHydration,
+} from '../core/hydration.ts';
+import {
+  attach,
+  destroy,
+  ensureLogicalRecord,
+  onDestroy,
+} from '../core/tree.ts';
+import { type ComponentController } from '../core/component.ts';
 
-/** Builds a view. Receives the outlet owner, which becomes the view's logical parent. */
-export type ViewFactory = (parent: object) => object;
+/** Creates a component controller for an outlet view. */
+export type ViewFactory = () => ComponentController;
 
-/** Lazily loads a view factory, e.g. `() => import('./Page')`. */
+/** Loads a view factory on demand. */
 export type ViewLoader = () => Promise<{ default: ViewFactory } | ViewFactory>;
 
-export type ViewSource = ViewFactory | ViewLoader;
+export type ViewSource = () =>
+  ComponentController | Promise<{ default: ViewFactory } | ViewFactory>;
 
 export type Outlet = {
-  /**
-   * Shows the view from `source`, replacing the current one. Showing the same
-   * factory again keeps the current view. Resolves to the shown view, or
-   * `undefined` when a later `show`/`clear` superseded this one.
-   */
-  show(source: ViewSource): Promise<object | undefined>;
-  /** Destroys the current view. */
+  /** Shows a view, replacing the current one unless its factory is unchanged. */
+  show(source: ViewSource): Promise<ComponentController | undefined>;
+  /** Destroys the current view, if any. */
   clear(): void;
 };
 
@@ -31,81 +38,104 @@ function requireRenderer() {
   return renderer;
 }
 
-/**
- * Creates a slot that shows one view at a time under `owner`.
- * @param owner Logical parent of shown views; without `placeholder`, views are appended to it.
- * @param placeholder View that marks the position; shown views are inserted before it and it stays mounted.
- * @returns The outlet.
- */
-export function createOutlet(owner: object, placeholder?: object): Outlet {
+/** Creates an outlet for the current frame. */
+export function createOutlet(placeholder?: object): Outlet {
+  const frame = requireFrame('createOutlet');
+  const rootViews = ensureLogicalRecord(frame).views;
+  if (!placeholder && rootViews && rootViews.size > 1) {
+    throw new Error(
+      'Outlet: frame has multiple rendered roots; pass a placeholder view.',
+    );
+  }
+  if (!placeholder && rootViews?.size === 0) {
+    throw new Error(
+      'Outlet: frame has no rendered root; pass a placeholder view.',
+    );
+  }
+  const renderParent = placeholder
+    ? undefined
+    : (rootViews?.values().next().value ?? frame);
   let source: ViewSource | undefined;
-  let factory: ViewFactory | undefined;
-  let view: object | undefined;
-  let unregisterView: (() => void) | undefined;
+  let factory: ViewSource | undefined;
+  let controller: ComponentController | undefined;
+  let unregisterCurrent: (() => void) | undefined;
   let version = 0;
-  // Views are built in a scope keyed by this outlet's position, which keeps hydration deterministic.
-  // Outside any scope (after hydration) the key is empty: the scope still marks setup for `useServer`.
-  const scopeKey = nextScopeKey() ?? '';
-  // Factories run in a frame of their own: pages need no `component()` wrapper.
-  const build = (run: ViewSource) =>
-    withScope(scopeKey, () => runInFrame(undefined, () => run(owner)));
+  // Keep outlet keys stable between server rendering and hydration.
+  const hydrationKey = nextHydrationKey() ?? '';
+  const build = <T>(run: () => T): T =>
+    withHydration(hydrationKey, () => withFrame(frame, run));
 
-  onDestroy(owner, () => {
+  onDestroy(frame, () => {
     version++;
   });
 
   const mount = (
     nextSource: ViewSource,
-    nextFactory: ViewFactory,
-    nextView: object,
+    nextFactory: ViewSource,
+    nextController: ComponentController,
   ) => {
-    attach(owner, nextView);
+    attach(frame, nextController);
 
     const renderer = requireRenderer();
-    const anchor = view ?? placeholder;
-    if (anchor) {
-      renderer.insertBefore(anchor, nextView);
-    } else {
-      renderer.append(owner, nextView);
+    const previousViews = controller
+      ? ensureLogicalRecord(controller).views
+      : undefined;
+    const anchor = previousViews
+      ? (previousViews.values().next().value ?? placeholder)
+      : (controller?.node ?? placeholder);
+
+    const nextViews = ensureLogicalRecord(nextController).views;
+
+    const place = (root: object) => {
+      if (anchor) {
+        renderer.insertBefore(anchor, root);
+        return;
+      }
+
+      renderer.append(renderParent!, root);
+    };
+
+    for (const root of nextViews!) {
+      place(root);
     }
 
-    unregisterView?.();
-    destroy(view);
+    unregisterCurrent?.();
+    destroy(controller);
 
     source = nextSource;
     factory = nextFactory;
-    view = nextView;
-    unregisterView = onDestroy(nextView, () => {
-      source = factory = view = unregisterView = undefined;
+    controller = nextController;
+    unregisterCurrent = onDestroy(nextController, () => {
+      source = factory = controller = unregisterCurrent = undefined;
     });
 
-    return nextView;
+    return nextController;
   };
 
   const show = async (nextSource: ViewSource) => {
-    if (view && nextSource === source) {
-      return view;
+    if (controller && nextSource === source) {
+      return controller;
     }
 
     const current = ++version;
-    const result = build(nextSource);
-    if (!(result instanceof Promise)) {
-      return mount(nextSource, nextSource as ViewFactory, result);
+    const built = build(nextSource);
+    if (!(built instanceof Promise)) {
+      return Promise.resolve().then(() => mount(nextSource, nextSource, built));
     }
 
-    const loaded = await (result as ReturnType<ViewLoader>);
+    const loaded = await built;
     if (current !== version) {
       return;
     }
 
     const nextFactory = typeof loaded === 'function' ? loaded : loaded.default;
-    if (view && nextFactory === factory) {
+    if (controller && nextFactory === factory) {
       source = nextSource;
 
-      return view;
+      return controller;
     }
 
-    return mount(nextSource, nextFactory, build(nextFactory) as object);
+    return mount(nextSource, nextFactory, build(nextFactory));
   };
 
   return {
@@ -113,7 +143,7 @@ export function createOutlet(owner: object, placeholder?: object): Outlet {
 
     clear() {
       version++;
-      destroy(view);
+      destroy(controller);
     },
   };
 }

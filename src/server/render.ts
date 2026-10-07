@@ -1,6 +1,6 @@
 import { parseHTML } from 'linkedom';
-import { runInFrame } from '../core/owner.ts';
-import { withScope, whenSettled } from '../core/scope.ts';
+import { runInFrame } from '../core/frame.ts';
+import { withHydration, whenSettledHydration } from '../core/hydration.ts';
 import { destroy } from '../core/tree.ts';
 import { setCreationHook } from '../html/create.ts';
 import type { Router } from '../router/router.ts';
@@ -18,7 +18,7 @@ export type RenderOptions = {
 
 const TEXT_NODE = 3;
 const ELEMENT_NODE = 1;
-/** Elements whose content is raw text: separator comments inside them would show up as text. */
+/** Tags where placeholder comments would become visible text. */
 const RAW_TEXT = new Set([
   'SCRIPT',
   'STYLE',
@@ -34,10 +34,7 @@ const RAW_TEXT = new Set([
 
 let queue: Promise<unknown> = Promise.resolve();
 
-/**
- * Runs renders one at a time: they share module state (the global
- * `document`, the app's router, page data), so they must not intervene with each other.
- */
+/** Serializes renders because they share document, router, and page data state. */
 function locked<T>(run: () => Promise<T>): Promise<T> {
   const result = queue.then(run, run);
   queue = result.catch(() => {});
@@ -45,15 +42,10 @@ function locked<T>(run: () => Promise<T>): Promise<T> {
   return result;
 }
 
-/**
- * Makes the DOM survive an HTML round trip: separates adjacent text nodes
- * with comments (the parser would merge them) and replaces empty text nodes
- * (the parser would drop them) with comments.
- * @returns Replaced empty text nodes mapped to their placeholder comments.
- */
+/** Adds placeholders so adjacent and empty text nodes survive HTML parsing. */
 function normalize(parent: Node, replaced: Map<Node, Node>) {
   let previousIsText = false;
-  // A copy: the loop inserts and replaces children, and `childNodes` is live.
+  // Copy live childNodes before inserting or replacing entries.
   // oxlint-disable-next-line unicorn/no-useless-spread
   for (const child of [...parent.childNodes]) {
     if (child.nodeType === TEXT_NODE) {
@@ -83,7 +75,7 @@ function normalize(parent: Node, replaced: Map<Node, Node>) {
   return replaced;
 }
 
-/** Collects the `childNodes` path of every wanted node in one walk. O(nodes). */
+/** Collects paths for wanted nodes in one tree walk. */
 function collectPaths(
   parent: Node,
   prefix: string,
@@ -101,7 +93,10 @@ function collectPaths(
   }
 }
 
-function serializeScopes(container: Element, recorded: Map<string, Node[][]>) {
+function serializeHydrationPath(
+  container: Element,
+  recorded: Map<string, Node[][]>,
+) {
   const replaced = normalize(container, new Map());
   const wanted = new Set<Node>();
   for (const creations of recorded.values()) {
@@ -114,7 +109,7 @@ function serializeScopes(container: Element, recorded: Map<string, Node[][]>) {
   const paths = new Map<Node, string>();
   collectPaths(container, '', wanted, paths);
 
-  const scopes: Payload['scopes'] = {};
+  const frames: Payload['frames'] = {};
   for (const [key, creations] of recorded) {
     const entries = creations.map((nodes) => {
       const parts: string[] = [];
@@ -132,11 +127,11 @@ function serializeScopes(container: Element, recorded: Map<string, Node[][]>) {
       entries.pop();
     }
     if (entries.length > 0) {
-      scopes[key] = entries;
+      frames[key] = entries;
     }
   }
 
-  return scopes;
+  return frames;
 }
 
 function timeoutAfter(ms: number) {
@@ -155,15 +150,7 @@ function timeoutAfter(ms: number) {
   };
 }
 
-/**
- * Renders the app for `url` into the template and embeds the hydration payload.
- * @param url Page URL.
- * @param data Page data from the server route loaders.
- * @param dataRoutes Ids of routes with server data.
- * @param preloads Module URLs to preload.
- * @param options Render options.
- * @returns The full HTML document.
- */
+/** Renders a page into the template and embeds its hydration payload. */
 export function renderPage(
   url: URL,
   data: Record<string, unknown>,
@@ -180,16 +167,16 @@ export function renderPage(
       );
     }
 
-    const scope = globalThis as { document?: unknown };
-    const previousDocument = scope.document;
-    scope.document = document;
+    const frame = globalThis as { document?: unknown };
+    const previousDocument = frame.document;
+    frame.document = document;
     const recorded = new Map<string, Node[][]>();
     setCreationHook({
-      record(renderScope, index, nodes) {
-        let creations = recorded.get(renderScope.key);
+      record(hydration, index, nodes) {
+        let creations = recorded.get(hydration.key);
         if (!creations) {
           creations = [];
-          recorded.set(renderScope.key, creations);
+          recorded.set(hydration.key, creations);
         }
         creations[index] = nodes;
       },
@@ -203,23 +190,23 @@ export function renderPage(
         options.router.go(url.pathname + url.search),
         timeout.promise,
       ]);
-      withScope('r', () => {
+      withHydration('r', () => {
         runInFrame(undefined, () => {
           options.app(container);
         });
       });
-      await Promise.race([whenSettled(), timeout.promise]);
+      await Promise.race([whenSettledHydration(), timeout.promise]);
 
       const payload: Payload = {
         path: url.pathname,
         data,
-        scopes: serializeScopes(container, recorded),
+        frames: serializeHydrationPath(container, recorded),
         dataRoutes,
       };
       const script = document.createElement('script');
       script.setAttribute('type', 'application/json');
       script.setAttribute('id', PAYLOAD_ID);
-      // `<` escaped so data can never close the script element.
+      // Escape `<` so serialized data cannot close the script element.
       script.textContent = JSON.stringify(payload).replaceAll('<', '\\u003c');
       document.body.append(script);
       for (const href of preloads) {
@@ -237,9 +224,9 @@ export function renderPage(
       setServerData({});
       suspendServerData(false);
       if (previousDocument === undefined) {
-        delete scope.document;
+        delete frame.document;
       } else {
-        scope.document = previousDocument;
+        frame.document = previousDocument;
       }
     }
   });
