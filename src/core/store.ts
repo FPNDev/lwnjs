@@ -20,9 +20,7 @@ export function attachStore<T>(
   nodeOrStore: object | Store<T>,
   maybeStore?: Store<T>,
 ): T {
-  const frame = maybeStore
-    ? frameOf(nodeOrStore)!
-    : requireFrame('attachStore');
+  const frame = maybeStore ? frameOf(nodeOrStore) : requireFrame('attachStore');
 
   const store = maybeStore ?? (nodeOrStore as Store<T>);
   let values = provided.get(frame);

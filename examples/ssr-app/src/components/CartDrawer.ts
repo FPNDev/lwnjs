@@ -2,9 +2,9 @@ import {
   component,
   destroy,
   env,
-  getFrame,
   listen,
   onDestroy,
+  requireFrame,
   useStore,
 } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
@@ -16,7 +16,7 @@ import classes from '../styles/ui.module.scss';
  * Created on click only, so it never takes part in hydration.
  */
 export const CartDrawer = component(() => {
-  const frame = getFrame()!;
+  const frame = requireFrame();
   const list = html`<div></div>`;
   const close = html`<button class=${`${classes.button} ${classes.ghost}`}>
     Close

@@ -3,7 +3,7 @@ import {
   attachStore,
   component,
   destroy,
-  getFrame,
+  requireFrame,
   useStore,
 } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
@@ -15,6 +15,7 @@ import classes from './Page.module.scss';
 
 /** Shows the routed conversation; the outlet keeps this page alive across peer changes. */
 const ChatPage = component(() => {
+  const frame = requireFrame();
   const chat = useStore(ChatStore);
   const ui = useStore(UiStore);
 
@@ -35,9 +36,7 @@ const ChatPage = component(() => {
       return;
     }
 
-    if (current && !ui.dock.take(current?.peerId)) {
-      destroy(current);
-    }
+    destroy(current);
 
     if (!chat.has(peerId)) {
       chat.addContact(peerId, peerId);
@@ -47,7 +46,7 @@ const ChatPage = component(() => {
     const docked = ui.dock.take(peerId);
     current = docked ?? Conversation(peerId);
     if (docked) {
-      attach(getFrame()!, docked);
+      attach(frame, docked);
     }
     node.append(current.node);
   });

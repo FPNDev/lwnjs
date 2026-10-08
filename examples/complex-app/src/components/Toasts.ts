@@ -2,9 +2,9 @@ import {
   attach,
   component,
   destroy,
-  getFrame,
   listen,
   onDestroy,
+  requireFrame,
 } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import classes from './Toasts.module.scss';
@@ -19,7 +19,7 @@ export type Toasts = {
 };
 
 export const Toasts = component((): Toasts => {
-  const frame = getFrame()!;
+  const frame = requireFrame();
   const node = html`<div class=${classes.toasts} aria-live="polite"></div>`;
   document.body.append(node);
 

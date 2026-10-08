@@ -3,8 +3,7 @@ import {
   attachStore,
   component,
   destroy,
-  getFrame,
-  onDestroy,
+  requireFrame,
 } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { PlacementStore } from '../store/ui';
@@ -21,45 +20,43 @@ export type Dock = {
 
 /** Keeps one conversation alive across navigation in a floating window. */
 export const Dock = component((): Dock => {
-  const frame = getFrame()!;
+  const frame = requireFrame();
   const node = html`<aside class=${classes.dock} hidden></aside>`;
   document.body.append(node);
 
   const placement = attachStore(PlacementStore);
   placement.kind = 'dock';
-  placement.close = (conversation) => {
-    destroy(conversation);
+  placement.close = () => {
+    destroy(current);
+    empty();
   };
 
   let current: Conversation | undefined;
-  let unwatch: (() => void) | undefined;
   const empty = () => {
+    const emptied = current;
     current = undefined;
     node.hidden = true;
+
+    return emptied;
   };
 
   return {
     node,
     adopt(conversation) {
-      unwatch?.();
       destroy(current);
       current = conversation;
       // Re-read the placement after the conversation changes frames.
       attach(frame, conversation);
       node.append(conversation.node);
       node.hidden = false;
-      unwatch = onDestroy(conversation, empty);
     },
 
     take(peerId) {
       if (current?.peerId !== peerId) {
         return;
       }
-      const conversation = current;
-      unwatch?.();
-      empty();
 
-      return conversation;
+      return empty();
     },
   };
 });

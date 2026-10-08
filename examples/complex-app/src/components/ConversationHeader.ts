@@ -2,8 +2,8 @@ import {
   attach,
   component,
   destroy,
-  getFrame,
   listen,
+  requireFrame,
   useStore,
 } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
@@ -29,6 +29,8 @@ export type ConversationHeader = {
 
 export const ConversationHeader = component(
   (peerId: string): ConversationHeader => {
+    const frame = requireFrame();
+
     const avatar = html`<div class=${classes.avatar}></div>`;
     const name = html`<div class=${classes.name}></div>`;
     const dot = html`<span class=${classes.dot}></span>`;
@@ -61,7 +63,6 @@ export const ConversationHeader = component(
     listen(verify, 'click', () => {
       SafetyNumberDialog(chat, peerId);
     });
-    const frame = getFrame()!;
 
     // Replace the action group and its listeners after each move.
     let placementButtons: HTMLElement | undefined;
@@ -98,7 +99,7 @@ export const ConversationHeader = component(
           </button>`;
           const close = html`<button title="Close">x</button>`;
           listen(group, open, 'click', () => void router.go(chatUrl(peerId)));
-          listen(group, close, 'click', () => placement.close?.(conversation));
+          listen(group, close, 'click', () => placement.close?.());
           group.append(open, close);
         }
         actions.append(group);

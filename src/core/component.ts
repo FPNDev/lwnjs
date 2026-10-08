@@ -8,7 +8,8 @@ import {
 
 /** A controller exposes one or more renderer roots. */
 export type ComponentController<T extends object = object> = (
-  { node: T; nodes?: never } | { nodes: T[]; node?: never }
+  | { node: T; nodes?: never }
+  | { nodes: T[]; node?: never }
 ) &
   Record<string, unknown>;
 
@@ -19,8 +20,16 @@ export function component<
 >(
   setup: (...args: A) => R,
 ): (...args: A) => R extends void ? ComponentController : R {
-  return (...args: A) =>
-    createFramedComponent(getFrame(), () => setup(...args));
+  return (...args: A) => {
+    let parentFrame: object | undefined;
+    try {
+      parentFrame = getFrame();
+    } catch {
+      // parent has no frame - ok
+    }
+
+    return createFramedComponent(parentFrame, () => setup(...args));
+  };
 }
 
 function createFramedComponent<T extends ComponentController | void>(

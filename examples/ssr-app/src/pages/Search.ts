@@ -1,4 +1,10 @@
-import { component, destroy, getFrame, listen, withFrame } from 'lwn-js/core';
+import {
+  component,
+  destroy,
+  listen,
+  requireFrame,
+  withFrame,
+} from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import { searchProducts, type ProductSummary } from '../api';
 import { ProductCard } from '../components/ProductCard';
@@ -12,6 +18,8 @@ const ProductGrid = component((products: ProductSummary[]) => ({
 }));
 
 const Search = component(() => {
+  const frame = requireFrame();
+
   const input = html<HTMLInputElement>`<input
     class=${classes.search}
     type="search"
@@ -19,7 +27,6 @@ const Search = component(() => {
   />`;
   const status = html`<p class=${classes.muted}>Type to search.</p>`;
   const gridHost = html`<div></div>`;
-  const frame = getFrame()!;
 
   let grid: ReturnType<typeof ProductGrid> | undefined;
   let latest = 0;

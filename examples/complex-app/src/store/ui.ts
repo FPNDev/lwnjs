@@ -15,7 +15,7 @@ export const UiStore = createStore(() => ({}) as Ui);
 export type Placement = {
   kind: 'page' | 'dock';
   popOut?(conversation: Conversation): void;
-  close?(conversation: Conversation): void;
+  close?(): void;
 };
 
 export const PlacementStore = createStore((): Placement => ({ kind: 'page' }));

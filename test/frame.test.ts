@@ -23,7 +23,7 @@ import {
   setupRouter,
   type Route,
 } from '../src/router/index.ts';
-import { frameOf } from '../src/core/frame.ts';
+import { frameOf, requireFrame } from '../src/core/frame.ts';
 
 beforeEach(() => {
   setRenderer(domRenderer);
@@ -224,10 +224,11 @@ describe('implicit frame', () => {
     const child = {};
     const controllerDestroyed = vi.fn();
     const childDestroyed = vi.fn();
+
     let frame: object | undefined;
     const Widget = component(() => {
       const controller = { node: document.createElement('div') };
-      frame = getFrame()!;
+      frame = requireFrame();
       attach(frame, child);
       onDestroy(controllerDestroyed);
       onDestroy(child, childDestroyed);
@@ -247,8 +248,7 @@ describe('implicit frame', () => {
   it('throws for calls without a frame outside setup, and subscribe stays unbound there', () => {
     expect(() => listen(document, 'click', () => {})).toThrow(/no frame here/u);
     expect(() => onDestroy(() => {})).toThrow(/no frame here/u);
-    const unsubscribe = createEmitter().subscribe(() => {});
-    expect(typeof unsubscribe).toBe('function');
-    expect(getFrame()).toBeUndefined();
+    expect(typeof createEmitter().subscribe(() => {})).toBe('function');
+    expect(getFrame()).toBe(undefined);
   });
 });

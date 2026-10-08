@@ -31,9 +31,7 @@ export function ensureLogicalRecord(node: object) {
 
 /** Moves `child` under `parent` in the logical tree. */
 export function attach(parent: object, child: object) {
-  const logicalParent = frameOf(parent)!;
-  const logicalChild = frameOf(child)!;
-  attachLogical(logicalParent, logicalChild);
+  attachLogical(frameOf(parent), frameOf(child));
 }
 
 function attachLogical(parent: object, child: object) {
@@ -60,7 +58,7 @@ function attachLogical(parent: object, child: object) {
 
 /** Detaches `child` while keeping it alive. */
 export function detach(child: object) {
-  const logicalChild = frameOf(child)!;
+  const logicalChild = frameOf(child);
   const record = tree.get(logicalChild);
   if (record?.parent) {
     detachLogicalChild(logicalChild, record);
@@ -128,7 +126,7 @@ export function onAttach(
   nodeOrHook: object | AttachHook,
   maybeHook?: AttachHook,
 ) {
-  const frame = maybeHook ? frameOf(nodeOrHook)! : requireFrame('onAttach');
+  const frame = maybeHook ? frameOf(nodeOrHook) : requireFrame('onAttach');
   const hook = maybeHook ?? (nodeOrHook as AttachHook);
 
   const record = ensureLogicalRecord(frame);
@@ -151,7 +149,7 @@ export function onDestroy(
   nodeOrHook: object | (() => void),
   maybeHook?: () => void,
 ) {
-  const frame = maybeHook ? frameOf(nodeOrHook)! : requireFrame('onDestroy');
+  const frame = maybeHook ? frameOf(nodeOrHook) : requireFrame('onDestroy');
   const hook = maybeHook ?? (nodeOrHook as () => void);
 
   const record = ensureLogicalRecord(frame);
@@ -170,7 +168,7 @@ export function onDestroy(
 
 /** Returns the logical parent of a node or controller. */
 export function getParent(node: object) {
-  return tree.get(frameOf(node)!)?.parent;
+  return tree.get(frameOf(node))?.parent;
 }
 
 function runAttachHook(

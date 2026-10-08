@@ -39,11 +39,11 @@ export function getFrame() {
 }
 
 /** Requires an active frame and names `api` in the error if absent. */
-export function requireFrame(api: string) {
+export function requireFrame(api?: string) {
   const frame = current?.value;
   if (frame === undefined) {
     throw new Error(
-      `${api}: no frame here. Call it during setup (inside component(), withFrame(), a page, a route action or onAttach), or pass the frame explicitly.`,
+      `${api ? `${api}: ` : ''}no frame here. Call it during setup (inside component(), withFrame(), a page, a route action or onAttach), or pass the frame explicitly.`,
     );
   }
 

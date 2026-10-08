@@ -1,4 +1,10 @@
-import { destroy, env, getFrame, listen, onDestroy } from 'lwn-js/core';
+import {
+  destroy,
+  env,
+  listen,
+  onDestroy,
+  requireFrame,
+} from 'lwn-js/core';
 import { html } from 'lwn-js/html';
 import classes from './Modal.module.scss';
 
@@ -18,6 +24,7 @@ export type Modal = {
  * closes), the modal goes with it. No portal API, no cleanup code.
  */
 export function openModal(title: string): Modal {
+  const frame = requireFrame();
   const id = Symbol(title);
   const body = html`<div class=${classes.body}></div>`;
   const close = html`<button class=${classes.close} aria-label="Close">
@@ -49,16 +56,16 @@ export function openModal(title: string): Modal {
   // `is`, not `isCurrent`: Escape closes the modal even while an input inside it has focus.
   listen(document, 'keydown', (event) => {
     if (event.key === 'Escape' && env.is(id)) {
-      destroy(getFrame());
+      destroy(frame);
     }
   });
   listen(node, 'mousedown', (event) => {
     if (event.target === node) {
-      destroy(getFrame());
+      destroy(frame);
     }
   });
   listen(close, 'click', () => {
-    destroy(getFrame());
+    destroy(frame);
   });
 
   document.body.append(node);
@@ -68,7 +75,7 @@ export function openModal(title: string): Modal {
     body,
     env: id,
     close: () => {
-      destroy(getFrame());
+      destroy(frame);
     },
   };
 }
