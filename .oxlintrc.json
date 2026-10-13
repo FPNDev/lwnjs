@@ -22,10 +22,10 @@
     "no-misused-promises": "off",
     "typescript/prefer-promise-reject-errors": "off",
     "no-await-in-loop": "off",
-    "max-lines": "off",
     "unicorn/prefer-top-level-await": "off",
     "unicorn/no-array-callback-reference": "off",
-    "no-loop-func": "off"
+    "no-loop-func": "off",
+    "max-depth": "off"
   },
   "ignorePatterns": ["dist/*", "examples/*"]
 }

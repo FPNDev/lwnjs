@@ -5,8 +5,8 @@ import {
   setRenderer,
   withFrame,
 } from 'lwn-js/core';
-import { html } from 'lwn-js/html';
-import { createOutlet } from 'lwn-js/router';
+import { html, text } from 'lwn-js/html';
+import { createOutlet, lazy } from 'lwn-js/router';
 import { CartStore } from './cart';
 import { Header } from './components/Header';
 import { Home } from './pages/Home';
@@ -23,6 +23,11 @@ import {
 } from './routes';
 import classes from './styles/ui.module.scss';
 
+const Collection = lazy(() => import('./pages/Collection'));
+const Product = lazy(() => import('./pages/Product'));
+const Search = lazy(() => import('./pages/Search'));
+const Account = lazy(() => import('./layout/Account'));
+
 export { router, routes };
 
 setRenderer(domRenderer);
@@ -31,7 +36,7 @@ setRenderer(domRenderer);
 export const App = component(() => {
   attachStore(CartStore);
 
-  const slot = html<Comment>`<!---->`;
+  const slot = text();
   const header = Header();
   const main = html`<main class=${classes.main}>${slot}</main>`;
   const footer = html`<footer class=${classes.footer}>
@@ -39,12 +44,10 @@ export const App = component(() => {
   </footer>`;
   const page = createOutlet(slot);
   router.route(HomeRoute, () => page.show(Home));
-  router.route(CollectionRoute, () =>
-    page.show(() => import('./pages/Collection')),
-  );
-  router.route(ProductRoute, () => page.show(() => import('./pages/Product')));
-  router.route(SearchRoute, () => page.show(() => import('./pages/Search')));
-  router.route(AccountRoute, () => page.show(() => import('./layout/Account')));
+  router.route(CollectionRoute, () => page.show(Collection));
+  router.route(ProductRoute, () => page.show(Product));
+  router.route(SearchRoute, () => page.show(Search));
+  router.route(AccountRoute, () => page.show(Account));
   router.route(NotFoundRoute, () => page.show(NotFound));
 
   return {

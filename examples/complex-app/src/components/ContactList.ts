@@ -97,7 +97,7 @@ export const ContactList = component(() => {
       rows.get(peerId)?.setPresence(value);
     }
   });
-  router.routes([HomeRoute, ChatRoute], highlight);
+  router.route([HomeRoute, ChatRoute], highlight);
 
   return { node: html`<nav>${list}${empty}</nav>` };
 });

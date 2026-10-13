@@ -1,5 +1,10 @@
 import { listen } from 'lwn-js/core';
-import { setupRouter, type Route } from 'lwn-js/router';
+import {
+  browserHistory,
+  memoryHistory,
+  setupRouter,
+  type Route,
+} from 'lwn-js/router';
 import { loadServerData } from 'lwn-js/ssr';
 
 export const HomeRoute: Route = { path: '/' };
@@ -28,7 +33,10 @@ export const routes = [
 
 // Same router on both sides: memory history on the server (no `window`), browser history in the client.
 // `loadServerData` fetches `__data.json` for routes with server data on client navigation.
-export const router = setupRouter(routes, { load: loadServerData(routes) });
+export const router = setupRouter(routes, {
+  history: typeof window === 'undefined' ? memoryHistory() : browserHistory(),
+  load: loadServerData(routes),
+});
 
 export const handleParam = () => router.getParams()?.groups?.handle ?? '';
 

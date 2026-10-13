@@ -68,3 +68,21 @@ export async function whenSettledHydration() {
     await nextTask();
   }
 }
+
+/** Hydration plumbing that ssr/server install; undefined in client-only apps. */
+export type HydrationHooks = {
+  scope: <T>(key: string, render: () => T) => T;
+  nextKey: () => string;
+  track: (pending: Promise<unknown>) => void;
+};
+
+export let hydration: HydrationHooks | undefined;
+
+/** Turns on hydration keying for this process. Called by hydrate() and the server renderer. */
+export function enableHydration() {
+  hydration ??= {
+    scope: withHydration,
+    nextKey: () => nextHydrationKey() ?? '',
+    track: trackPending,
+  };
+}

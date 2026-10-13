@@ -9,6 +9,7 @@ import {
 import { html, text } from '../../src/html/index.ts';
 import {
   createOutlet,
+  lazy,
   memoryHistory,
   setupRouter,
   type Route,
@@ -67,6 +68,8 @@ export function setupApp(
     node: html`<p>Not found</p>`,
   }));
 
+  const LazyPostPage = lazy(() => Promise.resolve({ default: PostPage }));
+
   function App(container: Element) {
     withFrame(container, () => {
       const header = html`<header>${'Blog'}</header>`;
@@ -74,9 +77,7 @@ export function setupApp(
       attach(container, header);
       const page = createOutlet();
       router.route(Home, () => page.show(HomePage));
-      router.route(PostRoute, () =>
-        page.show(() => Promise.resolve({ default: PostPage })),
-      );
+      router.route(PostRoute, () => page.show(LazyPostPage));
       router.route(Missing, () => page.show(MissingPage));
     });
   }

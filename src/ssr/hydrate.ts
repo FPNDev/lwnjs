@@ -1,5 +1,6 @@
 import { runInFrame } from '../core/frame.ts';
 import {
+  enableHydration,
   type HydrationContext,
   whenSettledHydration,
   withHydration,
@@ -78,6 +79,7 @@ export async function hydrate(
   app: (container: Element) => void,
   router: Router,
 ) {
+  enableHydration();
   const payload = takePayload();
   await router.ready;
   if (!payload) {

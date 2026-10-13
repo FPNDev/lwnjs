@@ -1,11 +1,13 @@
 import { component, listen } from 'lwn-js/core';
-import { html } from 'lwn-js/html';
-import { createOutlet } from 'lwn-js/router';
+import { html, text } from 'lwn-js/html';
+import { createOutlet, lazy } from 'lwn-js/router';
 import { useServer } from 'lwn-js/ssr';
 import { UserData } from '../data';
 import { OrdersRoute, OverviewRoute, router, routerLink } from '../routes';
 import classes from '../styles/ui.module.scss';
 import { Overview } from '../pages/account/Overview';
+
+const Orders = lazy(() => import('../pages/account/Orders'));
 
 /** Keeps the account shell mounted while its outlet switches between pages. */
 const AccountLayout = component(() => {
@@ -21,7 +23,7 @@ const AccountLayout = component(() => {
   const switchUser = html`<button class=${`${classes.button} ${classes.ghost}`}>
     Switch user
   </button>`;
-  const slot = html<Comment>`<!---->`;
+  const slot = text();
 
   listen(switchUser, 'click', () => {
     const next =
@@ -43,7 +45,7 @@ const AccountLayout = component(() => {
     orders.classList.add(classes.active);
     overview.classList.remove(classes.active);
 
-    return page.show(() => import('../pages/account/Orders'));
+    return page.show(Orders);
   });
 
   return {

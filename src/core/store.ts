@@ -1,12 +1,9 @@
-import { frameOf, requireFrame } from './frame.ts';
-import { getParent } from './tree.ts';
+import { ensureFrame, frameOf, requireCurrent } from './frame.ts';
 
 /** Identifies a value provided to logical descendants. */
 export type Store<T> = {
   readonly init: () => T;
 };
-
-const provided = new WeakMap<object, Map<Store<unknown>, unknown>>();
 
 /** Creates a store identifier and its value initializer. */
 export function createStore<T>(init: () => T): Store<T> {
@@ -20,17 +17,13 @@ export function attachStore<T>(
   nodeOrStore: object | Store<T>,
   maybeStore?: Store<T>,
 ): T {
-  const frame = maybeStore ? frameOf(nodeOrStore) : requireFrame('attachStore');
+  const frame = maybeStore
+    ? ensureFrame(nodeOrStore)
+    : requireCurrent('attachStore');
 
   const store = maybeStore ?? (nodeOrStore as Store<T>);
-  let values = provided.get(frame);
-  if (!values) {
-    values = new Map();
-    provided.set(frame, values);
-  }
-
   const value = store.init();
-  values.set(store, value);
+  (frame.stores ??= new Map()).set(store, value);
 
   return value;
 }
@@ -43,15 +36,15 @@ export function useStore<T>(
   maybeStore?: Store<T>,
 ): T {
   const store = maybeStore ?? (nodeOrStore as Store<T>);
-  let current: object | undefined = maybeStore
-    ? frameOf(nodeOrStore)
-    : requireFrame('useStore');
-  while (current) {
-    const values = provided.get(current);
+  for (
+    let frame = maybeStore ? frameOf(nodeOrStore) : requireCurrent('useStore');
+    frame;
+    frame = frame.parent
+  ) {
+    const values = frame.stores;
     if (values?.has(store)) {
       return values.get(store) as T;
     }
-    current = getParent(current);
   }
 
   throw new Error(

@@ -1,6 +1,10 @@
 import { parseHTML } from 'linkedom';
 import { runInFrame } from '../core/frame.ts';
-import { withHydration, whenSettledHydration } from '../core/hydration.ts';
+import {
+  enableHydration,
+  withHydration,
+  whenSettledHydration,
+} from '../core/hydration.ts';
 import { destroy } from '../core/tree.ts';
 import { setCreationHook } from '../html/create.ts';
 import type { Router } from '../router/router.ts';
@@ -159,6 +163,7 @@ export function renderPage(
   options: RenderOptions,
 ) {
   return locked(async () => {
+    enableHydration();
     const { document } = parseHTML(options.template);
     const container = document.querySelector(`#${options.containerId}`);
     if (!container) {

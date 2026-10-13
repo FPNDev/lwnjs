@@ -1,9 +1,10 @@
-import { getFrame, runInFrame } from './frame.ts';
+import { currentFrame, setCurrent } from './frame.ts';
+import { getRenderer } from './renderer.ts';
 import {
-  attach,
-  bindComponentController,
-  ensureLogicalRecord,
-  destroy,
+  bindController,
+  createChildFrame,
+  destroyFrame,
+  release,
 } from './tree.ts';
 
 /** A controller exposes one or more renderer roots. */
@@ -17,54 +18,24 @@ export type ComponentController<T extends object = object> = (
 export function component<
   A extends unknown[],
   R extends ComponentController | void,
->(
-  setup: (...args: A) => R,
-): (...args: A) => R extends void ? ComponentController : R {
+>(setup: (...args: A) => R): (...args: A) => R extends void ? object : R {
   return (...args: A) => {
-    let parentFrame: object | undefined;
+    const frame = createChildFrame(currentFrame());
+    const previous = setCurrent(frame);
     try {
-      parentFrame = getFrame();
-    } catch {
-      // parent has no frame - ok
-    }
+      const result = setup(...args);
+      setCurrent(previous);
+      if (result !== undefined) {
+        bindController(frame, result as ComponentController);
+      }
 
-    return createFramedComponent(parentFrame, () => setup(...args));
+      release(frame);
+
+      return (result ?? frame) as R extends void ? object : R;
+    } catch (error) {
+      setCurrent(previous);
+      destroyFrame(frame, getRenderer());
+      throw error;
+    }
   };
-}
-
-function createFramedComponent<T extends ComponentController | void>(
-  parentFrame: object | undefined,
-  setup: () => T,
-): T extends void ? ComponentController : T {
-  return createFrame(parentFrame, setup, (frame, result) => {
-    if (result === undefined) {
-      return frame as T extends void ? ComponentController : T;
-    }
-
-    bindComponentController(frame, result);
-
-    return result as T extends void ? ComponentController : T;
-  });
-}
-
-function createFrame<T, R>(
-  parentFrame: object | undefined,
-  setup: () => T,
-  finish: (frame: object, result: T) => R,
-): R {
-  const frame = {};
-  if (parentFrame) {
-    attach(parentFrame, frame);
-  } else {
-    ensureLogicalRecord(frame);
-  }
-
-  try {
-    const result = runInFrame(frame, setup);
-
-    return finish(frame, result);
-  } catch (error) {
-    destroy(frame);
-    throw error;
-  }
 }

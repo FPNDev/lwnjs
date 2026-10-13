@@ -49,11 +49,7 @@ export function loadServerData(routes: readonly Route[]) {
     }
 
     const request = ++latest;
-    const hasData = match.chain.some(
-      (route) =>
-        dataRoutes!.has(route) ||
-        (route.aliasOf !== undefined && dataRoutes!.has(route.aliasOf)),
-    );
+    const hasData = match.chain.some((route) => dataRoutes!.has(route));
     let next: Record<string, unknown> = {};
     if (hasData) {
       const response = await fetch(dataUrl(url.pathname));

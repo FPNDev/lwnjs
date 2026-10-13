@@ -1,3 +1,4 @@
+// oxlint-disable max-lines
 import type { RouteMatch } from '../router/match.ts';
 import type { Router } from '../router/router.ts';
 import type { Route, RouteParams } from '../router/types.ts';
@@ -101,8 +102,7 @@ export function createServer(options: ServerOptions) {
   const configsFor = (chain: readonly Route[]) => {
     const found: ServerRoute[] = [];
     for (const route of chain) {
-      const config =
-        configs.get(route) ?? (route.aliasOf && configs.get(route.aliasOf));
+      const config = configs.get(route);
       if (config) {
         found.push(config);
       }

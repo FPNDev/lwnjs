@@ -1,148 +1,223 @@
 import { getRenderer } from '../core/renderer.ts';
-import { requireFrame, withFrame } from '../core/frame.ts';
 import {
-  nextHydrationKey,
-  trackPending,
-  withHydration,
-} from '../core/hydration.ts';
+  DEAD,
+  frameOf,
+  HELD,
+  requireCurrent,
+  setCurrent,
+  type Frame,
+} from '../core/frame.ts';
+import { hydration } from '../core/hydration.ts';
 import {
-  attach,
+  afterSetup,
+  attachFrames,
+  createChildFrame,
   destroy,
-  ensureLogicalRecord,
   onDestroy,
+  release,
 } from '../core/tree.ts';
 import { type ComponentController } from '../core/component.ts';
+import { report } from '../core/report.ts';
 
 /** Creates a component controller for an outlet view. */
 export type ViewFactory = () => ComponentController;
 
-/** Loads a view factory on demand. */
-export type ViewLoader = () => Promise<{ default: ViewFactory } | ViewFactory>;
+/** A view factory loaded on first show; see lazy(). */
+export type Lazy = {
+  /** Loads the factory once; later calls share the same promise. */
+  readonly load: () => Promise<ViewFactory>;
+  /** The loaded factory; undefined until the load resolves. */
+  readonly factory: ViewFactory | undefined;
+};
 
-export type ViewSource = () =>
-  ComponentController | Promise<{ default: ViewFactory } | ViewFactory>;
+/** A view factory, or a lazy one. */
+export type ViewSource = ViewFactory | Lazy;
 
 export type Outlet = {
-  /** Shows a view, replacing the current one unless its factory is unchanged. */
-  show(source: ViewSource): Promise<ComponentController | undefined>;
-  /** Destroys the current view, if any. */
+  /** Shows a view now, or at the owner's setup end; returns the controller only if it drew. */
+  show(source: ViewFactory): ComponentController | undefined;
+  /** Loads, then shows a view; resolves undefined if it did not draw. */
+  show(source: Lazy): Promise<ComponentController | undefined>;
+  /** Destroys the current view and cancels a pending one. */
   clear(): void;
 };
 
-function requireRenderer() {
-  const renderer = getRenderer();
-  if (!renderer) {
-    throw new Error('Outlet: no renderer set. Call setRenderer() at startup.');
-  }
+/** Wraps a loader so the outlet loads it once and dedupes it by identity. */
+export function lazy(
+  loader: () => Promise<ViewFactory | { default: ViewFactory }>,
+): Lazy {
+  let pending: Promise<ViewFactory> | undefined;
+  const source: Lazy = {
+    factory: undefined,
+    load: () =>
+      (pending ??= loader().then(
+        (loaded) =>
+          ((source as { factory?: ViewFactory }).factory =
+            typeof loaded === 'function' ? loaded : loaded.default),
+        (error: unknown) => {
+          pending = undefined;
+          throw error;
+        },
+      )),
+  };
 
-  return renderer;
+  return source;
+}
+
+function fail(showFrame: Frame, message: string) {
+  destroy(showFrame);
+  return new Error(message);
 }
 
 /** Creates an outlet for the current frame. */
 export function createOutlet(placeholder?: object): Outlet {
-  const frame = requireFrame('createOutlet');
-  const rootViews = ensureLogicalRecord(frame).views;
-  if (!placeholder && rootViews && rootViews.size > 1) {
-    throw new Error(
-      'Outlet: frame has multiple rendered roots; pass a placeholder view.',
-    );
-  }
-  if (!placeholder && rootViews?.size === 0) {
-    throw new Error(
-      'Outlet: frame has no rendered root; pass a placeholder view.',
-    );
-  }
-  const renderParent = placeholder
-    ? undefined
-    : (rootViews?.values().next().value ?? frame);
-  let source: ViewSource | undefined;
-  let factory: ViewSource | undefined;
+  const frame = requireCurrent('createOutlet');
+  let factory: ViewFactory | undefined;
   let controller: ComponentController | undefined;
-  let unregisterCurrent: (() => void) | undefined;
+  let deferred: ViewFactory | undefined;
   let version = 0;
   // Keep outlet keys stable between server rendering and hydration.
-  const hydrationKey = nextHydrationKey() ?? '';
-  const build = <T>(run: () => T): T =>
-    withHydration(hydrationKey, () => withFrame(frame, run));
+  const hydrationKey = hydration ? hydration.nextKey() : '';
 
-  onDestroy(frame, () => {
-    version++;
-  });
-
-  const mount = (
-    nextSource: ViewSource,
-    nextFactory: ViewSource,
-    nextController: ComponentController,
-  ) => {
-    attach(frame, nextController);
-
-    const renderer = requireRenderer();
-    const previousViews = controller
-      ? ensureLogicalRecord(controller).views
-      : undefined;
-    const anchor = previousViews
-      ? (previousViews.values().next().value ?? placeholder)
-      : (controller?.node ?? placeholder);
-
-    const nextViews = ensureLogicalRecord(nextController).views;
-
-    const place = (root: object) => {
-      if (anchor) {
-        renderer.insertBefore(anchor, root);
-        return;
-      }
-
-      renderer.append(renderParent!, root);
-    };
-
-    for (const root of nextViews!) {
-      place(root);
+  const draw = (nextFactory: ViewFactory, v: number) => {
+    const showFrame = createChildFrame(frame);
+    const previous = setCurrent(showFrame);
+    let next: ComponentController;
+    try {
+      const h = hydration;
+      next = h ? h.scope(hydrationKey, nextFactory) : nextFactory();
+    } catch (error) {
+      setCurrent(previous);
+      destroy(showFrame);
+      throw error;
     }
+    setCurrent(previous);
+    if (version !== v) {
+      destroy(showFrame);
 
-    unregisterCurrent?.();
-    destroy(controller);
-
-    source = nextSource;
-    factory = nextFactory;
-    controller = nextController;
-    unregisterCurrent = onDestroy(nextController, () => {
-      source = factory = controller = unregisterCurrent = undefined;
-    });
-
-    return nextController;
-  };
-
-  const show = async (nextSource: ViewSource) => {
-    if (controller && nextSource === source) {
-      return controller;
-    }
-
-    const current = ++version;
-    const built = build(nextSource);
-    if (!(built instanceof Promise)) {
-      return Promise.resolve().then(() => mount(nextSource, nextSource, built));
-    }
-
-    const loaded = await built;
-    if (current !== version) {
       return;
     }
+    const pageFrame = next ? frameOf(next) : undefined;
+    if (!pageFrame || pageFrame.controller !== next) {
+      report(new Error('Outlet: factory must return a component().'));
+      destroy(showFrame);
 
-    const nextFactory = typeof loaded === 'function' ? loaded : loaded.default;
-    if (controller && nextFactory === factory) {
-      source = nextSource;
+      return;
+    }
+    const renderer = getRenderer();
+    if (!renderer) {
+      throw fail(showFrame, 'Outlet: no renderer set. Call setRenderer() at startup.');
+    }
+    const before = controller?.node ?? controller?.nodes![0] ?? placeholder;
+    let parent: object | undefined;
+    if (!before) {
+      const owner = frame.controller;
+      if (owner?.nodes && owner.nodes.length > 1) {
+        throw fail(
+          showFrame,
+          'Outlet: frame has multiple rendered roots; pass a placeholder view.',
+        );
+      }
+      parent = owner ? (owner.node ?? owner.nodes![0]) : frame.host;
+      if (!parent) {
+        throw fail(
+          showFrame,
+          'Outlet: frame has no rendered root; pass a placeholder view.',
+        );
+      }
+    }
+
+    if (next.node) {
+      if (before) {
+        renderer.insertBefore(before, next.node);
+      } else {
+        renderer.append(parent!, next.node);
+      }
+    } else {
+      for (const view of next.nodes!) {
+        if (before) {
+          renderer.insertBefore(before, view);
+        } else {
+          renderer.append(parent!, view);
+        }
+      }
+    }
+    destroy(controller);
+
+    factory = nextFactory;
+    controller = next;
+    onDestroy(next, () => {
+      factory = controller = undefined;
+      destroy(showFrame);
+    });
+    if (pageFrame.parent !== showFrame) {
+      attachFrames(showFrame, pageFrame);
+    }
+    release(showFrame);
+
+    return next;
+  };
+
+  const flush = () => {
+    const next = deferred;
+    deferred = undefined;
+    if (next) {
+      draw(next, version);
+    }
+  };
+
+  const showFactory = (nextFactory: ViewFactory) => {
+    if (frame.state & DEAD) {
+      return;
+    }
+    version++;
+    if (nextFactory === factory) {
+      deferred = undefined;
 
       return controller;
     }
+    if (frame.state & HELD) {
+      if (!deferred) {
+        afterSetup(frame, flush);
+      }
+      deferred = nextFactory;
 
-    return mount(nextSource, nextFactory, build(nextFactory));
+      return;
+    }
+    deferred = undefined;
+
+    return draw(nextFactory, version);
   };
 
+  function show(nextSource: ViewFactory): ComponentController | undefined;
+  function show(nextSource: Lazy): Promise<ComponentController | undefined>;
+  function show(nextSource: ViewSource) {
+    const nextFactory =
+      typeof nextSource === 'function' ? nextSource : nextSource.factory;
+    if (nextFactory || frame.state & DEAD) {
+      const shown = nextFactory && showFactory(nextFactory);
+
+      return typeof nextSource === 'function' ? shown : Promise.resolve(shown);
+    }
+    const current = ++version;
+    deferred = undefined;
+    const loading = (nextSource as Lazy)
+      .load()
+      .then(
+        (loaded) => (current === version ? showFactory(loaded) : undefined),
+        report,
+      );
+    hydration?.track(loading);
+
+    return loading;
+  }
+
   return {
-    show: (nextSource) => trackPending(show(nextSource)),
+    show,
 
     clear() {
       version++;
+      deferred = undefined;
       destroy(controller);
     },
   };

@@ -1,6 +1,6 @@
 {
   "name": "lwn-js",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "A high-performance TypeScript UI engine with direct component updates, explicit lifetimes, and server-side rendering.",
   "type": "module",
   "license": "MIT",
@@ -47,11 +47,15 @@
     "prepublishOnly": "npm run clean && npm run typecheck && npm run lint && npm test && npm run build"
   },
   "devDependencies": {
+    "@types/autocannon": "^7.12.7",
     "@types/node": "^24.19.1",
+    "autocannon": "^8.0.0",
     "happy-dom": "^20.14.5",
     "linkedom": "^0.18.13",
+    "mitata": "^1.0.34",
     "oxlint": "^1.87.0",
     "oxlint-tsgolint": "^7.0.2003",
+    "playwright": "^1.64.0",
     "typescript": "~5.9.3",
     "vite": "^8.3.2",
     "vitest": "^5.0.3"

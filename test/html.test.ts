@@ -60,7 +60,7 @@ describe('html', () => {
   });
 
   it('html requires one root, mhtml returns all', () => {
-    expect(() => html`<a></a><b></b>`).toThrow(/exactly one root/u);
+    expect(() => html`<a></a><b></b>`).toThrow(/exactly one root node/u);
     expect(mhtml`<a></a><b></b>`).toHaveLength(2);
   });
 

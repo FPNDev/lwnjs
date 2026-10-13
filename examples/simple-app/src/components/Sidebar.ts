@@ -82,7 +82,7 @@ export const Sidebar = component(() => {
   todos.lists.subscribe(render);
 
   let active: HTMLLIElement | undefined;
-  router.routes([HomeRoute, ListRoute], () => {
+  router.route([HomeRoute, ListRoute], () => {
     active?.classList.remove(classes.active);
     const id = currentListId();
     active = id ? rows.get(id)?.node : undefined;

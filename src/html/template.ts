@@ -1,8 +1,9 @@
-import type { ComponentController } from '../core';
+import type { ComponentController } from '../core/component.ts';
+import { marker, markup, splitParts } from './scanner.ts';
 
 /** A value accepted by an HTML template. */
 export type Interpolation =
-  | ComponentController
+  | ComponentController<Node>
   | Node
   | string
   | number
@@ -10,203 +11,195 @@ export type Interpolation =
   | boolean
   | null
   | undefined
-  | void
   | readonly Interpolation[];
 
-type NodeSlot = {
-  kind: 'node';
-  path: number[];
+const TEXT_SLOT = 0;
+const ATTR_SLOT = 1;
+const DATA_SLOT = 2;
+const TAG_SLOT = 3;
+const ATTRS_SLOT = 4;
+
+type IndexSlot = {
+  kind: typeof TEXT_SLOT | typeof TAG_SLOT;
+  at: number;
   index: number;
 };
 
-type AttributeSlot = {
-  kind: 'attribute';
-  path: number[];
-  name: string;
+type PartsSlot = {
+  kind: typeof ATTR_SLOT | typeof ATTRS_SLOT | typeof DATA_SLOT;
+  at: number;
+  name?: string;
   /** Static segments and interpolation indexes. */
   parts: (string | number)[];
 };
 
-type Template = {
-  content: DocumentFragment;
-  slots: (NodeSlot | AttributeSlot)[];
-};
+type Slot = IndexSlot | PartsSlot;
 
-const MARKER = '__engine';
-const nodeMarker = new RegExp(`^${MARKER}(\\d+)$`, 'u');
-const attributeMarker = new RegExp(`${MARKER}(\\d+)__`, 'u');
+type Template = { content: DocumentFragment; slots: Slot[] };
 
-const templates = new WeakMap<
-  Document,
-  WeakMap<TemplateStringsArray, Template>
->();
+const attributePair = /([^\s="]+)(?:="([^"]*)")?/gu;
+
+const templates = new WeakMap<TemplateStringsArray, Template>();
 
 function isNode(value: Interpolation): value is Node {
   return typeof value === 'object' && value !== null && 'nodeType' in value;
 }
 
-/** Converts an attribute interpolation to text. */
+/** Converts a primitive interpolation to text. */
 function toText(value: Interpolation): string {
-  if (value === null || value === undefined) {
-    return '';
-  }
-  if (isNode(value)) {
-    return value.textContent ?? '';
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => toText(item as Interpolation)).join(' ');
-  }
-  if (typeof value === 'object') {
-    if (Object.hasOwn(value, 'node')) {
-      return toText((value as ComponentController).node as Interpolation);
-    }
-
-    if (Object.hasOwn(value, 'nodes')) {
-      return toText((value as ComponentController).nodes as Interpolation);
-    }
-
-    return '';
-  }
-
-  return String(value);
+  return value === null || value === undefined ? '' : String(value as string);
 }
 
-/** Adds markers so child and attribute interpolations can be located after parsing. */
-function markup(strings: TemplateStringsArray) {
-  let html = '';
-  for (const [index, string] of strings.entries()) {
-    html += string;
-    if (index < strings.length - 1) {
-      const insideTag = html.lastIndexOf('<') > html.lastIndexOf('>');
-      html += insideTag ? `${MARKER}${index}__` : `<!--${MARKER}${index}-->`;
-    }
-  }
-
-  return html.trim();
-}
-
-/** Separates static attribute text from interpolation indexes. */
-function attributeSlot(attribute: Attr, path: number[]): AttributeSlot {
-  const parts: (string | number)[] = attribute.value.split(attributeMarker);
-  for (let partIndex = 1; partIndex < parts.length; partIndex += 2) {
-    parts[partIndex] = Number(parts[partIndex]);
-  }
-
-  return { kind: 'attribute', path: path.slice(), name: attribute.name, parts };
-}
-
-/** Walks the parsed template and records each interpolation's path. */
-function findSlots(parent: Node, path: number[], slots: Template['slots']) {
-  for (const [position, child] of parent.childNodes.entries()) {
-    path.push(position);
-
-    if (child.nodeType === 8) {
-      const match = nodeMarker.exec((child as Comment).data);
-      if (match) {
-        slots.push({
-          kind: 'node',
-          path: path.slice(),
-          index: Number(match[1]),
-        });
+/** Records slots in preorder and swaps child markers for empty text. */
+function findSlots(
+  parent: Node,
+  slots: Slot[],
+  at: number,
+  texts: boolean[],
+): number {
+  let child = parent.firstChild;
+  while (child) {
+    const next = child.nextSibling;
+    if (child.nodeType === 1) {
+      const element = child as Element;
+      const tag = marker.exec(element.localName);
+      if (tag) {
+        slots.push({ kind: TAG_SLOT, at, index: Number(tag[1]) });
       }
-    } else if (child.nodeType === 1) {
-      for (const attribute of (child as Element).attributes) {
-        if (attribute.value.includes(MARKER)) {
-          slots.push(attributeSlot(attribute, path));
+      const markers: string[] = [];
+      for (const { name, value } of element.attributes) {
+        if (name.includes('__engine')) {
+          slots.push({ kind: ATTRS_SLOT, at, name, parts: splitParts(name) });
+          markers.push(name);
+        } else if (value.includes('__engine')) {
+          slots.push({ kind: ATTR_SLOT, at, name, parts: splitParts(value) });
         }
       }
-      findSlots(child, path, slots);
+      for (const name of markers) {
+        element.removeAttribute(name);
+      }
+      at = findSlots(element, slots, at + 1, texts);
+    } else {
+      const data = (child as CharacterData).data;
+      const match = marker.exec(data);
+      if (match?.[0] === data && texts[Number(match[1])]) {
+        child.replaceWith(document.createTextNode(''));
+        slots.push({ kind: TEXT_SLOT, at, index: Number(match[1]) });
+      } else if (match) {
+        slots.push({ kind: DATA_SLOT, at, parts: splitParts(data) });
+      }
+      at++;
     }
-
-    path.pop();
+    child = next;
   }
+
+  return at;
 }
 
 function getTemplate(strings: TemplateStringsArray) {
-  let byStrings = templates.get(document);
-  if (!byStrings) {
-    byStrings = new WeakMap();
-    templates.set(document, byStrings);
-  }
-
-  let template = byStrings.get(strings);
+  let template = templates.get(strings);
   if (!template) {
     const element = document.createElement('template');
-    element.innerHTML = markup(strings);
+    const { html, texts } = markup(strings);
+    element.innerHTML = html;
     template = { content: element.content, slots: [] };
-    findSlots(template.content, [], template.slots);
-    byStrings.set(strings, template);
+    findSlots(template.content, template.slots, 0, texts);
+    templates.set(strings, template);
   }
 
   return template;
 }
 
-function toNodes(value: Interpolation, nodes: Node[]) {
+/** Inserts nodes, controller views and list items before a placeholder. */
+function insertBefore(placeholder: Text, value: Interpolation) {
   if (value === null || value === undefined) {
-    return nodes;
+    return;
   }
 
   if (isNode(value)) {
-    nodes.push(value);
+    (placeholder.parentNode as Node).insertBefore(value, placeholder);
   } else if (Array.isArray(value)) {
-    for (const item of value) {
-      toNodes(item as Interpolation, nodes);
+    for (const item of value as readonly Interpolation[]) {
+      insertBefore(placeholder, item);
     }
   } else if (typeof value === 'object') {
-    if (Object.hasOwn(value, 'node')) {
-      return toNodes(
-        (value as ComponentController).node as Interpolation,
-        nodes,
-      );
-    }
-
-    if (Object.hasOwn(value, 'nodes')) {
-      return toNodes(
-        (value as ComponentController).nodes as Interpolation,
-        nodes,
-      );
-    }
-
-    return nodes;
+    const controller = value as ComponentController<Node>;
+    insertBefore(placeholder, controller.node ?? controller.nodes);
   } else {
-    nodes.push(document.createTextNode(String(value)));
+    (placeholder.parentNode as Node).insertBefore(
+      document.createTextNode(String(value)),
+      placeholder,
+    );
   }
-
-  return nodes;
 }
 
-function resolve(root: Node, path: number[]) {
-  let node = root;
-  for (const position of path) {
-    node = node.childNodes[position];
-  }
-
-  return node;
-}
-
-/** Builds views from a template, inserting view values and escaping text values. */
+/** Builds a fragment from a template, inserting view values and escaping text values. */
 export function instantiate(
   strings: TemplateStringsArray,
   values: readonly Interpolation[],
-) {
+): DocumentFragment {
   const { content, slots } = getTemplate(strings);
   const fragment = document.importNode(content, true);
 
-  // Resolve paths first because earlier replacements can shift later targets.
-  const targets = slots.map((slot) => resolve(fragment, slot.path));
-  for (const [slotIndex, slot] of slots.entries()) {
-    const target = targets[slotIndex];
-    if (slot.kind === 'node') {
-      (target as ChildNode).replaceWith(...toNodes(values[slot.index], []));
-      continue;
+  let node = fragment.firstChild as Node;
+  let at = 0;
+  let slotIndex = 0;
+  let slot: Slot | undefined = slots[0];
+  while (slot) {
+    let successor = node.firstChild;
+    for (
+      let up = node;
+      !successor && up !== fragment;
+      up = up.parentNode as Node
+    ) {
+      successor = up.nextSibling;
     }
 
-    let text = '';
-    for (const part of slot.parts) {
-      text += typeof part === 'number' ? toText(values[part]) : part;
+    while (slot?.at === at) {
+      if (slot.kind === TEXT_SLOT) {
+        const value = values[slot.index];
+        const placeholder = node as Text;
+        if (value === null || value === undefined) {
+          placeholder.remove();
+        } else if (typeof value !== 'object') {
+          placeholder.data = String(value);
+        } else if (isNode(value)) {
+          placeholder.replaceWith(value);
+        } else {
+          insertBefore(placeholder, value);
+          placeholder.remove();
+        }
+      } else if (slot.kind === TAG_SLOT) {
+        const name = String(values[slot.index] as string);
+        const element = document.createElement(name);
+        for (const attribute of (node as Element).attributes) {
+          element.setAttribute(attribute.name, attribute.value);
+        }
+        element.append(...node.childNodes);
+        (node as Element).replaceWith(element);
+        node = element;
+      } else {
+        let text = '';
+        for (const part of (slot as PartsSlot).parts) {
+          text += typeof part === 'number' ? toText(values[part]) : part;
+        }
+        if (slot.kind === DATA_SLOT) {
+          (node as CharacterData).data = text;
+        } else if (slot.kind === ATTR_SLOT) {
+          (node as Element).setAttribute(slot.name!, text);
+        } else {
+          for (const [, name, value] of text.matchAll(attributePair)) {
+            (node as Element).setAttribute(name, value ?? '');
+          }
+        }
+      }
+      slotIndex++;
+      slot = slots[slotIndex];
     }
-    (target as Element).setAttribute(slot.name, text);
+
+    node = successor as Node;
+    at++;
   }
 
-  return [...fragment.childNodes];
+  return fragment;
 }

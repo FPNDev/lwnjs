@@ -1,11 +1,13 @@
 import { attachStore, component, listen } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
-import { createOutlet } from 'lwn-js/router';
+import { createOutlet, lazy } from 'lwn-js/router';
 import classes from './App.module.scss';
 import { Sidebar } from './components/Sidebar';
 import { Welcome } from './pages/Welcome';
 import { FallbackRoute, HomeRoute, ListRoute, router } from './router';
 import { STORAGE_KEY, TodosStore } from './store/todos';
+
+const ListPage = lazy(() => import('./pages/ListPage'));
 
 export const App = component(() => {
   const todos = attachStore(TodosStore);
@@ -17,7 +19,7 @@ export const App = component(() => {
   // The outlet view is a logical child rendered inside main.
   const page = createOutlet(slot);
   router.route(HomeRoute, () => page.show(Welcome));
-  router.route(ListRoute, () => page.show(() => import('./pages/ListPage')));
+  router.route(ListRoute, () => page.show(ListPage));
   router.route(FallbackRoute, () => router.go('/'));
 
   listen(window, 'storage', (event) => {

@@ -5,3 +5,9 @@ AFTERWARDS-TESTING.md
 TODO-SSR.md
 package-lock.json
 *.code-workspace
+.claude
+CLAUDE.md
+PLAN-CORE.md
+PLAN-SSR.md
+LAST-SSR-IMPL.md
+LOGIC.md

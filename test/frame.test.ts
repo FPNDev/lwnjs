@@ -40,7 +40,7 @@ describe('implicit frame', () => {
     const destroyed = vi.fn();
 
     const Widget = component(() => {
-      const node = {};
+      const node = document.createElement('div');
       ping.subscribe(seen);
       listen(button, 'click', clicked);
       onDestroy(destroyed);

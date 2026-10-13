@@ -1,67 +1,121 @@
+import { runCleanups } from './cleanup.ts';
 import type { ComponentController } from './component.ts';
-import { componentFrames, frameOf, requireFrame, runInFrame } from './frame.ts';
-import { getRenderer } from './renderer.ts';
-import { runIsolated } from './report.ts';
+import {
+  createFrame,
+  DEAD,
+  ensureFrame,
+  frameOf,
+  HELD,
+  PENDING,
+  tagController,
+  WAITING,
+  type Frame,
+} from './frame.ts';
+import { lift, runAttachHooks } from './lifecycle.ts';
+import { getRenderer, type Renderer } from './renderer.ts';
+import { report } from './report.ts';
 
-/** Runs after attachment and may return cleanup for detachment. */
-export type AttachHook = (frame: object) => (() => void) | void;
+export { onDestroy } from './cleanup.ts';
+export {
+  afterSetup,
+  onAttach,
+  release,
+  type AttachHook,
+} from './lifecycle.ts';
 
-type LogicalRecord = {
-  parent?: object;
-  children?: Set<object>;
-  attachHooks?: AttachHook[];
-  attachFrame?: object;
-  destroyHooks?: Set<() => void>;
-  controller?: ComponentController;
-  views?: Set<object>;
-};
+function link(parent: Frame, child: Frame) {
+  const last = parent.last;
+  child.parent = parent;
+  child.prev = last;
+  if (last) {
+    last.next = child;
+  } else {
+    parent.first = child;
+  }
+  parent.last = child;
+}
 
-const tree = new WeakMap<object, LogicalRecord>();
+function unlink(child: Frame) {
+  const parent = child.parent!;
+  if (parent.attachFrame === child) {
+    parent.attachFrame = undefined;
+  } else {
+    const { prev, next } = child;
+    if (prev) {
+      prev.next = next;
+    } else {
+      parent.first = next;
+    }
+    if (next) {
+      next.prev = prev;
+    } else {
+      parent.last = prev;
+    }
+    child.prev = child.next = undefined;
+  }
+  child.parent = undefined;
+}
 
-export function ensureLogicalRecord(node: object) {
-  const frame = frameOf(node);
-  let record = tree.get(frame);
-  if (!record) {
-    record = {};
-    tree.set(frame, record);
+/** Creates the frame of a component or show build under `parent`. */
+export function createChildFrame(parent: Frame | undefined) {
+  if (parent && parent.state & DEAD) {
+    return createFrame(DEAD);
   }
 
-  return record;
+  const frame = createFrame(
+    parent && parent.state & PENDING ? HELD | WAITING : HELD,
+  );
+  if (parent) {
+    link(parent, frame);
+  }
+
+  return frame;
 }
 
 /** Moves `child` under `parent` in the logical tree. */
 export function attach(parent: object, child: object) {
-  attachLogical(frameOf(parent), frameOf(child));
+  attachFrames(ensureFrame(parent), ensureFrame(child));
 }
 
-function attachLogical(parent: object, child: object) {
-  const record = ensureLogicalRecord(child);
-
-  if (record.parent === parent) {
+/** Moves the `child` frame under the `parent` frame; for engine callers. */
+export function attachFrames(parent: Frame, child: Frame) {
+  if (child.state & DEAD) {
     return;
   }
-
-  if (record.parent) {
-    detachLogicalChild(child, record);
+  if (parent.state & DEAD) {
+    destroyFrame(child, getRenderer());
+    return;
+  }
+  if (child.parent === parent) {
+    return;
+  }
+  if (child.parent) {
+    detachFrame(child);
   }
 
-  record.parent = parent;
-  (ensureLogicalRecord(parent).children ??= new Set()).add(child);
+  link(parent, child);
 
-  if (record.attachHooks) {
-    const attachFrame = (record.attachFrame = {});
-    for (const hook of record.attachHooks) {
-      runAttachHook(hook, frameOf(child), attachFrame);
-    }
+  if (parent.state & PENDING) {
+    child.state |= WAITING;
+  } else if ((child.state & PENDING) === 0) {
+    runAttachHooks(child);
+  } else {
+    lift(child, WAITING);
   }
 }
 
 /** Detaches `child` while keeping it alive. */
 export function detach(child: object) {
-  const logicalChild = frameOf(child);
-  const record = tree.get(logicalChild);
-  if (record?.parent) {
-    detachLogicalChild(logicalChild, record);
+  const frame = frameOf(child);
+  if (frame?.parent) {
+    detachFrame(frame);
+  }
+}
+
+function detachFrame(frame: Frame) {
+  unlink(frame);
+  if (frame.attachFrame) {
+    destroyFrame(frame.attachFrame, getRenderer());
   }
 }
 
@@ -72,158 +126,74 @@ export function destroy(node?: object) {
   }
 
   const frame = frameOf(node);
+  const renderer = getRenderer();
   if (frame) {
-    destroyFrame(frame);
+    destroyFrame(frame, renderer);
+  } else if (renderer) {
+    removeView(renderer, node);
   }
 }
 
-function destroyFrame(frame: object) {
-  const views = ensureLogicalRecord(frame).views ?? [frame];
-  if (views) {
-    for (const view of views) {
-      if (!view) {
-        continue;
-      }
-
-      getRenderer()?.remove(view);
-    }
+/** Destroys `frame`: own views, then children, then its cleanups in order. */
+export function destroyFrame(frame: Frame, renderer: Renderer | undefined) {
+  if (frame.state & DEAD) {
+    return;
   }
 
-  dispose(frame);
+  frame.state = DEAD;
+  if (frame.parent) {
+    unlink(frame);
+  }
+  const { controller, host } = frame;
+  if (renderer) {
+    if (controller) {
+      removeViews(renderer, controller);
+    } else if (host) {
+      removeView(renderer, host);
+    }
+  }
+  while (frame.first) {
+    destroyFrame(frame.first, renderer);
+  }
+  if (frame.attachFrame) {
+    destroyFrame(frame.attachFrame, renderer);
+  }
+  runCleanups(frame);
+  frame.controller = undefined;
+}
+
+function removeViews(renderer: Renderer, controller: ComponentController) {
+  if (controller.nodes) {
+    for (const view of controller.nodes) {
+      removeView(renderer, view);
+    }
+  } else {
+    removeView(renderer, controller.node!);
+  }
+}
+
+function removeView(renderer: Renderer, view: object) {
+  try {
+    renderer.remove(view);
+  } catch (error) {
+    report(error);
+  }
 }
 
 /** Associates a controller and its renderer roots with a frame. */
-export function bindComponentController(
-  frame: object,
-  controller: ComponentController,
-) {
-  const frameRecord = ensureLogicalRecord(frame);
-
-  const hasNode = Object.hasOwn(controller, 'node');
-  const hasNodes = Object.hasOwn(controller, 'nodes');
-  if (hasNode === hasNodes) {
+export function bindController(frame: Frame, controller: ComponentController) {
+  if (Object.hasOwn(controller, 'node') === Object.hasOwn(controller, 'nodes')) {
     throw new TypeError(
       'component(): setup must return { node }, { nodes }, or void.',
     );
   }
 
-  if (componentFrames.has(controller)) {
-    throw new TypeError(
-      'component(): each invocation must return a unique controller object.',
-    );
-  }
-
-  frameRecord.controller = controller;
-  frameRecord.views = new Set(hasNode ? [controller.node!] : controller.nodes!);
-
-  componentFrames.set(controller, frame);
+  tagController(controller, frame);
+  frame.controller = controller;
 }
 
-/** Runs a hook for each attachment and destroys its frame on detachment. */
-export function onAttach(hook: AttachHook): void;
-export function onAttach(node: object, hook: AttachHook): void;
-export function onAttach(
-  nodeOrHook: object | AttachHook,
-  maybeHook?: AttachHook,
-) {
-  const frame = maybeHook ? frameOf(nodeOrHook) : requireFrame('onAttach');
-  const hook = maybeHook ?? (nodeOrHook as AttachHook);
-
-  const record = ensureLogicalRecord(frame);
-  if (!record) {
-    return;
-  }
-
-  (record.attachHooks ??= []).push(hook);
-  record.attachFrame ??= {};
-
-  if (record.parent) {
-    runAttachHook(hook, frame, record.attachFrame);
-  }
-}
-
-/** Registers cleanup for destruction and returns an unregister function. */
-export function onDestroy(hook: () => void): () => void;
-export function onDestroy(node: object, hook: () => void): () => void;
-export function onDestroy(
-  nodeOrHook: object | (() => void),
-  maybeHook?: () => void,
-) {
-  const frame = maybeHook ? frameOf(nodeOrHook) : requireFrame('onDestroy');
-  const hook = maybeHook ?? (nodeOrHook as () => void);
-
-  const record = ensureLogicalRecord(frame);
-  if (!record) {
-    return;
-  }
-
-  const hooks = (record.destroyHooks ??= new Set());
-
-  hooks.add(hook);
-
-  return () => {
-    hooks.delete(hook);
-  };
-}
-
-/** Returns the logical parent of a node or controller. */
-export function getParent(node: object) {
-  return tree.get(frameOf(node))?.parent;
-}
-
-function runAttachHook(
-  hook: AttachHook,
-  parentFrame: object,
-  attachFrame: object,
-) {
-  attachLogical(parentFrame, attachFrame);
-
-  runIsolated(() => {
-    const cleanup = runInFrame(attachFrame, () => hook(attachFrame));
-    if (cleanup) {
-      onDestroy(attachFrame, cleanup);
-    }
-  });
-}
-
-function detachLogicalChild(child: object, record: LogicalRecord) {
-  tree.get(record.parent!)?.children?.delete(child);
-  record.parent = undefined;
-
-  const attachFrame = record.attachFrame;
-  if (attachFrame) {
-    record.attachFrame = undefined;
-    dispose(attachFrame);
-  }
-}
-
-function dispose(node: object) {
-  const record = tree.get(node);
-  if (!record) {
-    return;
-  }
-  tree.delete(node);
-
-  if (record.controller) {
-    componentFrames.delete(record.controller);
-  }
-  if (record.children) {
-    for (const child of record.children) {
-      destroy(child);
-    }
-  }
-
-  if (record.parent) {
-    detachLogicalChild(node, record);
-  }
-
-  if (record.attachFrame) {
-    dispose(record.attachFrame);
-  }
-
-  if (record.destroyHooks) {
-    for (const hook of record.destroyHooks) {
-      runIsolated(hook);
-    }
-  }
+/** Returns the logical parent; may be an internal engine frame (show or attach frame). */
+export function getParent(node: object): object | undefined {
+  const parent = frameOf(node)?.parent;
+  return parent && (parent.host ?? parent);
 }

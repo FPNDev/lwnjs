@@ -1,6 +1,12 @@
-import { runIsolated } from './report.ts';
-import { bindFrame, frameOf, getFrame } from './frame.ts';
-import { onDestroy } from './tree.ts';
+import { report } from './report.ts';
+import {
+  currentFrame,
+  ensureFrame,
+  setCurrent,
+  DEAD,
+  type Cleanup,
+} from './frame.ts';
+import { addCleanup, noop, unregister } from './cleanup.ts';
 
 export type Listener<T> = (value: T) => void;
 export type Unsubscribe = () => void;
@@ -11,12 +17,11 @@ export type Subscribe<T> = {
   (frame: object, listener: Listener<T>): Unsubscribe;
 };
 
-type Link<T> = {
-  listener: Listener<T>;
+type Link<T> = Cleanup & {
+  listener: Listener<T> | undefined;
   id: number;
-  next?: Link<T>;
-  prev?: Link<T>;
-  removed?: boolean;
+  next: Link<T> | undefined;
+  prev: Link<T> | undefined;
 };
 
 /** Creates a listener list that supports subscription changes during dispatch. */
@@ -25,8 +30,65 @@ export function createListeners<T>() {
   let tail: Link<T> | undefined;
   let nextId = 0;
 
-  const add = (listener: Listener<T>) => {
-    const link: Link<T> = { listener, id: nextId++, prev: tail };
+  const remove = function (this: Link<T>) {
+    if (!this.listener) {
+      return;
+    }
+
+    this.listener = undefined;
+
+    const { prev, next } = this;
+    if (prev) {
+      prev.next = next;
+    } else {
+      head = next;
+    }
+
+    if (next) {
+      next.prev = prev;
+    } else {
+      tail = prev;
+    }
+  };
+
+  const call = (value: T) => {
+    const endId = nextId;
+    const previous = currentFrame();
+    for (let link = head; link; link = link.next) {
+      const listener = link.listener;
+      if (listener && link.id < endId) {
+        setCurrent(link.owner ?? previous);
+        try {
+          listener(value);
+        } catch (error) {
+          report(error);
+        }
+      }
+    }
+    setCurrent(previous);
+  };
+
+  const subscribe = ((
+    frameOrListener: object | Listener<T>,
+    maybeListener?: Listener<T>,
+  ) => {
+    const implicit = typeof frameOrListener === 'function';
+    const frame = implicit ? currentFrame() : ensureFrame(frameOrListener);
+
+    if (frame && frame.state & DEAD) {
+      return noop;
+    }
+
+    const link: Link<T> = {
+      dispose: remove,
+      owner: undefined,
+      prevCleanup: undefined,
+      nextCleanup: undefined,
+      listener: implicit ? (frameOrListener as Listener<T>) : maybeListener!,
+      id: nextId++,
+      next: undefined,
+      prev: tail,
+    };
     if (tail) {
       tail.next = link;
     } else {
@@ -34,72 +96,11 @@ export function createListeners<T>() {
     }
     tail = link;
 
-    return link;
-  };
-
-  const remove = (link: Link<T>) => {
-    if (link.removed) {
-      return;
+    if (frame) {
+      addCleanup(frame, link);
     }
 
-    link.removed = true;
-
-    if (link.prev) {
-      link.prev.next = link.next;
-    } else {
-      head = link.next;
-    }
-
-    if (link.next) {
-      link.next.prev = link.prev;
-    } else {
-      tail = link.prev;
-    }
-  };
-
-  const call = (value: T) => {
-    const endId = nextId;
-    let link = head;
-    while (link) {
-      if (!link.removed && link.id < endId) {
-        const { listener } = link;
-        runIsolated(() => {
-          listener(value);
-        });
-      }
-      link = link.next;
-    }
-  };
-
-  const subscribe = ((
-    frameOrListener: object | Listener<T>,
-    maybeListener?: Listener<T>,
-  ) => {
-    const frame =
-      typeof frameOrListener === 'function'
-        ? getFrame()
-        : frameOf(frameOrListener);
-    const listener =
-      typeof frameOrListener === 'function'
-        ? (frameOrListener as Listener<T>)
-        : maybeListener!;
-
-    const link = add(bindFrame(frame, listener));
-
-    if (!frame) {
-      return () => {
-        remove(link);
-      };
-    }
-
-    const unregister = onDestroy(frame, () => {
-      remove(link);
-    });
-
-    return () => {
-      unregister();
-      remove(link);
-    };
+    return unregister(link);
   }) as Subscribe<T>;
 
   return { call, subscribe };

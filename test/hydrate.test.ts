@@ -66,7 +66,7 @@ describe('hydration', () => {
 
     expect(() => useServer(PostData)).toThrow(/during setup/u);
     const outlet = withFrame(container, () => createOutlet());
-    await expect(
+    expect(() =>
       outlet.show(
         component(() => {
           useServer(PostData);
@@ -74,7 +74,7 @@ describe('hydration', () => {
           return { node: document.createElement('i') };
         }),
       ),
-    ).rejects.toThrow(/no server data/u);
+    ).toThrow(/no server data/u);
   });
 
   it('does not fetch for routes without server data', async () => {
