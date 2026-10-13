@@ -6,6 +6,10 @@ export type History = {
   listen(onChange: () => void): () => void;
 };
 
+/** Tells whether two URLs address the same route: pathname and search match, the hash is ignored. */
+export const sameRoute = (a: URL, b: URL) =>
+  a.pathname === b.pathname && a.search === b.search;
+
 /** Creates a history adapter for the browser URL. */
 export function browserHistory(): History {
   return {

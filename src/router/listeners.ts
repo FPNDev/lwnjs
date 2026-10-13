@@ -4,9 +4,44 @@ import {
   type Cleanup,
   type Frame,
 } from '../core/frame.ts';
+import { hydration } from '../core/hydration.ts';
 import { report } from '../core/report.ts';
-import { addCleanup } from '../core/cleanup.ts';
+import { addCleanup, noop } from '../core/cleanup.ts';
 import type { Route } from './types.ts';
+
+/** Collects async work of route actions and lazy views; undefined when nothing awaits it. */
+export let work: Promise<unknown>[] | undefined;
+
+/** Runs `run` while async work is collected into `into`. */
+export function collectWork<T>(
+  into: Promise<unknown>[] | undefined,
+  run: () => T,
+): T {
+  const previous = work;
+  work = into;
+  try {
+    return run();
+  } finally {
+    work = previous;
+  }
+}
+
+/** Adds `promise` to the collected work, or reports its failure when nothing collects. */
+export function trackWork(promise: Promise<unknown>) {
+  if (work) {
+    promise.then(undefined, noop);
+    work.push(promise);
+  } else {
+    promise.then(undefined, report);
+  }
+}
+
+/** Resolves once all collected work, including work added meanwhile, settles; rejects with the first failure. */
+export async function settleWork(pending: Promise<unknown>[]) {
+  while (pending.length > 0) {
+    await Promise.all(pending.splice(0));
+  }
+}
 
 export type RouteOrRoutes = Route | readonly Route[];
 export type NavigationAction = () => void;
@@ -21,6 +56,8 @@ export type RouteListener = Cleanup & {
   action: RouteAction;
   /** Navigation id this listener last ran for, so it runs once per navigation. */
   ranFor: number;
+  /** Hydration key the action's views are created under. */
+  key: string;
   target: readonly Route[];
   map: Map<Route, Set<RouteListener>>;
 };
@@ -64,6 +101,7 @@ export function addRouteListener(
   map: Map<Route, Set<RouteListener>>,
   target: RouteOrRoutes,
   action: RouteAction,
+  key: string,
 ) {
   const routes = (
     Array.isArray(target) ? target : [target]
@@ -75,6 +113,7 @@ export function addRouteListener(
     nextCleanup: undefined,
     action,
     ranFor: -1,
+    key,
     target: routes,
     map,
   };
@@ -104,6 +143,31 @@ export function addNavigationListener(
   addCleanup(frame, listener);
 
   return listener;
+}
+
+/** Runs a route action under its hydration key; its async work and failures are collected, or reported when nothing collects. */
+export function runRouteAction(
+  listener: RouteListener,
+  previousRoute: Route | undefined,
+  previousLocation: URL | undefined,
+) {
+  try {
+    const h = hydration;
+    const result = h
+      ? h.scope(listener.key, () =>
+          listener.action(previousRoute, previousLocation),
+        )
+      : listener.action(previousRoute, previousLocation);
+    if (result instanceof Promise) {
+      trackWork(result);
+    }
+  } catch (error) {
+    if (work) {
+      trackWork(Promise.reject(error));
+    } else {
+      report(error);
+    }
+  }
 }
 
 /** Runs navigation actions in their frames; a throw is reported and the rest still run. */

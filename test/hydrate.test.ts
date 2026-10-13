@@ -1,21 +1,33 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { component, withFrame } from '../src/core/index.ts';
-import { createOutlet } from '../src/router/index.ts';
+import { element } from '../src/html/index.ts';
+import {
+  createOutlet,
+  memoryHistory,
+  setupRouter,
+  type Route,
+} from '../src/router/index.ts';
+import { createServer } from '../src/server/index.ts';
 import { hydrate, useServer } from '../src/ssr/index.ts';
-import { PostData, get, settle, setupApp } from './fixtures/blog.ts';
+import { PostData, TEMPLATE, get, settle, setupApp } from './fixtures/blog.ts';
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe('hydration', () => {
-  async function loadPage(path: string) {
-    const { server, ...app } = setupApp();
-    const page = await (await get(server, path))!.text();
+  function showPage(page: string) {
     const parsed = new DOMParser().parseFromString(page, 'text/html');
     document.body.replaceWith(document.importNode(parsed.body, true));
 
-    return { ...app, container: document.querySelector('#app')! };
+    return document.querySelector('#app')!;
+  }
+
+  async function loadPage(path: string) {
+    const { server, ...app } = setupApp();
+    const page = await (await get(server, path))!.text();
+
+    return { ...app, container: showPage(page) };
   }
 
   it('adopts the server nodes instead of creating new ones', async () => {
@@ -87,5 +99,53 @@ describe('hydration', () => {
     await settle();
     expect(fetchData).not.toHaveBeenCalled();
     expect(container.querySelector('main')!.textContent).toBe('home');
+  });
+  it('refetches page data on reload', async () => {
+    const { container, App, router } = await loadPage('/posts/1');
+    await hydrate(container, App, router);
+    await settle();
+
+    const fetchData = vi.fn(() =>
+      Promise.resolve(
+        Response.json({ post: { title: 'Post 1 again', body: 'again' } }),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchData);
+    await router.reload();
+    await settle();
+
+    expect(fetchData).toHaveBeenCalledWith('/posts/1/__data.json');
+    expect(container.querySelector('h1')!.textContent).toBe('Post 1 again');
+  });
+
+  it('adopts views created directly in different route actions', async () => {
+    const Home: Route = { path: '/' };
+    const routes = [Home];
+    const router = setupRouter(routes, { history: memoryHistory('/') });
+    function App(container: Element) {
+      withFrame(container, () => {
+        router.route(Home, () => {
+          const view = element('p');
+          view.textContent = 'first';
+          container.append(view);
+        });
+        router.route(Home, () => {
+          const view = element('p');
+          view.textContent = 'second';
+          container.append(view);
+        });
+      });
+    }
+    const server = createServer({ template: TEMPLATE, router, routes, app: App });
+    const container = showPage(await (await get(server, '/'))!.text());
+    const [first, second] = container.querySelectorAll('p');
+
+    await hydrate(container, App, router);
+
+    const views = container.querySelectorAll('p');
+    expect(views).toHaveLength(2);
+    expect(views[0]).toBe(first);
+    expect(views[1]).toBe(second);
+    expect(container.textContent).toBe('firstsecond');
   });
 });

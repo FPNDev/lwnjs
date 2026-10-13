@@ -29,7 +29,7 @@ const AccountLayout = component(() => {
     const next =
       (Number(/(?:^|;\s*)user=(\d+)/u.exec(document.cookie)?.[1] ?? 1) % 5) + 1;
     document.cookie = `user=${next}; path=/`;
-    location.reload();
+    void router.reload();
   });
 
   const page = createOutlet(slot);

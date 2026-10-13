@@ -1,11 +1,41 @@
 // @vitest-environment node
+// oxlint-disable max-lines
 import { createServer as createHttpServer } from 'node:http';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { parseHTML } from 'linkedom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { toNodeHandler } from '../src/server/index.ts';
-import { get, settle, setupApp } from './fixtures/blog.ts';
+import { withFrame } from '../src/core/index.ts';
+import { html } from '../src/html/index.ts';
+import {
+  createOutlet,
+  lazy,
+  memoryHistory,
+  setupRouter,
+  type Outlet,
+  type Route,
+} from '../src/router/index.ts';
+import { createServer, toNodeHandler } from '../src/server/index.ts';
+import { TEMPLATE, get, settle, setupApp } from './fixtures/blog.ts';
+
+function homeServer(action: (container: Element, outlet: Outlet) => unknown) {
+  const Home: Route = { path: '/' };
+  const routes = [Home];
+  const router = setupRouter(routes, { history: memoryHistory('/') });
+
+  return createServer({
+    template: TEMPLATE,
+    router,
+    routes,
+    app(container) {
+      withFrame(container, () => {
+        const outlet = createOutlet();
+        router.route(Home, () => action(container, outlet));
+      });
+    },
+  });
+}
 
 afterEach(() => {
   vi.useRealTimers();
@@ -78,6 +108,45 @@ describe('server render', () => {
     expect(pages[1]).toContain('Post b');
     expect(pages[2]).toContain('<main>home</main>');
     expect(pages[3]).toContain('Post c');
+  });
+
+  it('answers 500 when a route action or lazy view fails', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failures = [
+      homeServer(() => Promise.reject(new Error('async action'))),
+      homeServer(() => {
+        throw new Error('sync action');
+      }),
+      homeServer((_, outlet) => {
+        void outlet.show(lazy(() => Promise.reject(new Error('lazy view'))));
+      }),
+    ];
+
+    for (const server of failures) {
+      expect((await get(server, '/'))!.status).toBe(500);
+    }
+    expect(
+      logged.mock.calls.map(([error]) => (error as Error).message),
+    ).toEqual(['async action', 'sync action', 'lazy view']);
+    logged.mockRestore();
+  });
+
+  it('keeps interpolated values inside script and style elements', async () => {
+    const value = '</script></STYLE><!--<img src=x onerror=alert(1)>';
+    const server = homeServer((container) => {
+      container.append(
+        // prettier-ignore
+        html`<div><script>${value}</script><style>${value}</style></div>`,
+      );
+    });
+    const page = await (await get(server, '/'))!.text();
+    const escaped = String.raw`<\/script><\/STYLE><\!--<img src=x onerror=alert(1)>`;
+
+    expect(page).toContain(`<script>${escaped}</script>`);
+    expect(page).toContain(`<style>${escaped}</style>`);
+    const { document } = parseHTML(page);
+    expect(document.querySelector('img')).toBeNull();
+    expect(document.querySelector('#app script')!.textContent).toBe(escaped);
   });
 
   it('serves page data as JSON without rendering SSR pages', async () => {

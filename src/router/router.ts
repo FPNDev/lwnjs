@@ -8,16 +8,19 @@ import {
 import { hydration } from '../core/hydration.ts';
 import { report } from '../core/report.ts';
 import { noop, removeCleanup, unregister } from '../core/cleanup.ts';
-import { browserHistory, type History } from './history.ts';
+import { browserHistory, sameRoute, type History } from './history.ts';
 import {
   addNavigationListener,
   addRouteListener,
+  collectWork,
   emit,
   type NavigationAction,
   type NavigationListener,
   type RouteAction,
   type RouteListener,
   type RouteOrRoutes,
+  runRouteAction,
+  settleWork,
 } from './listeners.ts';
 import { compileRoutes, matchRoute, type RouteMatch } from './match.ts';
 import type { Route, RouteParams } from './types.ts';
@@ -60,6 +63,7 @@ export function setupRouter(
   let starting = false;
   let activeChain: readonly Route[] = [];
   let activeLocation: URL | undefined;
+  let requestedLocation: URL;
   let previousRoute: Route | undefined;
   let previousLocation: URL | undefined;
   let params: RouteParams = null;
@@ -72,14 +76,7 @@ export function setupRouter(
       listener.ranFor = matchedId;
       // Route actions run in their registered frame.
       setCurrent(listener.owner);
-      try {
-        const result = listener.action(previousRoute, previousLocation);
-        if (result instanceof Promise) {
-          result.then(undefined, report);
-        }
-      } catch (error) {
-        report(error);
-      }
+      runRouteAction(listener, previousRoute, previousLocation);
     }
   };
 
@@ -104,20 +101,8 @@ export function setupRouter(
     setCurrent(previous);
   };
 
-  const dispatch = (only?: RouteListener) => {
-    const h = hydration;
-    if (h) {
-      h.scope('', () => {
-        runActions(only);
-      });
-    } else {
-      runActions(only);
-    }
-  };
-
-  const navigate = async () => {
-    const url = history.location();
-
+  const navigate = async (url: URL) => {
+    requestedLocation = url;
     const id = ++requested;
 
     if (id - 1 === completed) {
@@ -126,6 +111,7 @@ export function setupRouter(
       starting = false;
     }
 
+    const pending: Promise<unknown>[] = [];
     try {
       let match = matchRoute(compiled, url.pathname);
       if (match instanceof Promise) {
@@ -162,11 +148,14 @@ export function setupRouter(
         matchedId = id;
       }
       completed = id;
-      dispatch();
+      collectWork(pending, runActions);
     } finally {
       if (id === requested) {
         emit(navigationEndListeners);
       }
+    }
+    if (pending.length > 0) {
+      await settleWork(pending);
     }
   };
 
@@ -199,10 +188,11 @@ export function setupRouter(
       listeners,
       target,
       maybeAction ?? (targetOrAction as RouteAction),
+      hydration ? hydration.nextKey() : '',
     );
 
     if (requested === completed && listener.target.some(isActive)) {
-      dispatch(listener);
+      runActions(listener);
     }
 
     return unregister(listener);
@@ -241,9 +231,12 @@ export function setupRouter(
   }
 
   const unlisten = history.listen(() => {
-    navigate().catch(report);
+    const url = history.location();
+    if (!sameRoute(url, requestedLocation)) {
+      navigate(url).catch(report);
+    }
   });
-  const ready = navigate();
+  const ready = navigate(history.location());
 
   return {
     /** Resolves after the initial navigation. */
@@ -252,11 +245,19 @@ export function setupRouter(
     match(pathname: string) {
       return matchRoute(compiled, pathname);
     },
-    /** Pushes `url` and resolves after the route actions run. */
+    /** Pushes `url` and resolves after the route actions and their async work settle. Does nothing when pathname and search are unchanged. */
     go(url: string) {
+      const current = history.location();
+      if (sameRoute(new URL(url, current), current)) {
+        return Promise.resolve();
+      }
       history.push(url);
 
-      return navigate();
+      return navigate(history.location());
+    },
+    /** Navigates to the current URL again without pushing a history entry; resolves like go(). */
+    reload() {
+      return navigate(history.location());
     },
     getPath() {
       return history.location().pathname;

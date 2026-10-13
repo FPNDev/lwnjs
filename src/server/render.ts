@@ -7,6 +7,7 @@ import {
 } from '../core/hydration.ts';
 import { destroy } from '../core/tree.ts';
 import { setCreationHook } from '../html/create.ts';
+import { collectWork, settleWork } from '../router/listeners.ts';
 import type { Router } from '../router/router.ts';
 import { setServerData } from '../ssr/data.ts';
 import { suspendServerData } from '../ssr/load.ts';
@@ -35,6 +36,8 @@ const RAW_TEXT = new Set([
   'PLAINTEXT',
   'TEMPLATE',
 ]);
+/** Sequences that could end a script or style element early. */
+const RAW_TEXT_END = /<(?=\/script|\/style|!--)/giu;
 
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -68,11 +71,17 @@ function normalize(parent: Node, replaced: Map<Node, Node>) {
     }
 
     previousIsText = false;
-    if (
-      child.nodeType === ELEMENT_NODE &&
-      !RAW_TEXT.has((child as Element).tagName)
-    ) {
-      normalize(child, replaced);
+    if (child.nodeType === ELEMENT_NODE) {
+      const { tagName } = child as Element;
+      if (!RAW_TEXT.has(tagName)) {
+        normalize(child, replaced);
+      } else if (tagName === 'SCRIPT' || tagName === 'STYLE') {
+        const data = child.textContent!;
+        const safe = data.replace(RAW_TEXT_END, '<\\');
+        if (safe !== data) {
+          child.textContent = safe;
+        }
+      }
     }
   }
 
@@ -195,12 +204,18 @@ export function renderPage(
         options.router.go(url.pathname + url.search),
         timeout.promise,
       ]);
-      withHydration('r', () => {
-        runInFrame(undefined, () => {
-          options.app(container);
+      const pending: Promise<unknown>[] = [];
+      collectWork(pending, () => {
+        withHydration('r', () => {
+          runInFrame(undefined, () => {
+            options.app(container);
+          });
         });
       });
-      await Promise.race([whenSettledHydration(), timeout.promise]);
+      await Promise.race([
+        Promise.all([settleWork(pending), whenSettledHydration()]),
+        timeout.promise,
+      ]);
 
       const payload: Payload = {
         path: url.pathname,

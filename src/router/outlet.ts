@@ -18,6 +18,8 @@ import {
 } from '../core/tree.ts';
 import { type ComponentController } from '../core/component.ts';
 import { report } from '../core/report.ts';
+import { noop } from '../core/cleanup.ts';
+import { collectWork, trackWork, work } from './listeners.ts';
 
 /** Creates a component controller for an outlet view. */
 export type ViewFactory = () => ComponentController;
@@ -201,15 +203,18 @@ export function createOutlet(placeholder?: object): Outlet {
     }
     const current = ++version;
     deferred = undefined;
+    const into = work;
     const loading = (nextSource as Lazy)
       .load()
-      .then(
-        (loaded) => (current === version ? showFactory(loaded) : undefined),
-        report,
+      .then((loaded) =>
+        current === version
+          ? collectWork(into, () => showFactory(loaded))
+          : undefined,
       );
     hydration?.track(loading);
+    trackWork(loading);
 
-    return loading;
+    return loading.then(undefined, noop);
   }
 
   return {

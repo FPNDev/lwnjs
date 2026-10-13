@@ -113,7 +113,7 @@ Routes match paths and run actions for the active route. An outlet shows one com
 ```ts
 import { component } from 'lwn-js/core';
 import { html } from 'lwn-js/html';
-import { createOutlet, setupRouter } from 'lwn-js/router';
+import { createOutlet, lazy, setupRouter } from 'lwn-js/router';
 
 const HomeRoute = { path: '/' };
 const SettingsRoute = { path: '/settings' };
@@ -122,19 +122,22 @@ const router = setupRouter([HomeRoute, SettingsRoute]);
 const Home = component(() => ({
   node: html`<h1>Home</h1>`,
 }));
+const Settings = lazy(() => import('./Settings'));
 
 const App = component(() => {
   const slot = html<Comment>`<!---->`;
   const outlet = createOutlet(slot);
 
   router.route(HomeRoute, () => outlet.show(Home));
-  router.route(SettingsRoute, () => outlet.show(() => import('./Settings')));
+  router.route(SettingsRoute, () => outlet.show(Settings));
 
   return { node: html`<main>${slot}</main>` };
 });
 ```
 
 Route actions registered during component setup follow that component's lifetime. Lazy imports keep a page out of the initial bundle until it is needed.
+
+router.go() resolves once the route actions and the lazy views they start have settled, and rejects if one of them fails. Navigating to the current pathname and search does nothing, and a change of hash alone does not count as a navigation. router.reload() runs the current URL again without adding a history entry; in server-rendered apps it also refetches the page data.
 
 ## Views and renderers
 
